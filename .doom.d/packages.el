@@ -17,4 +17,4 @@
   :recipe ( :host github :repo "Malabarba/beacon" :no-byte-compile t))
 
 (package! sublimity
-   :recipe ( :host github :repo "zk-phi/sublimity" :no-byte-compile t))
+  :recipe ( :host github :repo "zk-phi/sublimity" :no-byte-compile t))

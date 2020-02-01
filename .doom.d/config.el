@@ -47,7 +47,7 @@
     (global-set-key (kbd "F12") #'lsp-ui-peek-find-definitions)
     (global-set-key (kbd "C-F12") #'lsp-ui-peek-find-references))
 
-(def-package! company-lsp
+(use-package! company-lsp
   :after lsp-mode
   :config
   (set-company-backend! 'lsp-mode 'company-lsp)
@@ -86,3 +86,9 @@
           (lambda ()
             (setq buffer-face-mode-face '(:family "Monospace"))
             (buffer-face-mode))))
+(use-package! treemacs
+  :config
+  (setq treemacs-show-hidden-files t)
+  (treemacs-follow-mode t)
+  (treemacs-filewatch-mode t)
+  (treemacs-fringe-indicator-mode t))
