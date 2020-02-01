@@ -21,3 +21,6 @@
 
 (package! company-tabnine
   :recipe (:host github :repo "TommyX12/company-tabnine"))
+
+(package! company-quickhelp
+  :recipe (:host github :repo "company-mode/company-quickhelp"))

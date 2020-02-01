@@ -86,6 +86,7 @@
           (lambda ()
             (setq buffer-face-mode-face '(:family "Monospace"))
             (buffer-face-mode))))
+
 (use-package! treemacs
   :config
   (setq treemacs-show-hidden-files t)
@@ -93,12 +94,28 @@
   (treemacs-filewatch-mode t)
   (treemacs-fringe-indicator-mode t))
 
-(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
-(after! company
+(use-package! company
+  :config
+  (global-company-mode)
   (setq company-idle-delay 0
-        company-show-numbers t)
+        company-show-numbers t
+        company-tooltip-align-annotations t
+        global-company-mode t)
   ;; (company-tng-configure-default)
+  (setq company-backends '(company-capf)
+                      company-ispell
+                      company-yasnippet
+                      company-etags
+                      company-elisp
+                      company-files
+                      company-gtags)
   (setq company-frontends
         '(company-tng-frontend
           company-pseudo-tooltip-frontend
           company-echo-metadata-frontend)))
+
+(use-package! company-quickhelp
+  :after company
+  :config
+  (company-quickhelp-mode)
+  (setq company-quickhelp-delay 0))
