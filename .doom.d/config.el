@@ -92,3 +92,13 @@
   (treemacs-follow-mode t)
   (treemacs-filewatch-mode t)
   (treemacs-fringe-indicator-mode t))
+
+(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
+(after! company
+  (setq company-idle-delay 0
+        company-show-numbers t)
+  ;; (company-tng-configure-default)
+  (setq company-frontends
+        '(company-tng-frontend
+          company-pseudo-tooltip-frontend
+          company-echo-metadata-frontend)))

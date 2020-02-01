@@ -5,16 +5,19 @@
    :recipe ( :host github :repo "manateelazycat/snails" :no-byte-compile t))
 
 (package! powershell
-   :recipe ( :host github :repo "jschaf/powershell.el" :no-byte-compile t))
+   :recipe ( :host github :repo "jschaf/powershell.el"))
 
 (package! focus
-   :recipe ( :host github :repo "larstvei/Focus" :no-byte-compile t))
+   :recipe ( :host github :repo "larstvei/Focus"))
 
 (package! dimmer
-   :recipe ( :host github :repo "gonewest818/dimmer.el" :no-byte-compile t))
+   :recipe ( :host github :repo "gonewest818/dimmer.el"))
 
 (package! beacon
-  :recipe ( :host github :repo "Malabarba/beacon" :no-byte-compile t))
+  :recipe ( :host github :repo "Malabarba/beacon"))
 
 (package! sublimity
-  :recipe ( :host github :repo "zk-phi/sublimity" :no-byte-compile t))
+  :recipe ( :host github :repo "zk-phi/sublimity"))
+
+(package! company-tabnine
+  :recipe (:host github :repo "TommyX12/company-tabnine"))
