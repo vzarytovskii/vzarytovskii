@@ -27,6 +27,7 @@ export PATH=~/.cargo/bin:$PATH
 
 alias br="br -h"
 alias ls="br -dp"
+alias ll="exa -alF"
 alias tree="br"
 alias g="git"
 alias mc="ranger"
