@@ -4,11 +4,14 @@
       user-mail-address "vzaritovsky@hotmail.com")
 
 (setq doom-font (font-spec :family "monospace" :size 14))
-(setq doom-theme 'doom-one)
+(setq doom-theme 'doom-vibrant)
 (setq org-directory "~/org/")
 
 (setq display-line-numbers-type 'relative)
 (setq show-trailing-whitespace t)
+
+(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
+(setq highlight-indent-guides-auto-enabled nil)
 
 (use-package! powershell
   :after org
@@ -169,4 +172,3 @@
               company-files
               company-yasnippet))
 
-(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
