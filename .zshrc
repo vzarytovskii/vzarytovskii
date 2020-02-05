@@ -31,3 +31,5 @@ alias ll="exa -alF"
 alias tree="br"
 alias g="git"
 alias mc="ranger"
+
+if [ "$TMUX" = "" ]; then tmux; fi
