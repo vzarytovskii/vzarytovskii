@@ -1,3 +1,4 @@
+
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 (setq user-full-name "Vlad Zarytovskii"
       user-mail-address "vzaritovsky@hotmail.com")
@@ -86,7 +87,7 @@
           (lambda ()
             (setq buffer-face-mode-face '(:family "Monospace"))
             (buffer-face-mode))))
-
+            
 (use-package! treemacs
   :config
   (setq treemacs-show-hidden-files t)
@@ -94,28 +95,78 @@
   (treemacs-filewatch-mode t)
   (treemacs-fringe-indicator-mode t))
 
-(use-package! company
+(use-package! counsel
+    :hook
+    (after-init . ivy-mode)
+    (counsel-grep-post-action . better-jumper-set-jump)
+    :diminish ivy-mode
+    :config
+    (setq counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
+          counsel-describe-function-function #'helpful-callable
+          ncounsel-describe-variable-function #'helpful-variable
+          counsel-rg-base-command "rg -S --no-heading --line-number --color never %s ."
+          counsel-ag-base-command "ag -S --nocolor --nogroup %s"
+          counsel-pt-base-command "pt -S --nocolor --nogroup -e %s"
+          counsel-find-file-at-point t
+
+     (use-package! ivy-rich
+       :config
+       (ivy-rich-mode 1)
+       (setq ivy-format-function #'ivy-format-function-line))))
+     ;;[[https://github.com/gilbertw1/better-jumper][gilbertw1/better-jumper: A configurable jump list implementation for Emacs]]
+
+(use-package! company-tabnine
+  :when (featurep! :completion company)
   :config
-  (global-company-mode)
-  (setq company-idle-delay 0
-        company-show-numbers t
-        company-tooltip-align-annotations t
-        global-company-mode t)
-  ;; (company-tng-configure-default)
-  (setq company-backends '(company-capf)
-                      company-ispell
-                      company-yasnippet
-                      company-etags
-                      company-elisp
-                      company-files
-                      company-gtags)
+  (setq company-tabnine--disable-next-transform nil)
+  (defun my-company--transform-candidates (func &rest args)
+    (if (not company-tabnine--disable-next-transform)
+        (apply func args)
+      (setq company-tabnine--disable-next-transform nil)
+      (car args)))
+
+  (defun my-company-tabnine (func &rest args)
+    (when (eq (car args) 'candidates)
+      (setq company-tabnine--disable-next-transform t))
+    (apply func args))
+
+  (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
+  (advice-add #'company-tabnine :around #'my-company-tabnine)
+  (setq company-idle-delay 0)
+  (setq company-show-numbers t)
+  (company-tng-configure-default)
   (setq company-frontends
         '(company-tng-frontend
           company-pseudo-tooltip-frontend
           company-echo-metadata-frontend)))
 
-(use-package! company-quickhelp
-  :after company
-  :config
-  (company-quickhelp-mode)
-  (setq company-quickhelp-delay 0))
+(after! company
+  (setq company-idle-delay 0.1
+        company-minimum-prefix-length 2
+        company-transformers nil)
+  (setq company-show-numbers t)
+  (define-key company-active-map (kbd "C-n") 'company-select-next-or-abort)
+  (define-key company-active-map (kbd "C-j") 'company-select-previous-or-abort))
+
+
+(set-company-backend! '(c-mode
+                        c++-mode
+                        ess-mode
+                        haskell-mode
+                        ;;emacs-lisp-mode
+                        lisp-mode
+                        sh-mode
+                        php-mode
+                        python-mode
+                        go-mode
+                        ruby-mode
+                        rust-mode
+                        js-mode
+                        css-mode
+                        web-mode)
+
+  '(:separate company-tabnine
+              company-files
+              company-yasnippet))
+
+(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
