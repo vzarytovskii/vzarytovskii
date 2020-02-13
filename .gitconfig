@@ -2,4 +2,4 @@
 	email = vzaritovsky@hotmail.com
 	name = Vlad Zarytovskii
 [credential]
-	helper = cache
+	helper = store
