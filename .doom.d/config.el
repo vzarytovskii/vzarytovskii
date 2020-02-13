@@ -110,12 +110,12 @@
           counsel-rg-base-command "rg -S --no-heading --line-number --color never %s ."
           counsel-ag-base-command "ag -S --nocolor --nogroup %s"
           counsel-pt-base-command "pt -S --nocolor --nogroup -e %s"
-          counsel-find-file-at-point t
+          counsel-find-file-at-point t)
 
      (use-package! ivy-rich
        :config
        (ivy-rich-mode 1)
-       (setq ivy-format-function #'ivy-format-function-line))))
+       (setq ivy-format-function #'ivy-format-function-line)))
      ;;[[https://github.com/gilbertw1/better-jumper][gilbertw1/better-jumper: A configurable jump list implementation for Emacs]]
 
 (use-package! company-tabnine
