@@ -65,11 +65,11 @@ theme.fg_minimize                               = "#15abc3"
 
 -- | Systray | --
 theme.bg_systray                                = theme.bg_normal
-theme.systray_icon_spacing                      = dpi(5)
+theme.systray_icon_spacing                      = dpi(0)
 
 -- | Borders | --
-theme.useless_gap                               = dpi(5)
-theme.border_width                              = dpi(2)
+theme.useless_gap                               = dpi(0)
+theme.border_width                              = dpi(1)
 theme.border_normal                             = base_color
 theme.border_focus                              = "#00FFFF"
 theme.border_marked                             = "#FFFFFF"
