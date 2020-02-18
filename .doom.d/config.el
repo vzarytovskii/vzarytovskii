@@ -26,15 +26,15 @@
 (use-package! snails
   :after (doom-themes)
   :config
-    (defun snails3()
-      (interactive)
-      (snails '(snails-backend-awesome-tab-group
-                snails-backend-buffer
-                snails-backend-recentf
-                snails-backend-imenu
-                snails-backend-projectile)))
-    (add-hook 'snails-mode-hook (lambda () (evil-emacs-state)))
-    (global-set-key (kbd "C-S-p") 'snails3))
+  (defun snails3()
+    (interactive)
+    (snails '(snails-backend-awesome-tab-group
+              snails-backend-buffer
+              snails-backend-recentf
+              snails-backend-imenu
+              snails-backend-projectile)))
+  (add-hook 'snails-mode-hook (lambda () (evil-emacs-state)))
+  (global-set-key (kbd "C-S-p") 'snails3))
 
 (use-package! lsp-ui
   :after lsp-mode
@@ -99,23 +99,23 @@
   (treemacs-fringe-indicator-mode t))
 
 (use-package! counsel
-    :hook
-    (after-init . ivy-mode)
-    (counsel-grep-post-action . better-jumper-set-jump)
-    :diminish ivy-mode
-    :config
-    (setq counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
-          counsel-describe-function-function #'helpful-callable
-          ncounsel-describe-variable-function #'helpful-variable
-          counsel-rg-base-command "rg -S --no-heading --line-number --color never %s ."
-          counsel-ag-base-command "ag -S --nocolor --nogroup %s"
-          counsel-pt-base-command "pt -S --nocolor --nogroup -e %s"
-          counsel-find-file-at-point t)
+  :hook
+  (after-init . ivy-mode)
+  (counsel-grep-post-action . better-jumper-set-jump)
+  :diminish ivy-mode
+  :config
+  (setq counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
+        counsel-describe-function-function #'helpful-callable
+        ncounsel-describe-variable-function #'helpful-variable
+        counsel-rg-base-command "rg -S --no-heading --line-number --color never %s ."
+        counsel-ag-base-command "ag -S --nocolor --nogroup %s"
+        counsel-pt-base-command "pt -S --nocolor --nogroup -e %s"
+        counsel-find-file-at-point t)
 
-     (use-package! ivy-rich
-       :config
-       (ivy-rich-mode 1)
-       (setq ivy-format-function #'ivy-format-function-line)))
+  (use-package! ivy-rich
+    :config
+    (ivy-rich-mode 1)
+    (setq ivy-format-function #'ivy-format-function-line)))
      ;;[[https://github.com/gilbertw1/better-jumper][gilbertw1/better-jumper: A configurable jump list implementation for Emacs]]
 
 (use-package! company-tabnine

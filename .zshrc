@@ -26,10 +26,11 @@ export ARCHFLAGS="-arch x86_64"
 export PATH=~/.cargo/bin:$PATH
 
 alias br="br -h"
-alias ls="br -dp"
+alias lsa="br -dp"
+alias ls="exa"
 alias ll="exa -alF"
 alias tree="br"
 alias g="git"
 alias mc="ranger"
 
-if [ "$TMUX" = "" ]; then tmux; fi
+if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
