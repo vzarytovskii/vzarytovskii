@@ -286,28 +286,28 @@ local function get_wallpaper_menu (wallpaper_path, is_submenu)
 end
 naughty.config.notify_callback = notify_callback
 
-cyclefocus.show_clients = false
-cyclefocus.focus_clients = false
+cyclefocus.show_clients = true
+cyclefocus.focus_clients = true
 cyclefocus.display_prev_count = 1
 cyclefocus.default_preset = {
    position = "top_left", -- deprecated options
    timeout = 0,
-   margin = 3,
-   border_width = 1,
+   margin = 0,
+   border_width = 0,
    border_color = "#001E21",
    fg = "#00ffff",
    bg = "#001214"
 }
 
 awful.layout.layouts = {
-   awful.layout.suit.spiral,
-   awful.layout.suit.spiral.dwindle,
    awful.layout.suit.tile,
    awful.layout.suit.tile.left,
    awful.layout.suit.tile.bottom,
    awful.layout.suit.tile.top,
    awful.layout.suit.fair,
    awful.layout.suit.fair.horizontal,
+   awful.layout.suit.spiral,
+   awful.layout.suit.spiral.dwindle,
    awful.layout.suit.max,
    awful.layout.suit.max.fullscreen,
    awful.layout.suit.magnifier,
@@ -459,23 +459,9 @@ awful.screen.connect_for_each_screen(function(s)
       left_layout:add(s.mytaglist)
       left_layout:add(s.mypromptbox)
 
+
       -- Widgets that are aligned to the right
       local right_layout = wibox.layout.fixed.horizontal()
-      if s.index == 1 then
-         right_layout:add(mysystraymargin)
-         right_layout:add(mykeyboardlayout)
-         right_layout:add(mybrightness.icon)
-
-         if mybattery.hasbattery then
-            right_layout:add(mybattery.icon)
-         end
-
-         if mywifi.haswifi then
-            right_layout:add(mywifi.icon)
-         end
-
-         right_layout:add(mytextclock)
-      end
       right_layout:add(s.mylayoutbox)
 
       -- Add widgets to the wibox
@@ -483,7 +469,7 @@ awful.screen.connect_for_each_screen(function(s)
          layout = wibox.layout.align.horizontal,
          left_layout,  -- Left widget
          s.mytasklist, -- Middle widget
-         right_layout, -- Right widget
+	 right_layout, -- Right widget
       }
 end)
 -- }}}

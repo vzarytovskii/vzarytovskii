@@ -1,56 +1,20 @@
---[[
-
-   Awesome WM Tron Legacy Theme 1.5
-   Distopico Vegan <distopico [at] riseup [dot] net>
-   Licensed under GPL3
-
---]]
 local awful = require("awful")
 local xresources = require("beautiful.xresources")
 
--- Theme basic --
 local theme_path = os.getenv("HOME") .. "/.config/awesome/theme"
 local theme_wallpaper = theme_path .. "/wall.jpg"
 local dpi = xresources.apply_dpi
 
--- Load wallpaper from different locations --
-local wall_directories = {
-   os.getenv("HOME") .. "/Pictures/Wallpapers",
-   os.getenv("HOME") .. "/Pictures"
-}
-
-for i=1, #wall_directories do
-   local dir = wall_directories[i]
-
-   if awful.util.file_readable(theme_path .. "/_wall.jpg") then
-      theme_wallpaper = theme_path .. "/_wall.jpg"
-      break
-   end
-   if awful.util.file_readable(dir .. "/wall.png") then
-      theme_wallpaper = dir .. "/wall.png"
-      break
-   elseif awful.util.file_readable(dir .. "/wall.jpg") then
-      theme_wallpaper = dir .. "/wall.jpg"
-      break
-   elseif awful.util.file_readable(dir .. "/wallpaper.png") then
-      theme_wallpaper = dir .. "/wallpaper.png"
-      break
-   elseif awful.util.file_readable(dir .. "/wallpaper.jpg") then
-      theme_wallpaper = dir .. "/wallpaper.jpg"
-      break
-   end
-end
-
 -- | Definition  | --
-base_color = "#001214"
-opacity_hex = "CC"
+base_color = "#000000"
+opacity_hex = "FF"
 
 -- | THEME | --
 theme                                           = {}
 theme.theme_path                                = theme_path
-theme.wallpaper                                 = theme_wallpaper
+theme.wallpaper					= theme_wallpaper
 theme.icon_theme                                = "Papirus-Adapta-Nokto"
-theme.font                                      = "Hack 8"
+theme.font                                      = "Hack 10"
 
 -- | Base | --
 theme.bg_normal                                 = base_color..opacity_hex
@@ -58,7 +22,7 @@ theme.bg_focus                                  = theme.bg_normal
 theme.bg_minimize                               = theme.bg_normal
 theme.bg_urgent                                 = base_color
 
-theme.fg_normal                                 = "#DDDDDD"
+theme.fg_normal                                 = "#FFFFFF"
 theme.fg_focus                                  = "#00FFFF"
 theme.fg_urgent                                 = "#e0c625"
 theme.fg_minimize                               = "#15abc3"
@@ -70,8 +34,8 @@ theme.systray_icon_spacing                      = dpi(0)
 -- | Borders | --
 theme.useless_gap                               = dpi(0)
 theme.border_width                              = dpi(1)
-theme.border_normal                             = base_color
-theme.border_focus                              = "#00FFFF"
+theme.border_normal                             = "#333333"
+theme.border_focus                              = "#777777"
 theme.border_marked                             = "#FFFFFF"
 
 -- | Notification | --
@@ -83,14 +47,6 @@ theme.notification_max_height                   = 300
 theme.notification_width                        = 300
 theme.notification_icon_size                    = 30
 
--- | Menu | --
-theme.menu_bg_normal                            = base_color
-theme.menu_bg_focus                             = theme.menu_bg_normal
-theme.menu_icon                                 = theme.theme_path .. "/icons/menu.png"
-theme.menu_submenu_icon                         = theme.theme_path .. "/icons/submenu.png"
-theme.menu_height                               = dpi(16)
-theme.menu_width                                = dpi(100)
-
 -- | Hotkeys help | --
 theme.hotkeys_modifiers_fg                      = "#204143"
 theme.hotkeys_border_color                      = "#00FFFF"
@@ -100,48 +56,21 @@ theme.calendar_month_bg_color                   = base_color
 theme.calendar_year_bg_color                    = base_color
 
 -- | Tasklist | --
-theme.tasklist_bg_normal                        = base_color.."00"
-theme.tasklist_bg_focus                         = theme.tasklist_bg_normal
-theme.tasklist_fg_normal                        = theme.fg_normal.."CC"
+theme.tasklist_bg_normal                        = base_color
+theme.tasklist_fg_normal                        = theme.fg_normal
+theme.tasklist_fg_focus				= theme.tasklist_fg_normal
+theme.tasklist_bg_focus                         = theme.tasklist_fg_normal.."22"
+theme.tasklist_disable_icon			= true
 
 -- | Taglist squares | --
 theme.taglist_squares_sel                       = theme.theme_path .. "/taglist/square_sel.png"
 theme.taglist_squares_unsel                     = theme.theme_path .. "/taglist/square_unsel.png"
-theme.taglist_fg_focus                          = "#00FFFF"
-theme.taglist_font                              = "Icons 10"
+theme.taglist_fg_focus                          = theme.fg_normal
+theme.taglist_bg_focus				= theme.fg_normal.."22"
+theme.taglist_font                              = "Hack 9"
 
 -- | Titlebar | --
 theme.titlebar_bg_focus                         = base_color
-
-theme.titlebar_close_button_focus               = theme.theme_path .. "/titlebar/close_focus.png"
-theme.titlebar_close_button_normal              = theme.theme_path .. "/titlebar/close_normal.png"
-
-theme.titlebar_ontop_button_focus_active        = theme.theme_path .. "/titlebar/ontop_focus_active.png"
-theme.titlebar_ontop_button_normal_active       = theme.theme_path .. "/titlebar/ontop_normal_active.png"
-theme.titlebar_ontop_button_focus_inactive      = theme.theme_path .. "/titlebar/ontop_focus_inactive.png"
-theme.titlebar_ontop_button_normal_inactive     = theme.theme_path .. "/titlebar/ontop_normal_inactive.png"
-
-theme.titlebar_sticky_button_focus_active       = theme.theme_path .. "/titlebar/sticky_focus_active.png"
-theme.titlebar_sticky_button_normal_active      = theme.theme_path .. "/titlebar/sticky_normal_active.png"
-theme.titlebar_sticky_button_focus_inactive     = theme.theme_path .. "/titlebar/sticky_focus_inactive.png"
-theme.titlebar_sticky_button_normal_inactive    = theme.theme_path .. "/titlebar/sticky_normal_inactive.png"
-
-theme.titlebar_floating_button_focus_active     = theme.theme_path .. "/titlebar/floating_focus_active.png"
-theme.titlebar_floating_button_normal_active    = theme.theme_path .. "/titlebar/floating_normal_active.png"
-theme.titlebar_floating_button_focus_inactive   = theme.theme_path .. "/titlebar/floating_focus_inactive.png"
-theme.titlebar_floating_button_normal_inactive  = theme.theme_path .. "/titlebar/floating_normal_inactive.png"
-
-theme.titlebar_maximized_button_focus_active    = theme.theme_path .. "/titlebar/maximized_focus_active.png"
-theme.titlebar_maximized_button_normal_active   = theme.theme_path .. "/titlebar/maximized_normal_active.png"
-theme.titlebar_maximized_button_focus_inactive  = theme.theme_path .. "/titlebar/maximized_focus_inactive.png"
-theme.titlebar_maximized_button_normal_inactive = theme.theme_path .. "/titlebar/maximized_normal_inactive.png"
-
--- | Separators | --
-theme.spr1px                                    = theme.theme_path .. "/separators/spr1px.png"
-theme.spr2px                                    = theme.theme_path .. "/separators/spr2px.png"
-theme.spr4px                                    = theme.theme_path .. "/separators/spr4px.png"
-theme.spr5px                                    = theme.theme_path .. "/separators/spr5px.png"
-theme.spr10px                                   = theme.theme_path .. "/separators/spr10px.png"
 
 -- | Layout | --
 theme.layout_floating                           = theme.theme_path .. "/layouts/floating.png"
