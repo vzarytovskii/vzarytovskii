@@ -456,31 +456,21 @@ awful.screen.connect_for_each_screen(function(s)
 
       -- Widgets that are aligned to the left
       local left_layout = wibox.layout.fixed.horizontal()
-      if s.index == 1 then
-         left_layout:add(mylauncher)
-      end
       left_layout:add(s.mytaglist)
       left_layout:add(s.mypromptbox)
-      left_layout:add(separator10px)
 
       -- Widgets that are aligned to the right
       local right_layout = wibox.layout.fixed.horizontal()
       if s.index == 1 then
          right_layout:add(mysystraymargin)
-         right_layout:add(separator2px)
          right_layout:add(mykeyboardlayout)
-         right_layout:add(separator2px)
-         right_layout:add(myvolume.icon)
-         right_layout:add(separator1px)
          right_layout:add(mybrightness.icon)
 
          if mybattery.hasbattery then
-            right_layout:add(separator1px)
             right_layout:add(mybattery.icon)
          end
 
          if mywifi.haswifi then
-            right_layout:add(separator1px)
             right_layout:add(mywifi.icon)
          end
 
