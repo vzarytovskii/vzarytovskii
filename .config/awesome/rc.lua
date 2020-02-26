@@ -442,7 +442,7 @@ awful.screen.connect_for_each_screen(function(s)
                                awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
                                awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)))
       -- Create a taglist widget
-      s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.all, taglist_buttons)
+      s.mytaglist = awful.widget.taglist(s, function(t) return t.selected or #t:clients() > 0 end, taglist_buttons)
 
       -- Create a tasklist widget
       s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, tasklist_buttons)
