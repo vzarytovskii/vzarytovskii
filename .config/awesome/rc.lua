@@ -408,17 +408,6 @@ end))
 screen.connect_signal("property::geometry", function(s) set_wallpaper(s) end)
 
 awful.screen.connect_for_each_screen(function(s)
-      -- Widgets separators
-      local separator1px = wibox.widget.imagebox()
-      separator1px:set_image(beautiful.get().spr1px)
-      local separator2px = wibox.widget.imagebox()
-      separator2px:set_image(beautiful.get().spr2px)
-      local separator4px = wibox.widget.imagebox()
-      separator4px:set_image(beautiful.get().spr4px)
-      local separator5px = wibox.widget.imagebox()
-      separator5px:set_image(beautiful.get().spr5px)
-      local separator10px = wibox.widget.imagebox()
-      separator10px:set_image(beautiful.get().spr10px)
 
       -- Wallpaper
       set_wallpaper(s)
@@ -427,7 +416,7 @@ awful.screen.connect_for_each_screen(function(s)
       layouts = awful.layout.layouts
       tags = {
          names = { "1", "2", "3", "4", "5", "6" },
-         layouts = { layouts[1], layouts[2], layouts[10], layouts[10], layouts[1], layouts[12] }
+         layouts = { layouts[1], layouts[1], layouts[1], layouts[1], layouts[1], layouts[1] }
       }
       awful.tag(tags.names, s, tags.layouts)
 
@@ -910,7 +899,7 @@ awful.rules.rules = {
         keys = clientkeys,
         buttons = clientbuttons,
         screen = awful.screen.preferred,
-        titlebars_enabled = true,
+        titlebars_enabled = false,
         titlebars_show = false,
         placement = awful.placement.no_overlap+awful.placement.no_offscreen
      }
@@ -953,80 +942,12 @@ awful.rules.rules = {
         callback = awful.client.setslave
      }
    },
-   -- Custom
    { rule_any = { class = { "MPlayer", "mpv" } },
      properties = { floating = true }
-   },
-   { rule = { instance = "mps" },
-     properties = {
-        screen = 2,
-        skip_taskbar = true,
-        floating = true,
-        ontop = true,
-        raise = false,
-        focus = false,
-        width = 300,
-        x = 12,
-        y = 25
-     }
-   },
-   { rule = { class = "pinentry" },
-     properties = { floating = true }
-   },
-   { rule = { class = "Gimp.*" },
-     properties = { tag = "6", floating = true }
-   },
-   { rule_any = { class = { "URxvt", ".*ermina.*" } },
-     properties = { tag = "2", size_hints_honor = false, icon = "/usr/share/icons/Moka/48x48/apps/terminal.png" }
    },
    { rule = { class = "Emacs" },
      properties = { tag = "3", switch_to_tags = true, size_hints_honor = false }
    },
-   { rule_any = { instance = { "Ranger" }, name = { ".*ranger:.*" } },
-     properties = { tag = "6", screen = 2, size_hints_honor = false, icon = "/usr/share/icons/Moka/48x48/apps/file-manager.png" }
-   },
-   { rule_any = { instance = { "Mc" }, name = { ".*mc .*" } },
-     properties = { tag = "6", screen = 1, switch_to_tags = true, size_hints_honor = false, icon = "/usr/share/icons/Moka/48x48/apps/file-manager.png" }
-   },
-   { rule_any = { role = { "browser" }, class = { "Epiphany" }},
-     properties = { tag = "4", maximized_vertical = true, maximized_horizontal = true }
-   },
-   { rule_any = { instance = { "WeeChat" }, name = { ".*weeChat.*" } },
-     properties = {
-        tag = "5", switch_to_tags = true, maximized_vertical = true, maximized_horizontal = true, icon = "/usr/share/icons/hicolor/32x32/apps/weechat.png"
-     }
-   },
-   { rule_any = { name = {"^Android Emulator*", "^Emulator"} },
-     properties = {
-        floating = true,
-        -- skip_taskbar = true, 
-        callback = function(c)
-           -- force due the behavior in property::size
-           c.border_width = 0
-           c.no_border = true
-        end
-     }
-   },
-   { rule = { name = "^Emulator", type = "utility"},
-     properties = {
-        skip_taskbar = true,
-        focusable = false
-     }
-   },
-   { rule = { instance = "Pidgin" },
-     properties = { tag = "5", size_hints_honor = false, floating = true }
-   },
-   { rule = { class = "Pidgin", role = "conversation" },
-     properties = { width = 1000, height = 670, x = 320, y = 55 }},
-   -- {rule = {class = "Pidgin", role = "accounts"},
-   --  properties = {width = 500, height = 500, x = 0, y = 0}},
-   { rule = { class = "Pidgin", role = "buddy_list" },
-     properties = { width = 300, height = 670, x = 10, y = 55 },
-     callback = awful.client.setslave
-   },
-   { rule = { class = "Kodi" },
-     properties = { tag = "1", screen = 2, fullscreen = true, ontop = true, switch_to_tags = true }
-   }
 }
 -- }}}
 

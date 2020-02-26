@@ -7,6 +7,7 @@ local dpi = xresources.apply_dpi
 
 -- | Definition  | --
 base_color = "#000000"
+secondary_color = "#00FFFF"
 opacity_hex = "FF"
 
 -- | THEME | --
@@ -23,7 +24,7 @@ theme.bg_minimize                               = theme.bg_normal
 theme.bg_urgent                                 = base_color
 
 theme.fg_normal                                 = "#FFFFFF"
-theme.fg_focus                                  = "#00FFFF"
+theme.fg_focus                                  = secondary_color
 theme.fg_urgent                                 = "#e0c625"
 theme.fg_minimize                               = "#15abc3"
 
@@ -41,7 +42,7 @@ theme.border_marked                             = "#FFFFFF"
 -- | Notification | --
 theme.notification_fg                           = "#6F6F6F"
 theme.notification_bg                           = "#FFFFFF"
-theme.notification_border_color                 = "#00FFFF"
+theme.notification_border_color                 = secondary_color
 theme.notification_border_width                 = 1
 theme.notification_max_height                   = 300
 theme.notification_width                        = 300
@@ -49,7 +50,7 @@ theme.notification_icon_size                    = 30
 
 -- | Hotkeys help | --
 theme.hotkeys_modifiers_fg                      = "#204143"
-theme.hotkeys_border_color                      = "#00FFFF"
+theme.hotkeys_border_color                      = secondary_color
 
 -- | Calendar | --
 theme.calendar_month_bg_color                   = base_color
@@ -59,14 +60,14 @@ theme.calendar_year_bg_color                    = base_color
 theme.tasklist_bg_normal                        = base_color
 theme.tasklist_fg_normal                        = theme.fg_normal
 theme.tasklist_fg_focus				= theme.tasklist_fg_normal
-theme.tasklist_bg_focus                         = theme.tasklist_fg_normal.."22"
+theme.tasklist_bg_focus                         = secondary_color.."11" 
 theme.tasklist_disable_icon			= true
 
 -- | Taglist squares | --
 theme.taglist_squares_sel                       = theme.theme_path .. "/taglist/square_sel.png"
 theme.taglist_squares_unsel                     = theme.theme_path .. "/taglist/square_unsel.png"
 theme.taglist_fg_focus                          = theme.fg_normal
-theme.taglist_bg_focus				= theme.fg_normal.."22"
+theme.taglist_bg_focus				= secondary_color.."11"
 theme.taglist_font                              = "Hack 9"
 
 -- | Titlebar | --

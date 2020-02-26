@@ -15,7 +15,7 @@ COMPLETION_WAITING_DOTS="true"
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
 # HIST_STAMPS="mm/dd/yyyy"
 # ZSH_CUSTOM=/path/to/new-custom-folder
-plugins=(git archlinux autojump cargo colorize emacs fd fasd fzf git-prompt gitfast gitignore man)
+plugins=(git archlinux autojump cargo colorize fd fasd fzf git-prompt gitfast gitignore man)
 
 source $ZSH/oh-my-zsh.sh
 source /home/v/.config/broot/launcher/bash/br
