@@ -5,3 +5,8 @@
 (setq doom-theme 'doom-one)
 (setq org-directory "~/org/")
 (setq display-line-numbers-type t)
+
+(use-package! magit-gh-pulls
+  :after magit
+  :config
+  (add-hook! 'magit-mode-hook 'turn-on-magit-gh-pulls))
