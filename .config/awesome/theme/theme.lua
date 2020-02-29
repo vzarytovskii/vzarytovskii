@@ -60,14 +60,14 @@ theme.calendar_year_bg_color                    = base_color
 theme.tasklist_bg_normal                        = base_color
 theme.tasklist_fg_normal                        = theme.fg_normal
 theme.tasklist_fg_focus				= theme.tasklist_fg_normal
-theme.tasklist_bg_focus                         = secondary_color.."11" 
+theme.tasklist_bg_focus                         = secondary_color.."44" 
 theme.tasklist_disable_icon			= true
 
 -- | Taglist squares | --
 theme.taglist_squares_sel                       = theme.theme_path .. "/taglist/square_sel.png"
 theme.taglist_squares_unsel                     = theme.theme_path .. "/taglist/square_unsel.png"
 theme.taglist_fg_focus                          = theme.fg_normal
-theme.taglist_bg_focus				= secondary_color.."11"
+theme.taglist_bg_focus				= secondary_color.."66"
 theme.taglist_font                              = "Hack 9"
 
 -- | Titlebar | --

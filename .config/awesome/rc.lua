@@ -524,13 +524,6 @@ globalkeys = gears.table.join(
       {description = "focus the previous screen", group = "screen"}),
    awful.key({ modkey,           }, "u", awful.client.urgent.jumpto,
       {description = "jump to urgent client", group = "client"}),
-   awful.key({ modkey,           }, "Tab",
-      function ()
-         awful.client.focus.history.previous()
-         if client.focus then
-            client.focus:raise()
-         end
-      end, {description = "go back", group = "client"}),
    awful.key({ altkey,          }, "Tab",
       function(c)
          cyclefocus.cycle(1)
@@ -637,17 +630,6 @@ globalkeys = gears.table.join(
 
 
    -- Prompt
-   awful.key({ modkey },            "r",
-      function ()
-         awful.prompt.run {
-            prompt              = "Run: ",
-            textbox             = awful.screen.focused().mypromptbox.widget,
-            completion_callback = awful.completion.shell,
-            history_path        = awful.util.get_cache_dir() .. "/history"
-         }
-      end,
-      {description = "run prompt", group = "launcher"}),
-
    awful.key({ modkey,           }, "x",
       function ()
          awful.prompt.run {
@@ -659,17 +641,21 @@ globalkeys = gears.table.join(
       end,
       {description = "lua execute prompt", group = "awesome"}),
 
-   -- Menubar
+   -- Menubar & Rofi
    awful.key({ altkey         }, "Escape",
       function ()
          -- If you want to always position the menu on the same place set coordinates
          awful.menu.menu_keys.down = { "Down", "Alt_L" }
          awful.menu.clients({theme = { width = 250 }}, { keygrabber=true, coords={x=525, y=330} })
       end, {description = "show app switcher", group = "awesome"}),
-   awful.key({ modkey,         }, "a", function () awful.spawn("rofi -show", false) end,
+   awful.key({ modkey,         }, "Tab", function () awful.spawn("rofi -show", false) end,
       {description = "show rofi", group = "launcher"}),
-   awful.key({ modkey,         }, "p", function() menubar.show() end,
-      {description = "show the menubar", group = "launcher"}),
+   awful.key({ modkey,         }, "/", function () awful.spawn("rofi -show window", false) end,
+      {description = "show rofi", group = "launcher"}),
+   awful.key({ modkey,         }, "p", function () awful.spawn("rofi -show drun", false) end,
+      {description = "show rofi", group = "launcher"}),
+   awful.key({ modkey,         }, "r", function () awful.spawn("rofi -show run", false) end,
+      {description = "show rofi", group = "launcher"}),
    awful.key({ modkey,         }, "w", function () mymainmenu:show() end,
       {description = "show main menu", group = "awesome"}),
    awful.key({ modkey, "Shift" }, "w",
