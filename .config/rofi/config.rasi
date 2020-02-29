@@ -7,5 +7,6 @@ configuration {
 	show-icons: true;
 	sidebar-mode: true;
 	m: -4;
+	matching: "fuzzy";
 	theme: "andrea";
 }
