@@ -1,0 +1,11 @@
+configuration {
+	modi: "run,drun,window";
+	lines: 5;
+	columns: 1;
+	width: 100;
+	drun-icon-theme: "Pop";
+	show-icons: true;
+	sidebar-mode: true;
+	m: -4;
+	theme: "andrea";
+}
