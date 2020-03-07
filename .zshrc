@@ -32,5 +32,6 @@ alias ll="exa -alF"
 alias tree="br"
 alias g="git"
 alias mc="ranger"
+alias reddit="tuir"
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi

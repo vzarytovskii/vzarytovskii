@@ -56,26 +56,18 @@
        (eval +overlay)     ; run code, run (also, repls)
        gist              ; interacting with github gists
        (lookup           ; helps you navigate your code and documentation
-        +docsets)        ; ...or in Dash docsets locally
+        +dictionary)        ; ...or in Dash docsets locally
        lsp
        magit             ; a git porcelain for Emacs
        tmux              ; an API for interacting with tmux
 
        :lang
-       cc                ; C/C++/Obj-C madness
        (csharp +lsp)            ; unity, .NET, and mono shenanigans
        data              ; config/data formats
        emacs-lisp        ; drown in parentheses
        (fsharp +lsp)           ; ML stands for Microsoft's Language
        ;;(haskell +dante)  ; a language that's lazier than I am
        markdown          ; writing docs for people to ignore
-       (org              ; organize your plain life in plain text
-        +dragndrop       ; drag & drop files/images into org buffers
-        +hugo            ; use Emacs for hugo blogging
-        +jupyter        ; ipython/jupyter support for babel
-        +pandoc          ; export-with-pandoc support
-        +pomodoro        ; be fruitful with the tomato technique
-        +present)        ; using org-mode for presentations
        python            ; beautiful is better than ugly
        sh                ; she sells {ba,z,fi}sh shells on the C xor
 
