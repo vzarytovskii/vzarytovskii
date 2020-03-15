@@ -1,6 +1,6 @@
 (doom! :input
        :completion
-       company           ; the ultimate code completion backend
+       (company +tng)           ; the ultimate code completion backend
        ivy               ; a search engine for love and life
 
        :ui
