@@ -1,11 +1,82 @@
 (setq user-full-name "Vlad Zarytovskii"
       user-mail-address "vzaritovsky@hotmail.com")
 
-(setq doom-font (font-spec :family "monospace" :size 14))
-(setq doom-theme 'doom-one)
+(setq doom-font (font-spec :family "Fira Code" :size 15))
+(setq doom-theme 'doom-dracula)
 (setq org-directory "~/org/")
 (setq display-line-numbers-type t)
 
+(use-package server
+  :ensure nil
+  :hook (after-init . server-mode))
+
+;; Ignore split window horizontally
+(setq split-width-threshold nil)
+(setq split-width-threshold 160)
+
+;; Default Encoding
+(prefer-coding-system 'utf-8-unix)
+(set-locale-environment "en_US.UTF-8")
+(set-default-coding-systems 'utf-8-unix)
+(set-selection-coding-system 'utf-8-unix)
+(set-buffer-file-coding-system 'utf-8-unix)
+(set-clipboard-coding-system 'utf-8) ; included by set-selection-coding-system
+(set-keyboard-coding-system 'utf-8) ; configured by prefer-coding-system
+(set-terminal-coding-system 'utf-8) ; configured by prefer-coding-system
+(setq buffer-file-coding-system 'utf-8) ; utf-8-unix
+(setq save-buffer-coding-system 'utf-8-unix) ; nil
+(setq process-coding-system-alist
+  (cons '("grep" utf-8 . utf-8) process-coding-system-alist))
+
+;; Quiet Startup
+(setq inhibit-startup-screen t)
+(setq inhibit-startup-message t)
+(setq inhibit-startup-echo-area-message t)
+(setq initial-scratch-message nil)
+
+(defun display-startup-echo-area-message ()
+  (message ""))
+
+(setq ring-bell-function 'ignore)
+(setq uniquify-buffer-name-style 'post-forward-angle-brackets) ; Show path if names are same
+(setq adaptive-fill-regexp "[ t]+|[ t]*([0-9]+.|*+)[ t]*")
+(setq adaptive-fill-first-line-regexp "^* *$")
+(setq sentence-end "\\([。、！？]\\|……\\|[,.?!][]\"')}]*\\($\\|[ \t]\\)\\)[ \t\n]*")
+(setq sentence-end-double-space nil)
+(setq delete-by-moving-to-trash t)    ; Deleting files go to OS's trash folder
+(setq make-backup-files nil)          ; Forbide to make backup files
+(setq auto-save-default nil)          ; Disable auto save
+(setq set-mark-command-repeat-pop t)  ; Repeating C-SPC after popping mark pops it again
+(setq track-eol t)			; Keep cursor at end of lines.
+(setq line-move-visual nil)		; To be required by track-eol
+(setq-default kill-whole-line t)	; Kill line including '\n'
+(setq-default indent-tabs-mode nil)   ; use space
+(defalias 'yes-or-no-p #'y-or-n-p)
+
+(when (functionp 'mac-auto-ascii-mode)
+  (mac-auto-ascii-mode 1))
+
+(use-package! xclip
+  :if (eq system-type 'gnu/linux)
+  :config
+  (xclip-mode 1))
+
+;; Delete selection if insert someting
+(use-package! delsel
+  :ensure nil
+  :hook (after-init . delete-selection-mode))
+
+;; Automatically reload files was modified by external program
+(use-package! autorevert
+  :ensure nil
+  :diminish
+  :hook (after-init . global-auto-revert-mode))
+
+;; Hungry deletion
+(use-package! hungry-delete
+  :diminish
+  :hook (after-init . global-hungry-delete-mode)
+  :config (setq-default hungry-delete-chars-to-skip " \t\f\v"))
 
 (remove-hook 'post-self-insert-hook
              #'blink-paren-post-self-insert-function)
@@ -19,6 +90,13 @@
       show-paren-when-point-in-periphery t)
 (show-paren-mode 1)
 
+(use-package undo-tree
+  :bind
+  ("M-/" . undo-tree-redo)
+  :config
+  (global-undo-tree-mode))
+
+(use-package posframe)
 
 (use-package! helm-tramp
   :config
@@ -32,8 +110,7 @@
   (add-hook 'helm-tramp-quit-hook '(lambda () ;;(global-aggressive-indent-mode 1)
                                      (projectile-mode 1)
                                      ;;(editorconfig-mode 1)
-                                     ))
-  )
+                                     )))
 
 (use-package! counsel
   :hook
@@ -55,10 +132,45 @@
 
 (use-package! ivy-rich
   :config
+  (setq ivy-rich--display-transformers-list
+        '(ivy-switch-buffer
+          (:columns
+           ((ivy-rich-candidate (:width 30 :face bold))
+            (ivy-rich-switch-buffer-size (:width 7 :face font-lock-doc-face))
+            (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
+            (ivy-rich-switch-buffer-major-mode (:width 18 :face doom-modeline-buffer-major-mode))
+            (ivy-rich-switch-buffer-path (:width 50)))
+           :predicate
+           (lambda (cand) (get-buffer cand)))
+          +ivy/switch-workspace-buffer
+          (:columns
+           ((ivy-rich-candidate (:width 30 :face bold))
+            (ivy-rich-switch-buffer-size (:width 7 :face font-lock-doc-face))
+            (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
+            (ivy-rich-switch-buffer-major-mode (:width 18 :face doom-modeline-buffer-major-mode))
+            (ivy-rich-switch-buffer-path (:width 50)))
+           :predicate
+           (lambda (cand) (get-buffer cand)))
+          counsel-M-x
+          (:columns
+           ((counsel-M-x-transformer (:width 40))
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face :width 80))))
+          counsel-describe-function
+          (:columns
+           ((counsel-describe-function-transformer (:width 40))
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face :width 80))))
+          counsel-describe-variable
+          (:columns
+           ((counsel-describe-variable-transformer (:width 40))
+            (ivy-rich-counsel-variable-docstring (:face font-lock-doc-face :width 80))))
+          counsel-recentf
+          (:columns
+           ((ivy-rich-candidate (:width 100))
+            (ivy-rich-file-last-modified-time (:face font-lock-doc-face))))))
   (ivy-rich-mode 1)
   (setq ivy-format-function #'ivy-format-function-line))
 
-(use-package company
+(use-package! company
   :diminish company-mode
   :defines (company-dabbrev-ignore-case company-dabbrev-downcase)
   :hook (after-init . global-company-mode)
@@ -79,6 +191,9 @@
   (company-dabbrev-code-everywhere t)
   (company-dabbrev-code-modes t)
   (company-dabbrev-code-ignore-case t)
+  (company-tooltip-limit 5)
+  (company-tooltip-minimum-width 120)
+  (company-tooltip-minimum 5)
   (company-tooltip-align-annotations t)
   (company-transformers '(company-sort-by-occurrence
                           company-sort-by-backend-importance))
@@ -116,10 +231,14 @@
   (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
   (advice-add #'company-tabnine :around #'my-company-tabnine))
 
-(use-package company-posframe
+(use-package! company-posframe
   :hook (company-mode . company-posframe-mode))
 
-(use-package company-box
+(use-package! company-prescient
+  :after company
+  :hook (company-mode . company-prescient-mode))
+
+(use-package! company-box
   :diminish
   :hook (company-mode . company-box-mode)
   :init (setq company-box-icons-alist 'company-box-icons-all-the-icons)
@@ -173,7 +292,7 @@
             (Template . ,(all-the-icons-faicon "code" :height 0.7 :v-adjust 0.02 :face 'font-lock-variable-name-face))))))
 ;; Show quick tooltip
 
-(use-package company-quickhelp
+(use-package! company-quickhelp
   :defines company-quickhelp-delay
   :bind (:map company-active-map
           ("M-h" . company-quickhelp-manual-begin))
@@ -247,3 +366,65 @@
   (setq lsp-haskell-process-path-hie "ghcide")
   (setq lsp-haskell-process-args-hie '())
   (add-hook 'haskell-mode-hook #'lsp))
+
+(use-package! highlight-sexp
+  :config
+  (global-highlight-sexp-mode t))
+
+(use-package! git-gutter
+  :custom
+  (git-gutter:modified-sign "~")		; 
+  (git-gutter:added-sign    "+")		; 
+  (git-gutter:deleted-sign  "-")		; 
+  :custom-face
+  (git-gutter:modified ((t (:foreground "#f1fa8c" :background "#f1fa8c"))))
+  (git-gutter:added    ((t (:foreground "#50fa7b" :background "#50fa7b"))))
+  (git-gutter:deleted  ((t (:foreground "#ff79c6" :background "#ff79c6"))))
+  :config
+  (global-git-gutter-mode +1))
+
+(use-package! smartparens
+  :hook
+  (after-init . smartparens-global-mode)
+  :config
+  (require 'smartparens-config)
+  (sp-pair "=" "=" :actions '(wrap))
+  (sp-pair "+" "+" :actions '(wrap))
+  (sp-pair "<" ">" :actions '(wrap))
+  (sp-pair "$" "$" :actions '(wrap)))
+
+(use-package! saveplace
+  :ensure nil
+  :hook (after-init . save-place-mode))
+
+;; Recent files
+(use-package! recentf
+  :ensure nil
+  :hook (after-init . recentf-mode)
+  :custom
+  (recentf-max-saved-items 20000000)
+  (recentf-auto-cleanup 'never)
+  (recentf-exclude '((expand-file-name package-user-dir)
+                     ".cache"
+                     "cache"
+                     "recentf"
+                     "COMMIT_EDITMSG\\'"))
+  :preface
+  (defun ladicle/recentf-save-list-silence ()
+    (interactive)
+    (let ((message-log-max nil))
+      (if (fboundp 'shut-up)
+          (shut-up (recentf-save-list))
+        (recentf-save-list)))
+    (message ""))
+  (defun ladicle/recentf-cleanup-silence ()
+    (interactive)
+    (let ((message-log-max nil))
+      (if shutup-p
+          (shut-up (recentf-cleanup))
+        (recentf-cleanup)))
+    (message ""))
+  :hook
+  (focus-out-hook . (ladicle/recentf-save-list-silence ladicle/recentf-cleanup-silence)))
+
+(add-hook 'treemacs-mode #'treemacs-follow-mode)

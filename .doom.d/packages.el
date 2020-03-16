@@ -15,3 +15,5 @@
 (package! company-box)
 (package! company-posframe)
 (package! company-quickhelp)
+(package! highlight-sexp :recipe (:host github :repo "daimrod/highlight-sexp"))
+(package! git-gutter)
