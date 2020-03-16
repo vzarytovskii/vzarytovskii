@@ -1,8 +1,8 @@
 (setq user-full-name "Vlad Zarytovskii"
       user-mail-address "vzaritovsky@hotmail.com")
 
-(setq doom-font (font-spec :family "Fira Code" :size 15))
-(setq doom-theme 'doom-dracula)
+(setq doom-font (font-spec :family "Iosevka" :size 18))
+(setq doom-theme 'doom-vibrant)
 (setq org-directory "~/org/")
 (setq display-line-numbers-type t)
 
@@ -194,10 +194,10 @@
     '(:separate
       company-files
       company-yasnippet
-      company-lsp
-      company-tabnine))
-
-  (setq +lsp-company-backend '(company-lsp :with company-tabnine :separate)))
+      company-lsp))
+                                        ;company-tabnine))
+  ;(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
+  (setq +lsp-company-backend '(company-lsp)))
 
 (use-package! company-tabnine
   :when (featurep! :completion company)
@@ -429,3 +429,53 @@
                     ("\\*.*server log\\*$" :side top :size 0.20 :select nil)
                     ((lambda (buf _) (with-current-buffer buf (eq major-mode 'forge-topic-mode))) :size 0.35)
                     ))
+
+(use-package! lsp-mode
+  :commands (lsp-mode lsp-define-stdio-client)
+  :custom
+  (lsp-auto-guess-root t)
+  (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
+  (lsp-response-timeout 10)
+  (lsp-prefer-flymake nil))
+
+(use-package! lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :config
+  (set-lookup-handlers! 'lsp-ui-mode
+    :definition #'lsp-ui-peek-find-definitions
+    :references #'lsp-ui-peek-find-references)
+  (setq lsp-ui-doc-max-height 30
+        lsp-ui-doc-max-width 120
+        lsp-ui-sideline-ignore-duplicate t
+        lsp-ui-doc-enable t
+        lsp-ui-doc-header t
+        lsp-ui-doc-include-signature t
+        lsp-ui-doc-position 'at-point
+        lsp-ui-doc-use-childframe t
+        lsp-ui-doc-use-webkit t
+        lsp-ui-flycheck-enable nil
+        lsp-ui-sideline-enable nil
+        lsp-ui-sideline-ignore-duplicate t
+        lsp-ui-sideline-show-symbol t
+        lsp-ui-sideline-show-hover t
+        lsp-ui-sideline-show-diagnostics nil
+        lsp-ui-sideline-show-code-actions t
+        lsp-ui-sideline-code-actions-prefix ""
+        lsp-ui-imenu-enable t
+        lsp-ui-imenu-kind-position 'top
+        lsp-ui-peek-enable t
+        lsp-ui-peek-peek-height 20
+        lsp-ui-peek-list-width 50
+        lsp-ui-peek-fontify 'on-demand))
+
+(use-package! dap-mode
+  :after lsp-mode
+  :config
+  (dap-mode t)
+  (dap-ui-mode t))
+
+(use-package! company-lsp
+  :after lsp-mode
+  :config
+  (set-company-backend! 'lsp-mode 'company-lsp)
+  (setq company-lsp-enable-recompletion t))
