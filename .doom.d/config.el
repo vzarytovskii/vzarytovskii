@@ -117,10 +117,6 @@
   (after-init . ivy-mode)
   (counsel-grep-post-action . better-jumper-set-jump)
   :diminish ivy-mode
-  :custom
-  (company-idle-delay 0)
-  (company-echo-delay 0)
-  (company-minimum-prefix-length 2)
   :config
   (setq counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
         counsel-describe-function-function #'helpful-callable
@@ -174,20 +170,10 @@
   :diminish company-mode
   :defines (company-dabbrev-ignore-case company-dabbrev-downcase)
   :hook (after-init . global-company-mode)
-  :bind (:map company-active-map
-          ("C-n" . company-select-next)
-          ("C-p" . company-select-previous)
-          ("<tab>" . company-complete-common-or-cycle)
-          ("RET" . company-complete-selection)
-          ("<return>" . company-complete-selection)
-          ("SPC" . company-complete-selection)
-          :map company-search-map
-          ("C-p" . company-select-previous)
-          ("C-n" . company-select-next))
   :custom
   (company-idle-delay 0)
   (company-echo-delay 0)
-  (company-minimum-prefix-length 2)
+  (company-minimum-prefix-length 4)
   (company-dabbrev-code-everywhere t)
   (company-dabbrev-code-modes t)
   (company-dabbrev-code-ignore-case t)
