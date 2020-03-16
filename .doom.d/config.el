@@ -192,7 +192,7 @@
   (company-dabbrev-code-modes t)
   (company-dabbrev-code-ignore-case t)
   (company-tooltip-limit 5)
-  (company-tooltip-minimum-width 120)
+  (company-tooltip-minimum-width 80)
   (company-tooltip-minimum 5)
   (company-tooltip-align-annotations t)
   (company-transformers '(company-sort-by-occurrence
@@ -428,3 +428,18 @@
   (focus-out-hook . (ladicle/recentf-save-list-silence ladicle/recentf-cleanup-silence)))
 
 (add-hook 'treemacs-mode #'treemacs-follow-mode)
+
+(set-popup-rules! '(("^\\*helpful" :size 0.35)
+                    ("^\\*Ibuffer\\*$" :size 0.35)
+                    ("^\\*info.*" :size 80 :side right)
+                    ("^\\*Man.*" :size 80 :side right)
+                    ("^\\*Customize" :actions display-buffer)
+                    ("^\\*edit-indirect" :size 0.6)
+                    ("^\\*YASnippet Tables\\*$" :size 0.35)
+                    ("^\\*grep\\*$" :size 0.35)
+                    ("^\\*pytest\\*" :size 0.35)
+                    ("^\\*Anaconda\\*$" :size 0.35)
+                    ("^\\*helm kill ring\\*$" :size 0.35)
+                    ("\\*.*server log\\*$" :side top :size 0.20 :select nil)
+                    ((lambda (buf _) (with-current-buffer buf (eq major-mode 'forge-topic-mode))) :size 0.35)
+                    ))
