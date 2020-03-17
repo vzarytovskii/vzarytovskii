@@ -22,14 +22,15 @@ This function should only modify configuration layer settings."
       auto-completion-enable-help-tooltip t
       auto-completion-use-company-box t
       auto-completion-enable-sort-by-usage t
-      company-frontends '(company-tng-frontend))
-                          ;company-pseudo-tooltip-frontend
+      company-frontends '(company-tng-frontend
+                          company-pseudo-tooltip-frontend
                           ;company-preview-frontend
-                          ;company-echo-metadata-frontend))
+                          company-echo-metadata-frontend))
                           ;company-quickhelp-frontend))
      better-defaults
      emacs-lisp
      git
+     themes-megapack
      (helm
       :variables
       helm-enable-auto-resize t
@@ -39,7 +40,7 @@ This function should only modify configuration layer settings."
       :variables
       lsp-navigation 'both
       lsp-ui-doc-enable t
-      lsp-ui-doc-include-signature t
+      lsp-ui-doc-include-signature nil
       lsp-ui-doc-delay 0.0
       lsp-ui-doc-position 'bottom
       lsp-ui-doc-use-childframe t
@@ -97,8 +98,7 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-new-empty-buffer-major-mode 'text-mode
    dotspacemacs-scratch-mode 'text-mode
    dotspacemacs-initial-scratch-message nil
-   dotspacemacs-themes '(spacemacs-dark
-                         spacemacs-light)
+   dotspacemacs-themes '(cyberpunk)
    dotspacemacs-mode-line-theme '(doom :separator wave :separator-scale 1.5)
 
    dotspacemacs-colorize-cursor-according-to-state t
