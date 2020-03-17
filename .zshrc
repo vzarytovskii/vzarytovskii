@@ -23,7 +23,7 @@ source /home/v/.config/broot/launcher/bash/br
 export LANG=en_US.UTF-8
 export ARCHFLAGS="-arch x86_64"
 
-export PATH=~/.cargo/bin:$PATH
+export PATH=~/.cargo/bin:~/.local/bin/:$PATH
 
 alias br="br -h"
 alias lsa="br -dp"
