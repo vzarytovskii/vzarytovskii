@@ -98,12 +98,12 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-new-empty-buffer-major-mode 'text-mode
    dotspacemacs-scratch-mode 'text-mode
    dotspacemacs-initial-scratch-message nil
-   dotspacemacs-themes '(cyberpunk)
+   dotspacemacs-themes '(ample cyberpunk)
    dotspacemacs-mode-line-theme '(doom :separator wave :separator-scale 1.5)
 
    dotspacemacs-colorize-cursor-according-to-state t
 
-   dotspacemacs-default-font '("Source Code Pro"
+   dotspacemacs-default-font '("Fira Code"
                                :size 10.0
                                :weight normal
                                :width normal)
