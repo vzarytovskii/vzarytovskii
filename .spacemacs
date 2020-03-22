@@ -42,7 +42,7 @@ This function should only modify configuration layer settings."
       lsp-ui-doc-enable t
       lsp-ui-doc-include-signature nil
       lsp-ui-doc-delay 0.0
-      lsp-ui-doc-position 'bottom
+      lsp-ui-doc-position 'top
       lsp-ui-doc-use-childframe t
       lsp-ui-sideline-enable t
       lsp-ui-sideline-show-symbol t
@@ -67,6 +67,8 @@ This function should only modify configuration layer settings."
      fsharp
      (haskell :variables
               haskell-completion-backend 'lsp)
+     (shell-scripts :variables
+                    shell-scripts-backend 'lsp)
      windows-scripts
      (python :variables
              python-backend 'lsp
