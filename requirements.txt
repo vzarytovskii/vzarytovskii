@@ -1,0 +1,1 @@
+pip install python-language-server[all] pyls-isort pyls-mypy pyls-black rope pyflakes mccabe pycodestyle pydocstyle autopep8 yapf importmagic epc flake8 autoflake "ptvsd>=4.2" 

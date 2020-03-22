@@ -50,6 +50,7 @@ This function should only modify configuration layer settings."
       lsp-ui-sideline-show-hover t
       lsp-ui-sideline-show-code-actions t
       lsp-ui-sideline-delay 0.0)
+     dap
      markdown
      multiple-cursors
      org
@@ -66,7 +67,15 @@ This function should only modify configuration layer settings."
      fsharp
      (haskell :variables
               haskell-completion-backend 'lsp)
-     )
+     windows-scripts
+     (python :variables
+             python-backend 'lsp
+             python-lsp-server 'pyls
+             python-pipenv-activate t
+             python-test-runner '(pytest nose)
+             python-format-on-save t
+             python-fill-column 99
+             python-sort-imports-on-save t))
 
    dotspacemacs-additional-packages '()
    dotspacemacs-frozen-packages '()
