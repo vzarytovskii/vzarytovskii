@@ -7,17 +7,17 @@
 
 /* global settings and color variables */
 * {
-    maincolor:        #50fa7b;
-    highlight:        bold #50fa7b;
+    maincolor:        #1e75bd;
+    highlight:        bold #e6e6e6;
     urgentcolor:      #ff79c6;
 
-    fg:               #f8f8f2;
-    bg:               #282a36;
+    fg:               #cccccc;
+    bg:               #000000;
     blackselect:      #44475a;
     cyan:             #8be9fd;
-    font: "Hack 12";
+    font: "Hack 11";
     background-color: @bg;
-    show-icons: true;
+    show-icons: false;
     icon-theme: "Pop";
 }
 

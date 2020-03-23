@@ -7,7 +7,7 @@ This function should only modify configuration layer settings."
    dotspacemacs-distribution 'spacemacs
    dotspacemacs-enable-lazy-installation 'unused
    dotspacemacs-ask-for-lazy-installation t
-   dotspacemacs-configuration-layer-path '()
+   dotspacemacs-configuration-layer-path '("~/.spacemacs.d")
    dotspacemacs-configuration-layers
    '(yaml
      (auto-completion
@@ -88,7 +88,14 @@ This function should only modify configuration layer settings."
              python-test-runner '(pytest nose)
              python-format-on-save t
              python-fill-column 99
-             python-sort-imports-on-save t))
+             python-sort-imports-on-save t)
+     (exwm :variables
+           exwm-enable-systray t
+           exwm-autostart-xdg-applications t
+           exwm-locking-command "i3lock -n"
+           exwm-install-logind-lock-handler t
+           exwm-terminal-command "st -f \"monospace:pixelsize=14:antialias=true:autohint=true\""
+           exwm-custom-init (lambda() (exwm/autostart-process "Dunst OSD" "dunst"))))
 
    dotspacemacs-additional-packages '()
    dotspacemacs-frozen-packages '()
