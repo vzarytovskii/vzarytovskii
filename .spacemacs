@@ -98,7 +98,7 @@ This function should only modify configuration layer settings."
            exwm-terminal-command "st -f \"monospace:pixelsize=14:antialias=true:autohint=true\""
            exwm-custom-init (lambda() (exwm/autostart-process "Dunst OSD" "dunst"))))
 
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages '(atom-dark-theme)
    dotspacemacs-frozen-packages '()
    dotspacemacs-excluded-packages '()
    dotspacemacs-install-packages 'used-only))
@@ -128,8 +128,8 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-new-empty-buffer-major-mode 'text-mode
    dotspacemacs-scratch-mode 'text-mode
    dotspacemacs-initial-scratch-message nil
-   dotspacemacs-themes '(cyberpunk)
-   dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 0.0)
+   dotspacemacs-themes '(atom-dark)
+   dotspacemacs-mode-line-theme '(vim-powerline :separator wave :separator-scale 0.0)
 
    dotspacemacs-colorize-cursor-according-to-state t
 

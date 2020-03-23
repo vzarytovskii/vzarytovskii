@@ -96,11 +96,17 @@
 (defun exwm/init-dbus ()
   (use-package dbus))
 
+(defun exwm/init-xdg ()
+  (use-package xdg))
+
 (defun exwm/init-exwm ()
   (use-package exwm
     :init
 
+    ;; Explicitly init dbus and xdg
     (require 'dbus)
+    (require 'xdg)
+
     ;; Disable dialog boxes since they are unusable in EXWM
     (setq use-dialog-box nil)
     ;; You may want Emacs to show you the time
