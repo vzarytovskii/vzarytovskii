@@ -9,7 +9,8 @@ This function should only modify configuration layer settings."
    dotspacemacs-ask-for-lazy-installation t
    dotspacemacs-configuration-layer-path '("~/.spacemacs.d")
    dotspacemacs-configuration-layers
-   '(yaml
+   '(
+     yaml
      (auto-completion
       :variables
       auto-completion-return-key-behavior 'complete
@@ -127,8 +128,8 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-new-empty-buffer-major-mode 'text-mode
    dotspacemacs-scratch-mode 'text-mode
    dotspacemacs-initial-scratch-message nil
-   dotspacemacs-themes '(ample cyberpunk)
-   dotspacemacs-mode-line-theme '(doom :separator wave :separator-scale 1.5)
+   dotspacemacs-themes '(cyberpunk)
+   dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 0.0)
 
    dotspacemacs-colorize-cursor-according-to-state t
 

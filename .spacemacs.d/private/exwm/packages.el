@@ -22,7 +22,7 @@
         ;;       :step pre)
         (xelb :location elpa)
         (exwm :location elpa)
-
+	(dbus)
         ;; desktop-environment
         ;; TODO: remove :commit binding once upstream has new release
         (desktop-environment :location (recipe :fetcher github :repo "DamienCassou/desktop-environment" :upgrade t :commit "cd5145288944f4bbd7b2459e4b55a6a95e37f06d"))
@@ -93,9 +93,14 @@
     "FMa" 'exwm-workspace-attach-minibuffer
     ))
 
+(defun exwm/init-dbus ()
+  (use-package dbus))
+
 (defun exwm/init-exwm ()
   (use-package exwm
     :init
+
+    (require 'dbus)
     ;; Disable dialog boxes since they are unusable in EXWM
     (setq use-dialog-box nil)
     ;; You may want Emacs to show you the time
