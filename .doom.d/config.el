@@ -192,9 +192,9 @@
     '(c-mode c++-mode ess-mode fsharp-mode csharp-mode haskell-mode
              emacs-lisp-mode lisp-mode sh-mode python-mode rust-mode js-mode)
     '(:separate
+      company-lsp
       company-files
-      company-yasnippet
-      company-lsp))
+      company-yasnippet))
                                         ;company-tabnine))
   ;(setq +lsp-company-backend '(company-lsp :with company-tabnine :separate))
   (setq +lsp-company-backend '(company-lsp)))
@@ -483,8 +483,7 @@
         lsp-ui-sideline-show-diagnostics t
         lsp-ui-sideline-show-hover t
         lsp-ui-sideline-show-code-actions t
-        lsp-ui-sideline-delay 0.0)
-        ))
+        lsp-ui-sideline-delay 0.0))
 
 (use-package! dap-mode
   :after lsp-mode
