@@ -35,5 +35,6 @@ alias mc="ranger"
 alias reddit="tuir"
 alias youtube="mpsyt"
 alias yt="youtube"
+alias discord="6cord"
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi

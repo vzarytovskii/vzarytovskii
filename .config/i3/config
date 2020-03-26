@@ -26,7 +26,7 @@ bindsym $mod+Shift+q kill
 # start program launcher
 bindsym $mod+d exec --no-startup-id rofi -show run # -theme dmenu
 bindsym $mod+slash exec --no-startup-id rofi -show window # -theme purple
-bindsym $mod+t exec --no-startup-id /home/v/.local/bin/rft sw, workspace $ws1
+bindsym $mod+t exec --no-startup-id rft sw, workspace $ws1
 #bindsym $mod+d exec --no-startup-id dmenu
 #bindsym $mod+d exec "dmenu_run -nf '#BBBBBB' -nb '#222222' -sb '#005577' -sf '#EEEEEE' -fn 'monospace-10' -p 'run> '"
 

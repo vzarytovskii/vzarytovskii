@@ -432,6 +432,16 @@
 
 (use-package! lsp-mode
   :commands (lsp-mode lsp-define-stdio-client)
+  :config
+  (setq
+   lsp-navigation 'both
+   lsp-enable-snippet t
+   lsp-enable-folding t
+   lsp-eldoc-enable-hover t
+   lsp-eldoc-enable-signature-help nil
+   lsp-signature-render-all t
+   lsp-enable-symbol-highlighting t
+   lsp-enable-xref t)
   :custom
   (lsp-auto-guess-root t)
   (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
@@ -447,12 +457,13 @@
   (setq lsp-ui-doc-max-height 30
         lsp-ui-doc-max-width 120
         lsp-ui-sideline-ignore-duplicate t
-        lsp-ui-doc-enable t
+        lsp-ui-doc-enable nil
         lsp-ui-doc-header t
-        lsp-ui-doc-include-signature t
+        lsp-ui-doc-include-signature nil
         lsp-ui-doc-position 'at-point
-        lsp-ui-doc-use-childframe t
+        lsp-ui-doc-use-childframe nil
         lsp-ui-doc-use-webkit t
+        lsp-ui-doc-delay 0.0
         lsp-ui-flycheck-enable nil
         lsp-ui-sideline-enable nil
         lsp-ui-sideline-ignore-duplicate t
@@ -466,7 +477,14 @@
         lsp-ui-peek-enable t
         lsp-ui-peek-peek-height 20
         lsp-ui-peek-list-width 50
-        lsp-ui-peek-fontify 'on-demand))
+        lsp-ui-peek-fontify 'on-demand
+        lsp-ui-sideline-enable t
+        lsp-ui-sideline-show-symbol t
+        lsp-ui-sideline-show-diagnostics t
+        lsp-ui-sideline-show-hover t
+        lsp-ui-sideline-show-code-actions t
+        lsp-ui-sideline-delay 0.0)
+        ))
 
 (use-package! dap-mode
   :after lsp-mode

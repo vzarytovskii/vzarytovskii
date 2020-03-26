@@ -43,11 +43,11 @@ This function should only modify configuration layer settings."
       lsp-enable-snippet t
       lsp-enable-folding t
       lsp-eldoc-enable-hover t
-      lsp-eldoc-enable-signature-help t
+      lsp-eldoc-enable-signature-help nil
       lsp-signature-render-all t
       lsp-enable-symbol-highlighting t
       lsp-enable-xref t
-      lsp-ui-doc-enable t
+      lsp-ui-doc-enable nil
       lsp-ui-doc-include-signature nil
       lsp-ui-doc-delay 0.0
       lsp-ui-doc-position 'bottom
