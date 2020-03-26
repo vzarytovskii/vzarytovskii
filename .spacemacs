@@ -79,7 +79,6 @@ This function should only modify configuration layer settings."
      fsharp
      (haskell :variables
               haskell-completion-backend 'lsp)
-     liquid-types
      (shell-scripts :variables
                     shell-scripts-backend 'lsp)
      windows-scripts
