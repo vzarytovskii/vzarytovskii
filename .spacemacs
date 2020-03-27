@@ -31,6 +31,7 @@ This function should only modify configuration layer settings."
      better-defaults
      emacs-lisp
      git
+     github
      themes-megapack
      (helm
       :variables
@@ -98,9 +99,9 @@ This function should only modify configuration layer settings."
            exwm-terminal-command "st -f \"monospace:pixelsize=14:antialias=true:autohint=true\""
            exwm-custom-init (lambda() (exwm/autostart-process "Dunst OSD" "dunst"))))
 
-   dotspacemacs-additional-packages '(atom-dark-theme)
+   dotspacemacs-additional-packages '(atom-dark-theme (forge :toggle t) magit-todos)
    dotspacemacs-frozen-packages '()
-   dotspacemacs-excluded-packages '()
+   dotspacemacs-excluded-packages '(window-purpose)
    dotspacemacs-install-packages 'used-only))
 
 (defun dotspacemacs/init ()
@@ -197,7 +198,7 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-  )
+  (setq-default git-magit-status-fullscreen t))
 
 (defun dotspacemacs/user-load ()
   "Library to load while dumping.
@@ -213,6 +214,7 @@ configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
   (global-company-mode t)
+  (global-git-commit-mode t)
   (custom-set-faces
    '(company-tooltip-common
      ((t (:inherit company-tooltip :weight bold :underline nil))))
