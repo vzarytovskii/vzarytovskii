@@ -103,7 +103,7 @@ This function should only modify configuration layer settings."
            exwm-terminal-command "st -f \"monospace:pixelsize=14:antialias=true:autohint=true\""
            exwm-custom-init (lambda() (exwm/autostart-process "Dunst OSD" "dunst"))))
 
-   dotspacemacs-additional-packages '(atom-dark-theme (forge :toggle t) magit-todos)
+   dotspacemacs-additional-packages '(hl-block-mode atom-dark-theme (forge :toggle t) magit-todos solaire-mode)
    dotspacemacs-frozen-packages '()
    dotspacemacs-excluded-packages '(window-purpose)
    dotspacemacs-install-packages 'used-only))
@@ -133,7 +133,7 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-new-empty-buffer-major-mode 'text-mode
    dotspacemacs-scratch-mode 'text-mode
    dotspacemacs-initial-scratch-message nil
-   dotspacemacs-themes '(atom-dark)
+   dotspacemacs-themes '(doom-one alect-black-alt spacemacs-dark)
    dotspacemacs-mode-line-theme '(vim-powerline :separator wave :separator-scale 0.0)
 
    dotspacemacs-colorize-cursor-according-to-state t
@@ -202,14 +202,19 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-  (setq-default git-magit-status-fullscreen t))
+  (setq-default git-magit-status-fullscreen t)
+  (setq hl-block-bracket nil
+	hl-block-delay 0.0)
+  (setq show-paren-style 'expression))
 
 (defun dotspacemacs/user-load ()
   "Library to load while dumping.
 This function is called only while dumping Spacemacs configuration. You can
 `require' or `load' the libraries of your choice that will be included in the
 dump."
-  )
+  (require 'magit-todos)
+  (require 'solaire-mode)
+  (require 'hl-block-mode))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -219,6 +224,8 @@ Put your configuration code here, except for variables that should be set
 before packages are loaded."
   (global-company-mode t)
   (global-git-commit-mode t)
+  (solaire-global-mode +1)
+  (solaire-mode-swap-bg)
   (custom-set-faces
    '(company-tooltip-common
      ((t (:inherit company-tooltip :weight bold :underline nil))))
