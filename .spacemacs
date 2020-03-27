@@ -41,18 +41,22 @@ This function should only modify configuration layer settings."
      (lsp
       :variables
       lsp-navigation 'both
-      lsp-enable-snippet t
-      lsp-enable-folding t
-      lsp-eldoc-enable-hover t
-      lsp-eldoc-enable-signature-help nil
       lsp-signature-render-all t
       lsp-enable-symbol-highlighting t
+      lsp-enable-snippet t
+      lsp-enable-folding t
       lsp-enable-xref t
-      lsp-ui-doc-enable nil
+      lsp-eldoc-enable-hover t
+      lsp-eldoc-enable-signature-help nil
+      lsp-document-sync-method 'incremental
+      lsp-signature-render-all t
+      lsp-ui-doc-enable t
       lsp-ui-doc-include-signature nil
       lsp-ui-doc-delay 0.0
-      lsp-ui-doc-position 'bottom
-      lsp-ui-doc-use-childframe nil
+      lsp-ui-doc-position 'at-point
+      lsp-ui-doc-use-childframe t
+      lsp-ui-peek-enable t
+      lsp-ui-peek-fontify 'on-demand
       lsp-ui-sideline-enable t
       lsp-ui-sideline-show-symbol t
       lsp-ui-sideline-show-diagnostics t
