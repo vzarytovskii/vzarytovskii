@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+emacs -nw -l magit -f magit-status -f delete-other-windows --eval "(kill-buffer \"*spacemacs*\")" "$@"
+
