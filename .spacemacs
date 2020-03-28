@@ -104,7 +104,7 @@ This function should only modify configuration layer settings."
            exwm-terminal-command "st -f \"monospace:pixelsize=14:antialias=true:autohint=true\""
            exwm-custom-init (lambda() (exwm/autostart-process "Dunst OSD" "dunst"))))
 
-   dotspacemacs-additional-packages '(hl-block-mode atom-dark-theme (forge :toggle t) magit-todos solaire-mode)
+   dotspacemacs-additional-packages '(yasnippet-snippets hl-block-mode atom-dark-theme (forge :toggle t) magit-todos solaire-mode)
    dotspacemacs-frozen-packages '()
    dotspacemacs-excluded-packages '(window-purpose)
    dotspacemacs-install-packages 'used-only))
