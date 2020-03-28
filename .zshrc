@@ -1,5 +1,5 @@
 export QT_QPA_PLATFORMTHEME="qt5ct"
-export EDITOR="/usr/bin/emacs -nw"
+export EDITOR="emacsclient -nw -c"
 export ZSH="/home/v/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 CASE_SENSITIVE="false"
@@ -36,7 +36,7 @@ alias reddit="tuir"
 alias youtube="mpsyt"
 alias yt="youtube"
 alias discord="6cord"
-alias magit="emacs -nw -l magit -f magit-status -f delete-other-windows --eval \"(kill-buffer \\\"*spacemacs*\\\")\""
-
+alias emacs="emacsclient -c"
+alias magit="emacs -nw --eval \"(magit-status)\" --eval \"(delete-other-windows)\" --eval \"(kill-buffer \\\"*spacemacs*\\\")\""
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi

@@ -8,6 +8,7 @@ This function should only modify configuration layer settings."
    dotspacemacs-enable-lazy-installation 'unused
    dotspacemacs-ask-for-lazy-installation t
    dotspacemacs-configuration-layer-path '("~/.spacemacs.d")
+   dotspacemacs-persistent-server t
    dotspacemacs-configuration-layers
    '(
      yaml
