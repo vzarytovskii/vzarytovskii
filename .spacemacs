@@ -224,6 +224,8 @@ configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
   (evil-leader/set-key "q q" 'spacemacs/frame-killer)
+  (evil-ex-define-cmd "q[uit!]" 'spacemacs/frame-killer)
+  (evil-ex-define-cmd "q[all!]" 'spacemacs/frame-killer)
   (global-company-mode t)
   (global-git-commit-mode t)
   (solaire-global-mode +1)
