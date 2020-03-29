@@ -37,7 +37,7 @@ alias reddit="tuir"
 alias youtube="mpsyt"
 alias yt="youtube"
 alias discord="6cord"
-alias emacs="emacsclient -c"
-alias magit="emacs -nw --eval \"(magit-status)\" --eval \"(delete-other-windows)\" --eval \"(kill-buffer \\\"*spacemacs*\\\")\""
+alias emacs="~/.local/bin/em"
+alias magit="~/.local/bin/em -nw --eval \"(magit-status)\" --eval \"(delete-other-windows)\" --eval \"(kill-buffer \\\"*spacemacs*\\\")\""
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
