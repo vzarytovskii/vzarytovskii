@@ -30,6 +30,8 @@ This function should only modify configuration layer settings."
                           company-echo-metadata-frontend))
                           ;company-quickhelp-frontend))
      better-defaults
+     helpful
+     semantic
      emacs-lisp
      git
      github
@@ -37,8 +39,9 @@ This function should only modify configuration layer settings."
      (helm
       :variables
       helm-enable-auto-resize t
-      helm-no-header t
-      helm-position 'top)
+      helm-no-header nil
+      helm-position 'bottom
+      helm-use-fuzzy 'source)
      (lsp
       :variables
       lsp-navigation 'both
@@ -66,19 +69,24 @@ This function should only modify configuration layer settings."
       lsp-ui-sideline-delay 0.0)
      dap
      markdown
-     multiple-cursors
+     (multiple-cursors :variables
+                       multiple-cursors-backend 'evil-mc)
      org
      (shell :variables
             shell-default-height 30
             shell-default-position 'bottom)
      spell-checking
-     syntax-checking
+     (syntax-checking :variables
+                      syntax-checking-enable-tooltips t
+                      syntax-checking-enable-by-default t)
      version-control
      (treemacs :variables
                treemacs-use-follow-mode t
                treemacs-use-filewatch-mode t
                treemacs-use-git-mode 'deferred
                )
+     (gtags :variables
+            gtags-enable-by-defaults t)
      (csharp
       :variables
       csharp-backend 'lsp)
@@ -140,7 +148,7 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-colorize-cursor-according-to-state t
 
    dotspacemacs-default-font '("Fira Code"
-                               :size 10.0
+                               :size 11.0
                                :weight normal
                                :width normal)
 
@@ -205,7 +213,7 @@ It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
   (setq-default git-magit-status-fullscreen t)
   (setq hl-block-bracket nil
-	hl-block-delay 0.0)
+	      hl-block-delay 0.0)
   (setq show-paren-style 'expression))
 
 (defun dotspacemacs/user-load ()
@@ -215,7 +223,8 @@ This function is called only while dumping Spacemacs configuration. You can
 dump."
   (require 'magit-todos)
   (require 'solaire-mode)
-  (require 'hl-block-mode))
+  (require 'hl-block-mode)
+  (require 'semantic/db-file))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -223,17 +232,17 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
-  
-  (defun custom/ex-kill-all-buffers-and-close () 
+
+  (defun custom/ex-kill-all-buffers-and-close ()
     (interactive)
     (kill-matching-buffers ".*")
     (spacemacs/frame-killer))
 
-  (defun custom/ex-force-kill-all-buffers-and-close () 
+  (defun custom/ex-force-kill-all-buffers-and-close ()
     (interactive)
     (spacemacs/kill-matching-buffers-rudely ".*")
     (spacemacs/frame-killer))
-  
+
   (defun custom/ex-kill-buffer-and-close ()
     (interactive)
     (kill-this-buffer))
@@ -246,13 +255,15 @@ before packages are loaded."
   (evil-ex-define-cmd "q[uit!]" 'custom/ex-kill-buffer-and-close)
   (evil-ex-define-cmd "wq" 'custom/ex-save-kill-buffer-and-close)
   (evil-ex-define-cmd "qa[ll]" 'custom/ex-force-kill-all-buffers-and-close)
-  
   (evil-leader/set-key "q q" 'custom/ex-kill-all-buffers-and-close)
 
   (global-company-mode t)
+  (global-flycheck-mode t)
   (global-git-commit-mode t)
+  (global-hl-block-mode t)
   (solaire-global-mode +1)
   (solaire-mode-swap-bg)
+  (spacemacs/toggle-indent-guide-globally-on)
   (custom-set-faces
    '(company-tooltip-common
      ((t (:inherit company-tooltip :weight bold :underline nil))))
