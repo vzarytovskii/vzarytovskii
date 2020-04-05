@@ -1,8 +1,27 @@
 #!/usr/bin/env zsh
 
-emacsclient -n -e "(if (> (length (frame-list)) 1) ‘t)" 2> /dev/null | grep t &> /dev/null
-if [ "$?" -eq "1" ]; then
- emacsclient -a '' -nqc "$@" &> /dev/null
-else
- emacsclient -nq "$@" &> /dev/null
+
+visible_frames() {
+	emacsclient -a "" -e '(length (visible-frame-list))'
+}
+
+change_focus() {
+	emacsclient -n -e "(select-frame-set-input-focus (selected-frame))" > /dev/null
+}
+
+# If launched from the terminal, spawn a new emacsclient (i.e. for magit, repl, mu4e, etc);
+if [[ -t 1 ]]; then
+	emacsclient -tqc "$@"
+	exit 0
+fi
+
+# Try switching to emacs frame if minimized
+test "$(visible_frames)" -eq "1" && change_focus
+
+# If there's no frame, or we're running from terminal.
+if [[ "$(visible_frames)" -lt  "2" || ! -t 1 ]]; then
+	emacsclient -n -c "$@" && change_focus
+else # Something is running already, change focus.
+	change_focus
+	test  "$#" -ne "0" && emacsclient -n "$@"
 fi

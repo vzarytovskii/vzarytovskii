@@ -27,9 +27,11 @@ export DOTNET_ROOT=~/.dotnet
 
 export PATH=~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
+alias cat="bat"
 alias br="br -h"
 alias lsa="br -dp"
 alias ls="exa"
+alias la="ls -a"
 alias ll="exa -alF"
 alias tree="br"
 alias g="git"
@@ -40,7 +42,8 @@ alias youtube="mpsyt"
 alias yt="youtube"
 alias discord="6cord"
 alias emacs="~/.local/bin/emacs"
-alias magit="emacs --eval \"(magit-status)\" --eval \"(delete-other-windows)\" --eval \"(kill-buffer \\\"*spacemacs*\\\")\""
+# alias magit="emacs -e \"(magit-status)\" -e \"(delete-other-windows)\" -e \"(kill-buffer \\\"*spacemacs*\\\")\""
+alias magit="emacs --eval \"(magit-status)\""
 alias spotify="spt"
 alias cheat="cht.sh"
 alias how="howdoi"

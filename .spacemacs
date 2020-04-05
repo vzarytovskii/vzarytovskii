@@ -217,7 +217,7 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
   (setq hl-block-bracket nil
 	      hl-block-delay 0.0)
   (setq show-paren-style 'expression)
-  (setq doom-modeline-height 25)
+  (setq doom-modeline-height 15)
   (setq inhibit-compacting-font-caches t)
   (setq doom-modeline-project-detection 'project)
   (setq doom-modeline-buffer-file-name-style 'auto)
@@ -264,11 +264,11 @@ before packages are loaded."
     (save-buffer)
     (kill-this-buffer))
 
+  (evil-leader/set-key "qq" 'spacemacs/frame-killer)
   (evil-ex-define-cmd "q[uit!]" 'custom/ex-kill-buffer-and-close)
   (evil-ex-define-cmd "wq" 'custom/ex-save-kill-buffer-and-close)
   (evil-ex-define-cmd "qal[l]" 'custom/ex-force-kill-all-buffers-and-close)
   (evil-ex-define-cmd "qa" 'spacemacs/frame-killer)
-  (evil-leader/set-key "q q" 'spacemacs/frame-killer)
 
   (global-company-mode t)
   (global-flycheck-mode t)
