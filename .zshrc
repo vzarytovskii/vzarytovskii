@@ -23,7 +23,9 @@ source /home/v/.config/broot/launcher/bash/br
 export LANG=en_US.UTF-8
 export ARCHFLAGS="-arch x86_64"
 
-export PATH=~/.cargo/bin:~/.local/bin/:$PATH
+export DOTNET_ROOT=~/.dotnet
+
+export PATH=~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
 alias br="br -h"
 alias lsa="br -dp"
@@ -39,5 +41,8 @@ alias yt="youtube"
 alias discord="6cord"
 alias emacs="~/.local/bin/emacs"
 alias magit="emacs --eval \"(magit-status)\" --eval \"(delete-other-windows)\" --eval \"(kill-buffer \\\"*spacemacs*\\\")\""
+alias spotify="spt"
+alias cheat="cht.sh"
+alias how="howdoi"
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
