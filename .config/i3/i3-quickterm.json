@@ -1,0 +1,14 @@
+{
+    "menu": "rofi -dmenu -p 'quickterm: ' -auto-select",
+    "term": "alacritty",
+    "history": "{$HOME}/.cache/i3/i3-quickterm.order",
+    "ratio": 0.5,
+    "pos": "top",
+    "shells": {
+        "F#": "/home/v/.dotnet/dotnet fsi",
+        "haskell": "ghci",
+        "js": "node",
+        "python": "ipython3 --no-banner",
+        "shell": "{$SHELL}"
+    }
+}
