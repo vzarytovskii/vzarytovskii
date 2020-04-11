@@ -457,15 +457,15 @@
   (setq lsp-ui-doc-max-height 30
         lsp-ui-doc-max-width 120
         lsp-ui-sideline-ignore-duplicate t
-        lsp-ui-doc-enable nil
+        lsp-ui-doc-enable t
         lsp-ui-doc-header t
         lsp-ui-doc-include-signature nil
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-use-childframe nil
         lsp-ui-doc-use-webkit t
         lsp-ui-doc-delay 0.0
-        lsp-ui-flycheck-enable nil
-        lsp-ui-sideline-enable nil
+        lsp-ui-flycheck-enable t
+        lsp-ui-sideline-enable t
         lsp-ui-sideline-ignore-duplicate t
         lsp-ui-sideline-show-symbol t
         lsp-ui-sideline-show-hover t

@@ -9,8 +9,10 @@ default_border pixel 1
 
 hide_edge_borders none
 
-bindsym $mod+u border none
-bindsym $mod+y border pixel 1
+#bindsym $mod+u border none
+#bindsym $mod+y border pixel 1
+
+bindsym $mod+y exec --no-startup-id i3-layout.sh
 
 bindsym $mod+m exec i3-input -F 'rename workspace to "%s"' -P 'New name for this workspace:'
 
