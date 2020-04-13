@@ -254,7 +254,8 @@ before packages are loaded."
     (save-buffer)
     (kill-this-buffer))
 
-  (evil-leader/set-key "qq" 'spacemacs/frame-killer)
+  (evil-leader/set-key "qq" 'delete-frame)
+  (evil-leader/set-key "q q" 'delete-frame)
   (evil-ex-define-cmd "q[uit!]" 'custom/ex-kill-buffer-and-close)
   (evil-ex-define-cmd "wq" 'custom/ex-save-kill-buffer-and-close)
   (evil-ex-define-cmd "qal[l]" 'custom/ex-force-kill-all-buffers-and-close)
