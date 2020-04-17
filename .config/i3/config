@@ -61,6 +61,9 @@ workspace_auto_back_and_forth no
 bindsym $mod+b workspace back_and_forth
 bindsym $mod+Shift+b move container to workspace back_and_forth; workspace back_and_forth
 
+# Show OSD (date for now)
+bindsym $mod+o exec date | aosd_cat -R "#cc0022" -p 4 -B black --fade-full=3000 --back-opacity=100 --font="monospace light 50" --padding=30 -e 0 -
+
 # split orientation
 bindsym $mod+h split h;exec notify-send 'tile horizontally'
 bindsym $mod+v split v;exec notify-send 'tile vertically'
