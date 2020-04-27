@@ -5,10 +5,7 @@
       doom-themes-treemacs-theme "doom-colors"
       doom-modeline-height 22
       doom-theme 'doom-vibrant
-      doom-font                   (font-spec :family "JetBrains Mono 1.1" :size 14)
-      doom-big-font               (font-spec :family "JetBrains Mono 1.1" :size 24)
-      doom-variable-pitch-font    (font-spec :family "Noto Sans" :size 14)
-      doom-unicode-font           "Noto Color Emoji"
+      doom-font (font-spec :family "Iosevka" :size 18)
       all-the-icons-scale-factor 1)
 
 (setq org-directory "~/org/")
