@@ -1,21 +1,23 @@
 (doom! :input
        :completion
-       (company +tng)           ; the ultimate code completion backend
+       company           ; the ultimate code completion backend
+       helm              ; the *other* search engine for love and life
+       ido               ; the other *other* search engine...
        ivy               ; a search engine for love and life
 
        :ui
        doom              ; what makes DOOM look the way it does
        doom-dashboard    ; a nifty splash screen for Emacs
+       doom-quit         ; DOOM quit-message prompts when you quit Emacs
        fill-column       ; a `fill-column' indicator
        hl-todo           ; highlight TODO/FIXME/NOTE/DEPRECATED/HACK/REVIEW
        indent-guides     ; highlighted indent columns
        modeline          ; snazzy, Atom-inspired modeline, plus API
-       nav-flash         ; blink the current line after jumping
+       nav-flash         ; blink cursor line after big motions
+       neotree           ; a project drawer, like NERDTree for vim
        ophints           ; highlight the region an operation acts on
-       (popup            ; tame sudden yet inevitable temporary windows
-        +all             ; catch all popups that start with an asterix
-        +defaults)       ; default popup rules
-       (pretty-code +iosevka)       ; replace bits of code with pretty symbols
+       (popup +defaults)   ; tame sudden yet inevitable temporary windows
+       ;;pretty-code       ; ligatures or substitute text with pretty symbols
        treemacs          ; a project drawer, like neotree but cooler
        unicode           ; extended unicode support for various languages
        vc-gutter         ; vcs diff in the fringe
@@ -29,6 +31,7 @@
        file-templates    ; auto-snippets for empty files
        fold              ; (nigh) universal code folding
        (format +onsave)  ; automated prettiness
+       lispy             ; vim for lisp, for people who don't like vim
        multiple-cursors  ; editing in many places at once
        parinfer          ; turn lisp into python, sort of
        rotate-text       ; cycle region at point between text candidates
@@ -38,11 +41,13 @@
        :emacs
        dired             ; making dired pretty [functional]
        electric          ; smarter, keyword-based electric-indent
-       ibuffer           ; interactive buffer management
+       ibuffer         ; interactive buffer management
+       undo              ; persistent, smarter undo for your inevitable mistakes
        vc                ; version-control and Emacs, sitting in a tree
 
        :term
-       eshell            ; a consistent, cross-platform shell (WIP)
+       eshell            ; the elisp shell that works everywhere
+       vterm             ; the best terminal emulation in Emacs
 
        :checkers
        syntax              ; tasing you for every semicolon you forget
@@ -51,25 +56,44 @@
 
        :tools
        debugger          ; FIXME stepping through code, to help you add bugs
+       direnv
        docker
        editorconfig      ; let someone else argue about tabs vs spaces
+       ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)     ; run code, run (also, repls)
        gist              ; interacting with github gists
-       (lookup           ; helps you navigate your code and documentation
-        +dictionary)        ; ...or in Dash docsets locally
+       lookup              ; navigate your code and its documentation
        lsp
        magit             ; a git porcelain for Emacs
+       make              ; run make tasks from Emacs
        tmux              ; an API for interacting with tmux
 
        :lang
-       (csharp +lsp)            ; unity, .NET, and mono shenanigans
+       cc                ; C/C++/Obj-C madness
+       clojure           ; java with a lisp
+       common-lisp       ; if you've seen one lisp, you've seen them all
+       csharp            ; unity, .NET, and mono shenanigans
        data              ; config/data formats
        emacs-lisp        ; drown in parentheses
-       (fsharp +lsp)           ; ML stands for Microsoft's Language
-       ;;(haskell +dante)  ; a language that's lazier than I am
+       fsharp           ; ML stands for Microsoft's Language
+       (haskell +lsp)  ; a language that's lazier than I am
+       json              ; At least it ain't XML
        markdown          ; writing docs for people to ignore
-       python            ; beautiful is better than ugly
+       org               ; organize your plain life in plain text
+       plantuml          ; diagrams for confusing people more
+       (python +lsp)            ; beautiful is better than ugly
+       rest              ; Emacs as a REST client
        sh                ; she sells {ba,z,fi}sh shells on the C xor
+       yaml              ; JSON, but readable
+
+       :email
+       ;;(mu4e +gmail)
+       ;;notmuch
+
+       :app
+       calendar
+       twitter           ; twitter client https://twitter.com/vnought
 
        :config
+       ;;literate
        (default +bindings +smartparens))

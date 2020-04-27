@@ -865,9 +865,9 @@ manjaro-firmware
 manjaro-gdm-branding
 manjaro-gdm-theme
 manjaro-gdm-tweak
-manjaro-gnome-assets-19.0
-manjaro-gnome-extension-settings-19.0
-manjaro-gnome-settings-19.0
+manjaro-gnome-assets
+manjaro-gnome-extension-settings
+manjaro-gnome-settings
 manjaro-gnome-vanilla
 manjaro-hello
 manjaro-hotfixes
@@ -1075,6 +1075,7 @@ powertop
 ppp
 pptpclient
 procps-ng
+procs
 protobuf
 psmisc
 pulseaudio
@@ -1489,6 +1490,7 @@ zip
 zita-alsa-pcmi
 zita-resampler
 zlib
+zoxide
 zsh-git
 zstd
 zvbi
