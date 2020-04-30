@@ -4,8 +4,8 @@
       doom-themes-treemacs-enable-variable-pitch t
       doom-themes-treemacs-theme "doom-colors"
       doom-modeline-height 22
-      doom-theme 'doom-vibrant
-      doom-font (font-spec :family "Iosevka" :size 18)
+      doom-theme 'doom-tomorrow-night
+      doom-font (font-spec :family "monospace" :size 17)
       all-the-icons-scale-factor 1)
 
 (setq org-directory "~/org/")
@@ -39,6 +39,29 @@
 
 (set-popup-rule! "*backtrace\*"      :size 0.5            :side 'bottom :select t :quit t :modeline t)
 (set-popup-rule! "*doom:scratch"     :size 0.25 :vslot -4 :side 'bottom :select t :quit t :ttl nil :modeline nil)
+
+;; Auto theme switch
+;; -- Automatically switch between ligh and dark theme based on time of day
+(setq theme-autoswitch t)
+(setq theme-autoswitch/light-theme 'doom-tomorrow-day)
+(setq theme-autoswitch/dark-theme 'doom-tomorrow-night)
+(setq theme-autoswitch/day-start-hour 7)
+(setq theme-autoswitch/day-end-hour 19)
+(setq theme-autoswitch/sync-timer 300)
+(if (and theme-autoswitch (display-graphic-p))
+    (progn
+      (defun sync-theme-with-time ()
+        (setq theme-autoswitch/hour (string-to-number (substring (current-time-string) 11 13)))
+        (if (member theme-autoswitch/hour (number-sequence theme-autoswitch/day-start-hour theme-autoswitch/day-end-hour))
+            (setq theme-autoswitch/now theme-autoswitch/light-theme)
+          (setq theme-autoswitch/now theme-autoswitch/dark-theme))
+        (unless (and (boundp 'current-theme) (eq theme-autoswitch/now current-theme))
+          (progn
+            (setq current-theme theme-autoswitch/now)
+            (load-theme theme-autoswitch/now t))))
+      (sync-theme-with-time)
+      (run-with-timer 0 theme-autoswitch/sync-timer #'sync-theme-with-time))
+  (load-theme theme-autoswitch/dark-theme t))
 
 ;;(use-package server
 ;;  :ensure nil
@@ -119,6 +142,12 @@
   :after magit
   :hook (add-hook 'git-commit-setup-hook #'git-commit-turn-on-flyspell)
   :config
+  (add-to-list 'magit-section-initial-visibility-alist '(unpulled . show))
+  (add-to-list 'magit-section-initial-visibility-alist '(unpushed . show))
+  (add-to-list 'magit-section-initial-visibility-alist '(untracked . show))
+  (add-to-list 'magit-section-initial-visibility-alist '(unstaged . show))
+  (add-to-list 'magit-section-initial-visibility-alist '(todos . show))
+  (add-to-list 'magit-section-initial-visibility-alist '(recent . show))
   (magit-todos-mode))
 
 (use-package! imenu-list

@@ -932,6 +932,7 @@ neon
 neovim-git
 nerd-fonts-complete
 nerd-fonts-hack
+nerd-fonts-noto-sans-mono
 netcf
 netctl
 netflix-qdesktop
@@ -1341,6 +1342,7 @@ ttf-hack
 ttf-inconsolata
 ttf-indic-otf
 ttf-iosevka
+ttf-jetbrains-mono
 ttf-liberation
 twitch-curses
 twitchy-git
