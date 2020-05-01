@@ -1,3 +1,10 @@
+;;;  -*- lexical-binding: t; -*-
+
+;; Font locking is the source of much slowness in Emacs. jit-lock-mode tries to
+;; defer fontification until the user is idle. This should help... in theory.
+(setq jit-lock-defer-time 0    ; only defer while processing input
+       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
+
 (setq user-full-name "Vlad Zarytovskii"
       user-mail-address "vzaritovsky@hotmail.com"
       doom-themes-treemacs-line-spacing 0
@@ -72,6 +79,8 @@
 ;;(use-package server
 ;;  :ensure nil
 ;;  :hook (after-init . server-mode))
+
+;; TODO: Refactor some of these to after! instead of use-package!
 
 (use-package! dap-mode
   :defer 2
@@ -177,7 +186,7 @@
   (setq company-frontends
     '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
   (set-company-backend! '(prog-mode)
-   '(:separate company-lsp company-tabnine company-files (company-dabbrev company-dabbrev-code) company-keywords company-yasnippet))
+   '(:separate company-lsp company-tabnine company-files company-keywords company-yasnippet))
   (setq +lsp-company-backend '(company-lsp :with company-tabnine :separate company-files company-keywords company-yasnippet)))
 
 (use-package! company-lsp
@@ -189,12 +198,11 @@
   (defun push-company-lsp-backends ()
    "Push company-lsp to the backends."
    (general-pushnew
-     '(company-lsp
-       company-tabnine
-       company-files
-       (company-dabbrev company-dabbrev-code)
-       company-keywords
-       company-yasnippet)
+    '(company-lsp
+      company-tabnine
+      company-files
+      company-keywords
+      company-yasnippet)
      company-backends))
   (defun company-lsp-init-h ()
     "Make sure that `company-capf' is disabled since it is incompatible with
@@ -214,7 +222,6 @@
 
 (use-package! company-tabnine
  :defer 2
- :ensure t
  :after company
  :config
  (setq company-tabnine--disable-next-transform nil)
@@ -227,10 +234,11 @@
  (defun my-company-tabnine (func &rest args)
   (when (eq (car args) 'candidates)
     (setq company-tabnine--disable-next-transform t))
-  (apply func args))
+  (apply func args)
 
   (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
-  (advice-add #'company-tabnine :around #'my-company-tabnine)) 
+  (advice-add #'company-tabnine :around #'my-company-tabnine)))
+
 
 (use-package! treemacs
  :defer 2
@@ -246,3 +254,19 @@
  :config
  (lsp-metals-treeview-enable t)
  (setq lsp-metals-treeview-show-when-views-received t))
+
+(use-package! highlight-blocks
+  :commands (highlight-blocks-mode highlight-blocks-now)
+  :config
+  (custom-theme-set-faces! nil
+    `(highlight-blocks-depth-1-face :background ,(doom-color 'base1))
+    `(highlight-blocks-depth-2-face :background ,(doom-lighten 'base1 0.03))
+    `(highlight-blocks-depth-3-face :background ,(doom-lighten 'base1 0.06))
+    `(highlight-blocks-depth-4-face :background ,(doom-lighten 'base1 0.09))
+    `(highlight-blocks-depth-5-face :background ,(doom-lighten 'base1 0.12))
+    `(highlight-blocks-depth-6-face :background ,(doom-lighten 'base1 0.15))
+    `(highlight-blocks-depth-7-face :background ,(doom-lighten 'base1 0.17))
+    `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
+    `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
+
+(use-package! highlight-escape-sequences :commands highlight-escape-sequences-mode)
