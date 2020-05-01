@@ -245,4 +245,4 @@
  :after treemacs
  :config
  (lsp-metals-treeview-enable t)
- (gsetq lsp-metals-treeview-show-when-views-received t))
+ (setq lsp-metals-treeview-show-when-views-received t))
