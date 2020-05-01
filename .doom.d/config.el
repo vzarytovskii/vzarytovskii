@@ -11,8 +11,8 @@
       doom-themes-treemacs-enable-variable-pitch t
       doom-themes-treemacs-theme "doom-colors"
       doom-modeline-height 22
-      doom-theme 'doom-tomorrow-night
-      doom-font (font-spec :family "monospace" :size 17)
+      doom-theme 'doom-nord
+      doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
 (require 'package)
@@ -56,8 +56,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-tomorrow-day)
-(setq theme-autoswitch/dark-theme 'doom-tomorrow-night)
+(setq theme-autoswitch/light-theme 'doom-nord-light)
+(setq theme-autoswitch/dark-theme 'doom-nord)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
