@@ -1,9 +1,9 @@
 (doom! :input
        :completion
        company           ; the ultimate code completion backend
-       helm              ; the *other* search engine for love and life
+       ;(helm +fuzzy +childframe)              ; the *other* search engine for love and life
        ;ido               ; the other *other* search engine...
-       ;ivy               ; a search engine for love and life
+       (ivy +fuzzy +childframe +prescient +icons)               ; a search engine for love and life
 
        :ui
        doom              ; what makes DOOM look the way it does
@@ -15,7 +15,7 @@
        neotree           ; a project drawer, like NERDTree for vim
        ophints           ; highlight the region an operation acts on
        (popup +defaults)   ; tame sudden yet inevitable temporary windows
-       treemacs          ; a project drawer, like neotree but cooler
+       (treemacs +treemacs-git-mode)          ; a project drawer, like neotree but cooler
        unicode           ; extended unicode support for various languages
        vc-gutter         ; vcs diff in the fringe
        vi-tilde-fringe   ; fringe tildes to mark beyond EOB
@@ -72,7 +72,7 @@
        csharp            ; unity, .NET, and mono shenanigans
        data              ; config/data formats
        emacs-lisp        ; drown in parentheses
-       fsharp           ; ML stands for Microsoft's Language
+       (fsharp +lsp)           ; ML stands for Microsoft's Language
        (haskell +lsp)  ; a language that's lazier than I am
        json              ; At least it ain't XML
        markdown          ; writing docs for people to ignore

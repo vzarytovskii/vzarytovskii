@@ -3,3 +3,5 @@
 	name = Vlad Zarytovskii
 [credential]
 	helper = store
+[github]
+	user = vzarytovskii

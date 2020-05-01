@@ -8,6 +8,12 @@
       doom-font (font-spec :family "monospace" :size 17)
       all-the-icons-scale-factor 1)
 
+(require 'package)
+(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "http://melpa.org/packages/")))
+(setq package-check-signature nil)
+(package-initialize)
+
 (setq org-directory "~/org/")
 (setq display-line-numbers-type 'relative)
 
@@ -111,11 +117,11 @@
     :definition #'lsp-ui-peek-find-definitions
     :references #'lsp-ui-peek-find-references)
   (setq lsp-ui-doc-enable t
-        lsp-ui-doc-header t
+        lsp-ui-doc-header nil
         lsp-ui-doc-border "green"
         lsp-ui-doc-max-height 30
         lsp-ui-doc-max-width 120
-        lsp-ui-doc-include-signature nil
+        lsp-ui-doc-include-signature t
         lsp-ui-doc-delay 0.0
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-use-childframe t
@@ -162,7 +168,81 @@
   :ensure t
   :after company
   :config
-  (setq company-idle-delay 0.5
+  (company-tng-configure-default)
+  (setq company-idle-delay 0.0
         company-minimum-prefix-length 2
         company-transformers nil
-        company-show-numbers t))
+        company-show-numbers nil)
+
+  (setq company-frontends
+    '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
+  (set-company-backend! '(prog-mode)
+   '(:separate company-lsp company-tabnine company-files (company-dabbrev company-dabbrev-code) company-keywords company-yasnippet))
+  (setq +lsp-company-backend '(company-lsp :with company-tabnine :separate company-files company-keywords company-yasnippet)))
+
+(use-package! company-lsp
+  :defer 2
+  :ensure t
+  :after company
+  :commands company-lsp
+  :preface
+  (defun push-company-lsp-backends ()
+   "Push company-lsp to the backends."
+   (general-pushnew
+     '(company-lsp
+       company-tabnine
+       company-files
+       (company-dabbrev company-dabbrev-code)
+       company-keywords
+       company-yasnippet)
+     company-backends))
+  (defun company-lsp-init-h ()
+    "Make sure that `company-capf' is disabled since it is incompatible with
+`company-lsp' (see lsp-mode#884)."
+    (if (not (bound-and-true-p company-mode))
+        (add-hook 'company-mode-hook #'company-lsp-init-h t t)
+      (setq-local company-backends
+                  (cons 'company-lsp
+                        (remq 'company-capf company-backends)))
+      (remove-hook 'company-mode-hook #'company-lsp-init-h t)))
+  :hook ((lsp-mode . company-lsp-init-h))
+  :init
+  (setq company-lsp-async               t
+        company-lsp-enable-recompletion t
+        company-lsp-enable-snippet      t
+        company-lsp-cache-candidates    'auto))
+
+(use-package! company-tabnine
+ :defer 2
+ :ensure t
+ :after company
+ :config
+ (setq company-tabnine--disable-next-transform nil)
+ (defun my-company--transform-candidates (func &rest args)
+  (if (not company-tabnine--disable-next-transform)
+    (apply func args)
+    (setq company-tabnine--disable-next-transform nil)
+    (car args)))
+
+ (defun my-company-tabnine (func &rest args)
+  (when (eq (car args) 'candidates)
+    (setq company-tabnine--disable-next-transform t))
+  (apply func args))
+
+  (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
+  (advice-add #'company-tabnine :around #'my-company-tabnine)) 
+
+(use-package! treemacs
+ :defer 2
+ :ensure t
+ :config
+ (treemacs-follow-mode 1))
+
+(use-package! lsp-treemacs
+ :defer 2
+ :ensure t
+ :commands lsp-treemacs-errors-list
+ :after treemacs
+ :config
+ (lsp-metals-treeview-enable t)
+ (gsetq lsp-metals-treeview-show-when-views-received t))
