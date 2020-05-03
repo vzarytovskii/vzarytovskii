@@ -375,11 +375,15 @@
   (add-to-list 'company-backends 'company-restclient))
 
 (use-package! dimmer
-  :defer t
-  :config
+  :hook (after-init . dimmer-mode)
+  :init
   (setq dimmer-fraction 0.50)
-  (dimmer-configure-which-key)
+  :config
   (dimmer-configure-magit)
   (dimmer-configure-posframe)
-  (dimmer-configure-helm)
   (dimmer-mode t))
+
+(use-package ace-window
+  :ensure t
+  :config
+  (global-set-key (kbd "<M-RET>") 'ace-window))
