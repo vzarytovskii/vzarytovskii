@@ -1,27 +1,45 @@
 #!/usr/bin/env zsh
 
+EMACS_BIN=/usr/bin/emacs
+EMACSCLIENT_BIN=/usr/bin/emacsclient
 
-visible_frames() {
-	emacsclient -a "" -e '(length (visible-frame-list))'
+function visible_frames() {
+	$EMACSCLIENT_BIN -a "" -e '(length (visible-frame-list))'
 }
 
-change_focus() {
-	emacsclient -n -e "(select-frame-set-input-focus (selected-frame))" > /dev/null
+function change_focus() {
+	$EMACSCLIENT_BIN -n -e "(select-frame-set-input-focus (selected-frame))" > /dev/null
 }
+
+function is_server_running() {
+  ps ux | grep "$EMACS_BIN --fg-daemon" | grep -v grep >/dev/null 
+}
+
+# Check for server running explicitly, as oppose to using -e/ALTERNATE_EDITOR, since we want to run differently depending whether it's terminal or not.
+if ! is_server_running; then
+  echo "\e[33mWARNING\e[m: No server is running." 
+  if [[ -t 1 ]]; then
+    $EMACS_BIN -nw "$@"
+  else
+    $EMACS_BIN "$@"
+  fi
+  exit 0
+fi
 
 # If launched from the terminal, spawn a new emacsclient (i.e. for magit, repl, mu4e, etc);
 if [[ -t 1 ]]; then
-	emacsclient -tqc "$@"
+	$EMACSCLIENT_BIN -tqc "$@"
 	exit 0
 fi
 
 # Try switching to emacs frame if minimized
 test "$(visible_frames)" -eq "1" && change_focus
 
-# If there's no frame, or we're running from terminal.
+# If there's no frame, or we're running not from terminal, spawn new emacsclient explicitly.
 if [[ "$(visible_frames)" -lt  "2" || ! -t 1 ]]; then
-	emacsclient -n -c "$@" && change_focus
+	$EMACSCLIENT_BIN -n -c "$@" && change_focus
 else # Something is running already, change focus.
-	change_focus
-	test  "$#" -ne "0" && emacsclient -n "$@"
+  # If some arguments have been passed, spawn new client.
+	test  "$#" -ne "0" && $EMACSCLIENT_BIN -n "$@"
+  change_focus
 fi

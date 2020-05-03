@@ -127,6 +127,7 @@ dhclient
 dhcpcd
 diffutils
 ding-libs
+direnv
 discord-cli-git
 djvulibre
 dmg2img

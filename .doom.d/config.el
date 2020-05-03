@@ -3,23 +3,28 @@
 ;; Font locking is the source of much slowness in Emacs. jit-lock-mode tries to
 ;; defer fontification until the user is idle. This should help... in theory.
 (setq jit-lock-defer-time 0    ; only defer while processing input
-       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
-
-(setq user-full-name "Vlad Zarytovskii"
-      user-mail-address "vzaritovsky@hotmail.com"
-      doom-themes-treemacs-line-spacing 0
-      doom-themes-treemacs-enable-variable-pitch t
-      doom-themes-treemacs-theme "doom-colors"
-      doom-modeline-height 22
-      doom-theme 'doom-nord
-      doom-font (font-spec :family "JetBrains Mono" :size 17)
-      all-the-icons-scale-factor 1)
+      jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
 
 (require 'package)
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")))
 (setq package-check-signature nil)
 (package-initialize)
+
+(setq +doom-dashboard-banner-padding '(0 . 0))
+(setq +doom-dashboard-functions
+      '(doom-dashboard-widget-shortmenu))
+
+(setq user-full-name "Vlad Zarytovskii"
+      user-mail-address "vzaritovsky@hotmail.com"
+      doom-themes-treemacs-line-spacing 0
+      doom-themes-treemacs-enable-variable-pitch t
+      doom-themes-treemacs-theme "doom-dark+"
+      doom-modeline-height 22
+      doom-theme 'doom-nord
+      doom-font (font-spec :family "JetBrains Mono" :size 17)
+      all-the-icons-scale-factor 1)
+
 
 (setq org-directory "~/org/")
 (setq display-line-numbers-type 'relative)
@@ -56,8 +61,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-nord-light)
-(setq theme-autoswitch/dark-theme 'doom-nord)
+(setq theme-autoswitch/light-theme 'doom-tomorrow-day)
+(setq theme-autoswitch/dark-theme 'doom-dark+)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
@@ -75,6 +80,70 @@
       (sync-theme-with-time)
       (run-with-timer 0 theme-autoswitch/sync-timer #'sync-theme-with-time))
   (load-theme theme-autoswitch/dark-theme t))
+
+(defun howdoi ()
+  "Call `howdoi' and ask for help"
+  (interactive)
+  (let* ((query (read-from-minibuffer "Query: "))
+         (docstring (shell-command-to-string (concat "howdoi " query)))
+         (buffer-name "*How do I do it?*"))
+    (when (get-buffer buffer-name)
+      (kill-buffer buffer-name))
+    (get-buffer-create buffer-name)
+    (with-current-buffer buffer-name (insert docstring))
+    (switch-to-buffer-other-window buffer-name)
+    (special-mode)))
+
+(defun restclient ()
+  "Open the restclient buffer."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*restclient*")
+    (restclient-mode)
+    (pop-to-buffer (current-buffer))))
+
+(defun toggle-window-split ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer)))
+         (next-win-buffer (window-buffer (next-window)))
+         (this-win-edges (window-edges (selected-window)))
+         (next-win-edges (window-edges (next-window)))
+         (this-win-2nd (not (and (<= (car this-win-edges))))
+                     (car next-win-edges)
+                     (<= (cadr this-win-edges))
+                     (cadr next-win-edges))
+         (splitter
+          (if (= (car this-win-edges))
+             (car (window-edges (next-window))))
+          'split-window-horizontally)
+        'split-window-vertically)
+    (delete-other-windows)
+    (let ((first-win (selected-window)))
+      (funcall splitter)
+      (if this-win-2nd (other-window 1))
+      (set-window-buffer (selected-window) this-win-buffer)
+      (set-window-buffer (next-window) next-win-buffer)
+      (select-window first-win)
+      (if this-win-2nd (other-window 1)))))
+
+(global-set-key (kbd "C-x |") 'toggle-window-split)
+
+(defun vsplit-last-buffer ()
+  "Split the window vertically and display the previous buffer."
+  (interactive)
+  (split-window-vertically)
+  (other-window 1 nil)
+  (switch-to-next-buffer))
+
+(defun hsplit-last-buffer ()
+  "Split the window horizontally and display the previous buffer."
+  (interactive)
+  (split-window-horizontally)
+  (other-window 1 nil)
+  (switch-to-next-buffer))
+
+(global-set-key (kbd "C-x 2") 'vsplit-last-buffer)
+(global-set-key (kbd "C-x 3") 'hsplit-last-buffer)
 
 ;;(use-package server
 ;;  :ensure nil
@@ -157,6 +226,8 @@
   :after magit
   :hook (add-hook 'git-commit-setup-hook #'git-commit-turn-on-flyspell)
   :config
+  (setq magit-diff-refine-hunk t)
+  (setq magit-commit-arguments '("--verbose"))
   (add-to-list 'magit-section-initial-visibility-alist '(unpulled . show))
   (add-to-list 'magit-section-initial-visibility-alist '(unpushed . show))
   (add-to-list 'magit-section-initial-visibility-alist '(untracked . show))
@@ -184,9 +255,9 @@
         company-show-numbers nil)
 
   (setq company-frontends
-    '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
+        '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
   (set-company-backend! '(prog-mode)
-   '(:separate company-lsp company-tabnine company-files company-keywords company-yasnippet))
+    '(:separate company-lsp company-tabnine company-files company-keywords company-yasnippet))
   (setq +lsp-company-backend '(company-lsp :with company-tabnine :separate company-files company-keywords company-yasnippet)))
 
 (use-package! company-lsp
@@ -196,13 +267,13 @@
   :commands company-lsp
   :preface
   (defun push-company-lsp-backends ()
-   "Push company-lsp to the backends."
-   (general-pushnew
-    '(company-lsp
-      company-tabnine
-      company-files
-      company-keywords
-      company-yasnippet)
+    "Push company-lsp to the backends."
+    (general-pushnew
+     '(company-lsp
+       company-tabnine
+       company-files
+       company-keywords
+       company-yasnippet)
      company-backends))
   (defun company-lsp-init-h ()
     "Make sure that `company-capf' is disabled since it is incompatible with
@@ -221,39 +292,49 @@
         company-lsp-cache-candidates    'auto))
 
 (use-package! company-tabnine
- :defer 2
- :after company
- :config
- (setq company-tabnine--disable-next-transform nil)
- (defun my-company--transform-candidates (func &rest args)
-  (if (not company-tabnine--disable-next-transform)
+  :defer 2
+  :after company
+  :config
+  (setq company-tabnine--disable-next-transform nil)
+  (defun my-company--transform-candidates (func &rest args)
+    (if (not company-tabnine--disable-next-transform)
+        (apply func args)
+      (setq company-tabnine--disable-next-transform nil)
+      (car args)))
+
+  (defun my-company-tabnine (func &rest args)
+    (when (eq (car args) 'candidates)
+      (setq company-tabnine--disable-next-transform t))
     (apply func args)
-    (setq company-tabnine--disable-next-transform nil)
-    (car args)))
 
- (defun my-company-tabnine (func &rest args)
-  (when (eq (car args) 'candidates)
-    (setq company-tabnine--disable-next-transform t))
-  (apply func args)
-
-  (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
-  (advice-add #'company-tabnine :around #'my-company-tabnine)))
+    (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
+    (advice-add #'company-tabnine :around #'my-company-tabnine)))
 
 
 (use-package! treemacs
- :defer 2
- :ensure t
- :config
- (treemacs-follow-mode 1))
+  :defer 2
+  :ensure t
+  :config
+  (treemacs-follow-mode 1))
 
 (use-package! lsp-treemacs
- :defer 2
- :ensure t
- :commands lsp-treemacs-errors-list
- :after treemacs
- :config
- (lsp-metals-treeview-enable t)
- (setq lsp-metals-treeview-show-when-views-received t))
+  :defer 2
+  :ensure t
+  :commands lsp-treemacs-errors-list
+  :after treemacs
+  :config
+  (lsp-metals-treeview-enable t)
+  (setq lsp-metals-treeview-show-when-views-received t))
+
+(use-package highlight-symbol
+  :delight highlight-symbol-mode
+  :hook
+  ((highlight-symbol-mode . highlight-symbol-nav-mode)
+   (prog-mode . highlight-symbol-mode))
+  :custom
+  (highlight-symbol-highlight-single-occurrence nil)
+  (highlight-symbol-idle-delay 0.25)
+  (highlight-symbol-on-navigation-p t))
 
 (use-package! highlight-blocks
   :commands (highlight-blocks-mode highlight-blocks-now)
@@ -269,4 +350,36 @@
     `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
     `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
 
-(use-package! highlight-escape-sequences :commands highlight-escape-sequences-mode)
+(use-package! highlight-escape-sequences
+  :commands highlight-escape-sequences-mode
+  :config
+  (hes-mode t))
+
+;; Social & apps:
+(use-package! twittering-mode
+  :defer t
+  :config
+  (setq twittering-timer-interval 3600
+        twittering-icon-mode t
+        twittering-use-master-password t))
+
+(use-package! restclient
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode)))
+
+(use-package! company-restclient
+  :ensure t
+  :after company
+  :config
+  (add-to-list 'company-backends 'company-restclient))
+
+(use-package! dimmer
+  :defer t
+  :config
+  (setq dimmer-fraction 0.50)
+  (dimmer-configure-which-key)
+  (dimmer-configure-magit)
+  (dimmer-configure-posframe)
+  (dimmer-configure-helm)
+  (dimmer-mode t))
