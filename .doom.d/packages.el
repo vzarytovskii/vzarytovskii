@@ -7,3 +7,4 @@
    :recipe (:host github :repo "hlissner/highlight-escape-sequences"))
 (package! company-tabnine)
 (package! dimmer)
+(package! focus)

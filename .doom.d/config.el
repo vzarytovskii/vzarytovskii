@@ -5,6 +5,16 @@
 (setq jit-lock-defer-time 0    ; only defer while processing input
       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
 
+(prefer-coding-system 'utf-8)
+(setq locale-coding-system 'utf-8)
+(set-language-environment "UTF-8")
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
+
+(setq bidi-paragraph-direction 'left-to-right)
+
 (require 'package)
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")))
@@ -144,6 +154,21 @@
 
 (global-set-key (kbd "C-x 2") 'vsplit-last-buffer)
 (global-set-key (kbd "C-x 3") 'hsplit-last-buffer)
+
+(defun smarter-move-beginning-of-line (arg)
+  "Move depending on ARG to beginning of visible line or not.
+  From https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/."
+  (interactive "^p")
+  (setq arg (or arg 1))
+  (when (/= arg 1)
+    (let ((line-move-visual nil))
+      (forward-line (1- arg))))
+  (let ((orig-point (point)))
+    (back-to-indentation)
+    (when (= orig-point (point))
+      (move-beginning-of-line 1))))
+
+(global-set-key [remap move-beginning-of-line] 'smarter-move-beginning-of-line)
 
 ;;(use-package server
 ;;  :ensure nil
@@ -387,3 +412,11 @@
   :ensure t
   :config
   (global-set-key (kbd "<M-RET>") 'ace-window))
+
+(use-package! focus
+  :hook (prog-mode . focus-mode)
+  :defer t
+  :config
+  (add-to-list 'focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence)))
+  (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))
+  (focus-mode t))
