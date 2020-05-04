@@ -29,9 +29,8 @@
       user-mail-address "vzaritovsky@hotmail.com"
       doom-themes-treemacs-line-spacing 0
       doom-themes-treemacs-enable-variable-pitch t
-      doom-themes-treemacs-theme "doom-dark+"
       doom-modeline-height 22
-      doom-theme 'doom-nord
+      doom-theme 'doom-one
       doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
@@ -71,8 +70,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-tomorrow-day)
-(setq theme-autoswitch/dark-theme 'doom-dark+)
+(setq theme-autoswitch/light-theme 'doom-one-light)
+(setq theme-autoswitch/dark-theme 'doom-one)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
@@ -115,17 +114,17 @@
   (interactive)
   (if (= (count-windows) 2)
       (let* ((this-win-buffer (window-buffer)))
-         (next-win-buffer (window-buffer (next-window)))
-         (this-win-edges (window-edges (selected-window)))
-         (next-win-edges (window-edges (next-window)))
-         (this-win-2nd (not (and (<= (car this-win-edges))))
-                     (car next-win-edges)
-                     (<= (cadr this-win-edges))
-                     (cadr next-win-edges))
-         (splitter
-          (if (= (car this-win-edges))
+        (next-win-buffer (window-buffer (next-window)))
+        (this-win-edges (window-edges (selected-window)))
+        (next-win-edges (window-edges (next-window)))
+        (this-win-2nd (not (and (<= (car this-win-edges))))
+                      (car next-win-edges)
+                      (<= (cadr this-win-edges))
+                      (cadr next-win-edges))
+        (splitter
+         (if (= (car this-win-edges))
              (car (window-edges (next-window))))
-          'split-window-horizontally)
+         'split-window-horizontally)
         'split-window-vertically)
     (delete-other-windows)
     (let ((first-win (selected-window)))
@@ -187,6 +186,9 @@
 (use-package! lsp-mode
   :defer 2
   :ensure t
+  :hook ((lsp-after-open . lsp-enable-imenu)
+         (lsp-after-open . lsp-ui-mode)
+         (lsp-mode . lsp-enable-which-key-integration))
   :config
   (setq lsp-navigation 'both
         lsp-signature-render-all t
@@ -197,11 +199,13 @@
         lsp-enable-on-type-formatting t
         lsp-enable-file-watchers t
         lsp-enable-xref t
+        lsp-prefer-capf t
         lsp-semantic-highlighting t
-        lsp-eldoc-enable-hover t
+        lsp-eldoc-enable-hover nil
         lsp-eldoc-enable-signature-help nil
         lsp-document-sync-method 'incremental
         lsp-signature-render-all t)
+
   :custom
   (lsp-auto-guess-root t)
   (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
@@ -214,12 +218,11 @@
   :defer 2
   :ensure t
   :after lsp-mode
-  :hook (add-hook 'lsp-ui-mode-hook #'+lsp/dim-lsp-sideline)
   :config
   (set-lookup-handlers! 'lsp-ui-mode :async t
     :definition #'lsp-ui-peek-find-definitions
     :references #'lsp-ui-peek-find-references)
-  (setq lsp-ui-doc-enable t
+  (setq lsp-ui-doc-enable nil
         lsp-ui-doc-header nil
         lsp-ui-doc-border "green"
         lsp-ui-doc-max-height 30
@@ -228,14 +231,15 @@
         lsp-ui-doc-delay 0.0
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-use-childframe t
-        lsp-ui-doc-use-webkit t
+        lsp-ui-doc-use-webkit nil
         lsp-ui-flycheck-enable t
         lsp-ui-peek-enable t
         lsp-ui-peek-fontify 'on-demand
         lsp-ui-peek-peek-height 20
         lsp-ui-peek-list-width 50
         lsp-ui-sideline-enable t
-        lsp-ui-sideline-show-symbol t
+        lsp-ui-sideline-update-mode 'line
+        lsp-ui-sideline-show-symbol nil
         lsp-ui-sideline-show-diagnostics t
         lsp-ui-sideline-show-hover t
         lsp-ui-sideline-show-code-actions t
@@ -300,21 +304,13 @@
        company-keywords
        company-yasnippet)
      company-backends))
-  (defun company-lsp-init-h ()
-    "Make sure that `company-capf' is disabled since it is incompatible with
-`company-lsp' (see lsp-mode#884)."
-    (if (not (bound-and-true-p company-mode))
-        (add-hook 'company-mode-hook #'company-lsp-init-h t t)
-      (setq-local company-backends
-                  (cons 'company-lsp
-                        (remq 'company-capf company-backends)))
-      (remove-hook 'company-mode-hook #'company-lsp-init-h t)))
-  :hook ((lsp-mode . company-lsp-init-h))
   :init
   (setq company-lsp-async               t
         company-lsp-enable-recompletion t
         company-lsp-enable-snippet      t
-        company-lsp-cache-candidates    'auto))
+        company-lsp-cache-candidates    'auto)
+  :config
+  (push-company-lsp-backends))
 
 (use-package! company-tabnine
   :defer 2
@@ -416,6 +412,7 @@
 (use-package! focus
   :hook (prog-mode . focus-mode)
   :defer t
+  :disabled t
   :config
   (add-to-list 'focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence)))
   (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))

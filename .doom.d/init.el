@@ -75,9 +75,9 @@
        (haskell +lsp)  ; a language that's lazier than I am
        json              ; At least it ain't XML
        markdown          ; writing docs for people to ignore
-       org               ; organize your plain life in plain text
+       (org +brain +journal +jupyter +noter +pandoc +pomodoro +present +roam)               ; organize your plain life in plain text
        plantuml          ; diagrams for confusing people more
-       (python +lsp)            ; beautiful is better than ugly
+       (python +lsp +pyenv)            ; beautiful is better than ugly
        rest              ; Emacs as a REST client
        sh                ; she sells {ba,z,fi}sh shells on the C xor
        yaml              ; JSON, but readable
