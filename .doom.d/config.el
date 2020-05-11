@@ -344,7 +344,12 @@
   :commands lsp-treemacs-errors-list
   :after treemacs
   :config
+  (map! :map lsp-command-map
+        "gs" #'lsp-treemacs-symbols
+        "gR" #'lsp-treemacs-references)
+
   (lsp-metals-treeview-enable t)
+  (lsp-treemacs-sync-mode 1)
   (setq lsp-metals-treeview-show-when-views-received t))
 
 (use-package highlight-symbol
