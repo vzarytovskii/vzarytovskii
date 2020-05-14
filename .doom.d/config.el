@@ -416,23 +416,48 @@
   (setq org-todo-keywords
         '((sequence
            "TODO(t)"
-           "WAITING(w@/!)"
+           "INPROGRESS(i@/!)"
            "|"
-           "DONE(d!)"
-           "CANCELLED(c@/!)")
+           "DONE(d!)")
           (sequence
            "[ ](T)"
-           "[-](S)"
-           "[?](W)"
+           "[-](I)"
            "|"
            "[X](D)")))
   (setq org-capture-templates
-        '(("t" "Task" entry (file "tasks.org")
-           "* TODO %^{taskname}%? %^{CATEGORY}p
+        '(("t" "TODO" entry (file "tasks.org")
+           "* TODO [#%^{priority}] %^{taskname}%? %^{CATEGORY}p
 :PROPERTIES:
 :CREATED: %U
 :END:
-"))))
+" :empty-lines 1)
+
+          ("s" "Scheduled TODO" entry (file "tasks.org")
+           "* TODO %^{taskname}%? %^{CATEGORY}p
+SCHEDULED: %^t
+:PROPERTIES:
+:CREATED: %U
+:END:
+" :empty-lines 1)
+
+          ("d" "Deadline TODO" entry (file "tasks.org")
+           "* TODO %^{taskname}%? %^{CATEGORY}p
+DEADLINE: %^t
+:PROPERTIES:
+:CREATED: %U
+:END:
+" :empty-lines 1)
+
+          ("p" "Priority TODO" entry (file "tasks.org")
+           "* TODO [#A] %^{taskname}%? %^{CATEGORY}p
+DEADLINE: %^t
+:PROPERTIES:
+:CREATED: %U
+:END:
+" :empty-lines 1)
+
+          ("n" "Note" entry (file "notes.org")
+           "* NOTE %?\n%U" :empty-lines 1))))
 
 (after! org-agenda
   (setq org-agenda-span 'week)
