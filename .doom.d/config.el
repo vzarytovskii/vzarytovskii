@@ -286,8 +286,8 @@
   (setq company-frontends
         '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
   (set-company-backend! '(prog-mode)
-    '(:separate company-lsp company-tabnine company-files company-keywords company-yasnippet))
-  (setq +lsp-company-backend '(company-lsp :with company-tabnine :separate company-files company-keywords company-yasnippet)))
+    '(:separate company-lsp company-dabbrev company-files company-keywords company-yasnippet))
+  (setq +lsp-company-backend '(company-lsp :with company-dabbrev :separate company-files company-keywords company-yasnippet)))
 
 (use-package! company-lsp
   :defer 2
@@ -299,7 +299,7 @@
     "Push company-lsp to the backends."
     (general-pushnew
      '(company-lsp
-       company-tabnine
+       company-dabbrev
        company-files
        company-keywords
        company-yasnippet)
@@ -311,26 +311,6 @@
         company-lsp-cache-candidates    'auto)
   :config
   (push-company-lsp-backends))
-
-(use-package! company-tabnine
-  :defer 2
-  :after company
-  :config
-  (setq company-tabnine--disable-next-transform nil)
-  (defun my-company--transform-candidates (func &rest args)
-    (if (not company-tabnine--disable-next-transform)
-        (apply func args)
-      (setq company-tabnine--disable-next-transform nil)
-      (car args)))
-
-  (defun my-company-tabnine (func &rest args)
-    (when (eq (car args) 'candidates)
-      (setq company-tabnine--disable-next-transform t))
-    (apply func args)
-
-    (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
-    (advice-add #'company-tabnine :around #'my-company-tabnine)))
-
 
 (use-package! treemacs
   :defer 2
