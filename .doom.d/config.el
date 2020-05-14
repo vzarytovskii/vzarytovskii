@@ -402,3 +402,64 @@
   (add-to-list 'focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence)))
   (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))
   (focus-mode t))
+
+(load-library "find-lisp")
+(after! org
+  (remove-hook 'org-mode-hook #'org-superstar-mode)
+  (add-to-list 'org-modules 'org-habit)
+  (add-to-list 'org-modules 'org-id)
+  (setq org-use-property-inheritance t ; We like to inhert properties from their parents
+      org-catch-invisible-edits 'smart) ; Catch invisible edits
+  (setq org-hide-leading-stars nil
+        org-startup-indented nil
+        org-adapt-indentation nil)
+  (setq org-todo-keywords
+        '((sequence
+           "TODO(t)"
+           "WAITING(w@/!)"
+           "|"
+           "DONE(d!)"
+           "CANCELLED(c@/!)")
+          (sequence
+           "[ ](T)"
+           "[-](S)"
+           "[?](W)"
+           "|"
+           "[X](D)")))
+  (setq org-capture-templates
+        '(("t" "Task" entry (file "tasks.org")
+           "* TODO %^{taskname}%? %^{CATEGORY}p
+:PROPERTIES:
+:CREATED: %U
+:END:
+"))))
+
+(after! org-agenda
+  (setq org-agenda-span 'week)
+  (setq org-agenda-start-on-weekday 1)
+  (setq org-agenda-block-separator "")
+  (setq org-agenda-start-with-log-mode '(clock))
+  (setq org-agenda-files
+                  (find-lisp-find-files "~/org/" "\.org$"))
+  (setq org-agenda-files '("~/org/tasks.org"))
+  (setq org-agenda-diary-file "~/.org/diary.org"
+                  org-agenda-dim-blocked-tasks t
+                  org-agenda-use-time-grid t
+                  org-agenda-hide-tags-regexp ":\\w+:"
+                  org-agenda-compact-blocks t
+                  org-agenda-block-separator nil
+                  org-agenda-skip-scheduled-if-done t
+                  org-agenda-skip-deadline-if-done t
+                  org-enforce-todo-checkbox-dependencies nil
+                  org-habit-show-habits t)
+  (setq org-agenda-custom-commands
+        '((" " "Agenda"
+           ((agenda ""
+                    ((org-agenda-span 'day)
+                     (org-agenda-start-day nil)
+                     (org-deadline-warning-days 365)))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Tasks")
+                   (org-agenda-files '("~/org/tasks.org")))))))))
+(after! evil-org
+  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
