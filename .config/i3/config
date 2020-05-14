@@ -250,12 +250,13 @@ client.background       #FFFFFF
 bar {
   status_command i3status
   position top
-  mode dock
+  mode hide
   tray_output none
   tray_padding 0
   workspace_buttons yes
   #strip_workspace_numbers no
   strip_workspace_name no
+  font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
   colors {
     background #000000
     statusline #FFFFFF
