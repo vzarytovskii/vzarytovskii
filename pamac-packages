@@ -1292,6 +1292,7 @@ startup-notification
 steam-manjaro
 st-git
 stoken
+strace
 streamlink-git
 streamlink-twitch-gui
 sudo
@@ -1381,6 +1382,7 @@ virglrenderer
 virt-install
 virt-manager
 vlc
+vmaf
 volume_key
 vpnc
 vte3
@@ -1415,6 +1417,7 @@ wxgtk-common
 x264
 x265
 xapian-core
+xapps
 xbindkeys
 xbitmaps
 xcb-proto
@@ -1477,6 +1480,7 @@ xorg-xwininfo
 xosd-ex
 xsel
 xterm
+xtitle
 xvidcore
 xz
 yad
