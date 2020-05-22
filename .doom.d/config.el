@@ -2,6 +2,12 @@
 
 ;; Font locking is the source of much slowness in Emacs. jit-lock-mode tries to
 ;; defer fontification until the user is idle. This should help... in theory.
+;; TODO: Refactor some of use-package! to after! instead of use-package!
+;; TODO: Ensure that packages are loaded deferred.
+;; TODO: Reorder, sort, and join some settings into blocks by category.
+;; TODO: Move some of these to separate modules, grouped by category.
+
+
 (setq jit-lock-defer-time 0    ; only defer while processing input
       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
 
@@ -113,27 +119,27 @@
 (defun toggle-window-split ()
   (interactive)
   (if (= (count-windows) 2)
-      (let* ((this-win-buffer (window-buffer)))
-        (next-win-buffer (window-buffer (next-window)))
-        (this-win-edges (window-edges (selected-window)))
-        (next-win-edges (window-edges (next-window)))
-        (this-win-2nd (not (and (<= (car this-win-edges))))
-                      (car next-win-edges)
-                      (<= (cadr this-win-edges))
-                      (cadr next-win-edges))
-        (splitter
-         (if (= (car this-win-edges))
-             (car (window-edges (next-window))))
-         'split-window-horizontally)
-        'split-window-vertically)
-    (delete-other-windows)
-    (let ((first-win (selected-window)))
-      (funcall splitter)
-      (if this-win-2nd (other-window 1))
-      (set-window-buffer (selected-window) this-win-buffer)
-      (set-window-buffer (next-window) next-win-buffer)
-      (select-window first-win)
-      (if this-win-2nd (other-window 1)))))
+      (let* ((this-win-buffer (window-buffer))
+             (next-win-buffer (window-buffer (next-window)))
+             (this-win-edges (window-edges (selected-window)))
+             (next-win-edges (window-edges (next-window)))
+             (this-win-2nd (not (and (<= (car this-win-edges)
+                                         (car next-win-edges))
+                                     (<= (cadr this-win-edges)
+                                         (cadr next-win-edges)))))
+             (splitter
+              (if (= (car this-win-edges)
+                     (car (window-edges (next-window))))
+                  'split-window-horizontally
+                'split-window-vertically)))
+        (delete-other-windows)
+        (let ((first-win (selected-window)))
+          (funcall splitter)
+          (if this-win-2nd (other-window 1))
+          (set-window-buffer (selected-window) this-win-buffer)
+          (set-window-buffer (next-window) next-win-buffer)
+          (select-window first-win)
+          (if this-win-2nd (other-window 1))))))
 
 (global-set-key (kbd "C-x |") 'toggle-window-split)
 
@@ -154,6 +160,38 @@
 (global-set-key (kbd "C-x 2") 'vsplit-last-buffer)
 (global-set-key (kbd "C-x 3") 'hsplit-last-buffer)
 
+(defun duplicate-current-line-or-region (arg)
+  "Duplicates the current line or region ARG times.
+If there's no region, the current line will be duplicated."
+  (interactive "p")
+  (save-excursion
+    (if (region-active-p)
+        (duplicate-region arg)
+      (duplicate-current-line arg))))
+
+(defun duplicate-region (num &optional start end)
+  "Duplicates the region bounded by START and END NUM times.
+If no START and END is provided, the current region-beginning
+region-end is used."
+  (interactive "p")
+  (let* ((start (or start (region-beginning)))
+         (end (or end (region-end)))
+         (region (buffer-substring start end)))
+    (goto-char start)
+    (dotimes (i num)
+      (insert region))))
+
+(defun duplicate-current-line (num)
+  "Duplicate the current line NUM times."
+  (interactive "p")
+  (when (eq (point-at-eol) (point-max))
+    (goto-char (point-max))
+    (newline)
+    (forward-char -1))
+  (duplicate-region num (point-at-bol) (1+ (point-at-eol))))
+
+(global-set-key (kbd "C-c 2") 'duplicate-current-line-or-region)
+
 (defun smarter-move-beginning-of-line (arg)
   "Move depending on ARG to beginning of visible line or not.
   From https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/."
@@ -169,11 +207,50 @@
 
 (global-set-key [remap move-beginning-of-line] 'smarter-move-beginning-of-line)
 
-;;(use-package server
-;;  :ensure nil
-;;  :hook (after-init . server-mode))
+(eval-after-load "enriched"
+  '(defun enriched-decode-display-prop (start end &optional param)
+     (list start end)))
 
-;; TODO: Refactor some of these to after! instead of use-package!
+(use-package! async
+  :ensure t
+  :defer t
+  :init
+  (dired-async-mode 1)
+  (async-bytecomp-package-mode 1)
+  :custom (async-bytecomp-allowed-packages '(all)))
+
+(use-package emacs
+  :ensure nil
+  :config
+  (setq compilation-always-kill t
+        compilation-ask-about-save nil
+        compilation-context-lines 10
+        compilation-window-height 100
+        compilation-scroll-output 'first-error))
+
+(defvar file-name-handler-alist-old file-name-handler-alist)
+
+(setq-default gc-cons-threshold 402653184
+              file-name-handler-alist nil
+              gc-cons-percentage 0.6
+              auto-window-vscroll nil
+              message-log-max 16384)
+
+(add-hook 'after-init-hook
+          `(lambda ()
+             (setq file-name-handler-alist file-name-handler-alist-old
+                   gc-cons-threshold 800000
+                   gc-cons-percentage 0.1)
+             (garbage-collect)) t)
+(setq inhibit-compacting-font-caches t)
+
+(use-package gcmh
+  :ensure t
+  :disabled t
+  :init
+  (setq gcmh-verbose nil)
+  :config
+  (gcmh-mode 1))
 
 (use-package! dap-mode
   :defer 2
@@ -343,6 +420,7 @@
   (highlight-symbol-on-navigation-p t))
 
 (use-package! highlight-blocks
+  :defer 2
   :commands (highlight-blocks-mode highlight-blocks-now)
   :config
   (custom-theme-set-faces! nil
@@ -357,9 +435,21 @@
     `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
 
 (use-package! highlight-escape-sequences
+  :defer 2
   :commands highlight-escape-sequences-mode
   :config
   (hes-mode t))
+
+(use-package! undo-tree
+  :defer 2
+  :config
+  (global-undo-tree-mode 1)
+
+  ;; make ctrl-z undo
+  (global-set-key (kbd "C-z") 'undo)
+  ;; make ctrl-Z redo
+  (defalias 'redo 'undo-tree-redo)
+  (global-set-key (kbd "C-S-z") 'redo))
 
 ;; Social & apps:
 (use-package! twittering-mode
@@ -371,16 +461,19 @@
 
 (use-package! restclient
   :ensure t
+  :defer 2
   :config
   (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode)))
 
 (use-package! company-restclient
   :ensure t
+  :defer 2
   :after company
   :config
   (add-to-list 'company-backends 'company-restclient))
 
 (use-package! dimmer
+  :defer 2
   :hook (after-init . dimmer-mode)
   :init
   (setq dimmer-fraction 0.50)
@@ -390,13 +483,15 @@
   (dimmer-mode t))
 
 (use-package ace-window
+  :defer 2
   :ensure t
   :config
   (global-set-key (kbd "<M-RET>") 'ace-window))
 
 (use-package! focus
   :hook (prog-mode . focus-mode)
-  :defer t
+  :defer 2
+
   :disabled t
   :config
   (add-to-list 'focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence)))

@@ -8,3 +8,4 @@
 (package! company-tabnine)
 (package! dimmer)
 (package! focus)
+(package! undo-tree)
