@@ -6,7 +6,7 @@
 ;; TODO: Ensure that packages are loaded deferred.
 ;; TODO: Reorder, sort, and join some settings into blocks by category.
 ;; TODO: Move some of these to separate modules, grouped by category.
-
+;; TODO: Look at existing literate configs and how they're organized, e.g.: https://github.com/dangirsh/.doom.d
 
 (setq jit-lock-defer-time 0    ; only defer while processing input
       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
@@ -72,6 +72,24 @@
 
 (set-popup-rule! "*backtrace\*"      :size 0.5            :side 'bottom :select t :quit t :modeline t)
 (set-popup-rule! "*doom:scratch"     :size 0.25 :vslot -4 :side 'bottom :select t :quit t :ttl nil :modeline nil)
+
+;; Thin grey line separating windows
+(set-face-background 'vertical-border "grey")
+(set-face-foreground 'vertical-border (face-background 'vertical-border))
+
+(use-package! doom-themes
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t      ; if nil, bold is universally disabled
+        doom-themes-enable-italic t)   ; if nil, italics is universally disabled
+  ;; (load-theme 'doom-acario-dark t)
+  ;; (load-theme 'doom-one-light t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
 
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
@@ -251,6 +269,26 @@ region-end is used."
   (setq gcmh-verbose nil)
   :config
   (gcmh-mode 1))
+
+(use-package! multiple-cursors
+  :init
+  (setq mc/always-run-for-all t)
+  :config
+  (add-to-list 'mc/unsupported-minor-modes 'lispy-mode)
+  :bind (("C-S-c" . mc/edit-lines)
+         ("C-M-g" . mc/mark-all-like-this-dwim)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-)" . mc/skip-to-next-like-this)
+         ("C-M->" . mc/skip-to-next-like-this)
+         ("C-(" . mc/skip-to-previous-like-this)
+         ("C-M-<" . mc/skip-to-previous-like-this)))
+
+
+(use-package! iedit
+  :init
+  (map! "C-;" 'company-complete)
+  (map! "M-i" 'iedit-mode))
 
 (use-package! dap-mode
   :defer 2
@@ -442,22 +480,26 @@ region-end is used."
 
 (use-package! undo-tree
   :defer 2
+  :init
+  (setq undo-tree-auto-save-history t
+        undo-tree-visualizer-diff t
+        undo-tree-visualizer-timestamps t)
   :config
+  (progn
+    (defun my/undo-tree-restore-default ()
+      (setq undo-tree-visualizer-diff t))
+    (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
   (global-undo-tree-mode 1)
-
   ;; make ctrl-z undo
   (global-set-key (kbd "C-z") 'undo)
   ;; make ctrl-Z redo
   (defalias 'redo 'undo-tree-redo)
   (global-set-key (kbd "C-S-z") 'redo))
 
-;; Social & apps:
-(use-package! twittering-mode
-  :defer t
-  :config
-  (setq twittering-timer-interval 3600
-        twittering-icon-mode t
-        twittering-use-master-password t))
+(use-package! deadgrep
+              :if (executable-find "rg")
+              :init
+              (map! "M-s" #'deadgrep))
 
 (use-package! restclient
   :ensure t
@@ -504,7 +546,7 @@ region-end is used."
   (add-to-list 'org-modules 'org-habit)
   (add-to-list 'org-modules 'org-id)
   (setq org-use-property-inheritance t ; We like to inhert properties from their parents
-      org-catch-invisible-edits 'smart) ; Catch invisible edits
+        org-catch-invisible-edits 'smart) ; Catch invisible edits
   (setq org-hide-leading-stars nil
         org-startup-indented nil
         org-adapt-indentation nil)
@@ -560,18 +602,18 @@ DEADLINE: %^t
   (setq org-agenda-block-separator "")
   (setq org-agenda-start-with-log-mode '(clock))
   (setq org-agenda-files
-                  (find-lisp-find-files "~/org/" "\.org$"))
+        (find-lisp-find-files "~/org/" "\.org$"))
   (setq org-agenda-files '("~/org/tasks.org"))
   (setq org-agenda-diary-file "~/.org/diary.org"
-                  org-agenda-dim-blocked-tasks t
-                  org-agenda-use-time-grid t
-                  org-agenda-hide-tags-regexp ":\\w+:"
-                  org-agenda-compact-blocks t
-                  org-agenda-block-separator nil
-                  org-agenda-skip-scheduled-if-done t
-                  org-agenda-skip-deadline-if-done t
-                  org-enforce-todo-checkbox-dependencies nil
-                  org-habit-show-habits t)
+        org-agenda-dim-blocked-tasks t
+        org-agenda-use-time-grid t
+        org-agenda-hide-tags-regexp ":\\w+:"
+        org-agenda-compact-blocks t
+        org-agenda-block-separator nil
+        org-agenda-skip-scheduled-if-done t
+        org-agenda-skip-deadline-if-done t
+        org-enforce-todo-checkbox-dependencies nil
+        org-habit-show-habits t)
   (setq org-agenda-custom-commands
         '((" " "Agenda"
            ((agenda ""

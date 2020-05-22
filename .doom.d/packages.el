@@ -9,3 +9,5 @@
 (package! dimmer)
 (package! focus)
 (package! undo-tree)
+(package! deadgrep)
+(package! iedit)
