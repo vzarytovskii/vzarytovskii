@@ -36,7 +36,7 @@
       doom-themes-treemacs-line-spacing 0
       doom-themes-treemacs-enable-variable-pitch t
       doom-modeline-height 22
-      doom-theme 'doom-one
+      doom-theme 'doom-dracula
       doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
@@ -94,8 +94,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-one-light)
-(setq theme-autoswitch/dark-theme 'doom-one)
+(setq theme-autoswitch/light-theme 'doom-tomorrow-day)
+(setq theme-autoswitch/dark-theme 'doom-dracula)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
