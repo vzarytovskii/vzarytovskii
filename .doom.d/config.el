@@ -36,7 +36,7 @@
       doom-themes-treemacs-line-spacing 0
       doom-themes-treemacs-enable-variable-pitch t
       doom-modeline-height 22
-      doom-theme 'doom-dracula
+      doom-theme 'doom-one
       doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
@@ -94,8 +94,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-tomorrow-day)
-(setq theme-autoswitch/dark-theme 'doom-dracula)
+(setq theme-autoswitch/light-theme 'doom-one-light)
+(setq theme-autoswitch/dark-theme 'doom-one)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
@@ -299,11 +299,11 @@ region-end is used."
   (dap-ui-mode t))
 
 (use-package! lsp-mode
-  :defer 2
   :ensure t
-  ;:hook ((lsp-after-open . lsp-enable-imenu)
-  ;       (lsp-after-open . lsp-ui-mode)
-  ;       (lsp-mode . lsp-enable-which-key-integration)
+  :hook ((lsp-after-open . lsp-enable-imenu)
+         (lsp-after-open . lsp-ui-mode)
+         (lsp-after-open . lsp-lens-mode)
+         (lsp-mode . lsp-enable-which-key-integration))
   :config
   (setq lsp-navigation 'both
         lsp-signature-render-all t
@@ -325,12 +325,11 @@ region-end is used."
   (lsp-auto-guess-root t)
   (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
   (lsp-response-timeout 10)
-  (lsp-prefer-flymake nil)
-  (lsp-mode t)
-  (lsp-ui-mode t))
+  (lsp-prefer-flymake nil))
+  ;(lsp-mode t)
+  ;(lsp-ui-mode t))
 
 (use-package! lsp-ui
-  :defer 2
   :ensure t
   :after lsp-mode
   :config
@@ -360,7 +359,7 @@ region-end is used."
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-ignore-duplicate t
         lsp-ui-sideline-delay 0.0
-        lsp-ui-sideline-code-actions-prefix ""
+        lsp-ui-sideline-code-actions-prefix " "
         lsp-ui-imenu-enable t
         lsp-ui-imenu-kind-position 'top))
 
@@ -432,20 +431,6 @@ region-end is used."
   :ensure t
   :config
   (treemacs-follow-mode 1))
-
-(use-package! lsp-treemacs
-  :defer 2
-  :ensure t
-  :commands lsp-treemacs-errors-list
-  :after treemacs
-  :config
-  (map! :map lsp-command-map
-        "gs" #'lsp-treemacs-symbols
-        "gR" #'lsp-treemacs-references)
-
-  (lsp-metals-treeview-enable t)
-  (lsp-treemacs-sync-mode 1)
-  (setq lsp-metals-treeview-show-when-views-received t))
 
 (use-package highlight-symbol
   :delight highlight-symbol-mode
