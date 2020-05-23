@@ -36,7 +36,7 @@
       doom-themes-treemacs-line-spacing 0
       doom-themes-treemacs-enable-variable-pitch t
       doom-modeline-height 22
-      doom-theme 'doom-one
+      doom-theme 'doom-acario-dark
       doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
@@ -94,8 +94,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-one-light)
-(setq theme-autoswitch/dark-theme 'doom-one)
+(setq theme-autoswitch/light-theme 'doom-acario-light)
+(setq theme-autoswitch/dark-theme 'doom-acario-dark)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
@@ -291,7 +291,6 @@ region-end is used."
   (map! "M-i" 'iedit-mode))
 
 (use-package! dap-mode
-  :defer 2
   :ensure t
   :after lsp-mode
   :config
@@ -300,10 +299,11 @@ region-end is used."
 
 (use-package! lsp-mode
   :ensure t
+  :defer t
   :hook ((lsp-after-open . lsp-enable-imenu)
-         (lsp-after-open . lsp-ui-mode)
-         (lsp-after-open . lsp-lens-mode)
+         (lsp-mode . lsp-lens-mode)
          (lsp-mode . lsp-enable-which-key-integration))
+         (lsp-after-open . lsp-ui-mode)
   :config
   (setq lsp-navigation 'both
         lsp-signature-render-all t
