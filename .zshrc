@@ -1,3 +1,4 @@
+
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export EDITOR="emacsclient -nw -c"
 export ZSH="/home/v/.oh-my-zsh"

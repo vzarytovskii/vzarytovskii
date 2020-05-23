@@ -27,9 +27,11 @@ archlinux-appstream-data
 archlinux-keyring
 argon2
 aribb24
+asciidoc
 aspell
 aspell-en
 aspell-ru
+asp-git
 atk
 atkmm
 atool
@@ -281,9 +283,9 @@ gnu-netcat
 gnupg
 gnuplot
 gnutls
+go
 gobject-introspection-runtime
 gom
-go-pie
 gotwitch
 gparted
 gperf
@@ -542,6 +544,7 @@ lib32-sqlite
 lib32-systemd
 lib32-tdb
 lib32-util-linux
+lib32-vulkan-icd-loader
 lib32-vulkan-intel
 lib32-vulkan-radeon
 lib32-wayland
@@ -993,6 +996,7 @@ pacui
 pam
 pamac-cli
 pamac-common
+pamac-flatpak-plugin
 pamac-gtk
 pamac-snap-plugin
 pambase
@@ -1217,7 +1221,6 @@ rclone
 re2
 readline
 reiserfsprogs
-remacs-git
 rest
 rhash
 ripcord

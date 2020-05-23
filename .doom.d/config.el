@@ -301,9 +301,9 @@ region-end is used."
 (use-package! lsp-mode
   :defer 2
   :ensure t
-  :hook ((lsp-after-open . lsp-enable-imenu)
-         (lsp-after-open . lsp-ui-mode)
-         (lsp-mode . lsp-enable-which-key-integration))
+  ;:hook ((lsp-after-open . lsp-enable-imenu)
+  ;       (lsp-after-open . lsp-ui-mode)
+  ;       (lsp-mode . lsp-enable-which-key-integration)
   :config
   (setq lsp-navigation 'both
         lsp-signature-render-all t
@@ -472,11 +472,11 @@ region-end is used."
     `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
     `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
 
-(use-package! highlight-escape-sequences
-  :defer 2
-  :commands highlight-escape-sequences-mode
-  :config
-  (hes-mode t))
+;(use-package! highlight-escape-sequences
+;  :defer 2
+;  :commands highlight-escape-sequences-mode
+;  :config
+;  (hes-mode t))
 
 (use-package! undo-tree
   :defer 2
