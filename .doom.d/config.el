@@ -67,6 +67,9 @@
 (setq-default indent-tabs-mode nil)   ; use space
 (defalias 'yes-or-no-p #'y-or-n-p)
 
+;; Binds:
+(map! "C-w" 'doom/delete-backward-word)
+
 (defun display-startup-echo-area-message ()
   (message ""))
 
