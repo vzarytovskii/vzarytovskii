@@ -1,3 +1,4 @@
+
 ;;;  -*- lexical-binding: t; -*-
 
 ;; Font locking is the source of much slowness in Emacs. jit-lock-mode tries to
@@ -240,7 +241,7 @@ region-end is used."
   (async-bytecomp-package-mode 1)
   :custom (async-bytecomp-allowed-packages '(all)))
 
-(use-package emacs
+(use-package! emacs
   :ensure nil
   :config
   (setq compilation-always-kill t
@@ -265,7 +266,7 @@ region-end is used."
              (garbage-collect)) t)
 (setq inhibit-compacting-font-caches t)
 
-(use-package gcmh
+(use-package! gcmh
   :ensure t
   :disabled t
   :init
@@ -274,19 +275,22 @@ region-end is used."
   (gcmh-mode 1))
 
 (use-package! multiple-cursors
-  :init
-  (setq mc/always-run-for-all t)
   :config
   (add-to-list 'mc/unsupported-minor-modes 'lispy-mode)
-  :bind (("C-S-c" . mc/edit-lines)
-         ("C-M-g" . mc/mark-all-like-this-dwim)
-         ("C->" . mc/mark-next-like-this)
-         ("C-<" . mc/mark-previous-like-this)
-         ("C-)" . mc/skip-to-next-like-this)
-         ("C-M->" . mc/skip-to-next-like-this)
-         ("C-(" . mc/skip-to-previous-like-this)
-         ("C-M-<" . mc/skip-to-previous-like-this)))
+  :init
+  (setq mc/always-run-for-all t)
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this))
 
+(use-package! projectile
+  :ensure t
+  :defer 2
+  :init
+  (map! "C-c C-p" 'projectile-command-map)
+  :custom
+  (projectile-mode +1))
 
 (use-package! iedit
   :init
