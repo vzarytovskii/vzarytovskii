@@ -487,11 +487,6 @@ region-end is used."
     `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
     `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
 
-                                        ;(use-package! highlight-escape-sequences
-                                        ;  :defer 2
-                                        ;  :commands highlight-escape-sequences-mode
-                                        ;  :config
-                                        ;  (hes-mode t))
 
 (use-package! undo-tree
   :init
