@@ -1,3 +1,5 @@
+;; -*- no-byte-compile: t; -*-
+;;; $DOOMDIR/packages.el
 (package! dap-mode)
 (package! imenu-list)
 (package! lsp-haskell)

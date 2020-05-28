@@ -1,10 +1,8 @@
-
-;;;  -*- lexical-binding: t; -*-
+;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 ;; Font locking is the source of much slowness in Emacs. jit-lock-mode tries to
 ;; defer fontification until the user is idle. This should help... in theory.
 ;; TODO: Refactor some of use-package! to after! instead of use-package!
-;; TODO: Ensure that packages are loaded deferred.
 ;; TODO: Reorder, sort, and join some settings into blocks by category.
 ;; TODO: Move some of these to separate modules, grouped by category.
 ;; TODO: Look at existing literate configs and how they're organized, e.g.: https://github.com/dangirsh/.doom.d
@@ -43,7 +41,7 @@
 
 
 (setq org-directory "~/org/")
-(setq display-line-numbers-type 'relative)
+(setq display-line-numbers-type nil)
 
 (setq split-width-threshold nil)
 (setq split-width-threshold 160)
@@ -553,6 +551,40 @@ region-end is used."
 (after! lsp-python-ms
   (set-lsp-priority! 'mspyls 1))
 
+(after! (:and ivy ivy-prescient)
+  (setq ivy-prescient-retain-classic-highlighting t))
+
+
+(after! ivy-posframe
+  ;; Lower internal-border-width on MacOS
+  (when IS-MAC
+    (setq ivy-posframe-border-width 5))
+
+  ;; Use minibuffer to display ivy functions
+  (dolist (fn '(+ivy/switch-workspace-buffer
+                ivy-switch-buffer))
+    (setf (alist-get fn ivy-posframe-display-functions-alist) #'ivy-display-function-fallback)))
+
+(after! ivy-rich
+  (plist-put! ivy-rich-display-transformers-list
+              'ivy-switch-buffer
+              '(:columns
+                ((ivy-switch-buffer-transformer (:width 60))
+                 (ivy-rich-switch-buffer-size (:width 7))
+                 (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
+                 (ivy-rich-switch-buffer-major-mode (:width 12 :face warning))
+                 (ivy-rich-switch-buffer-project (:width 15 :face success))
+                 (ivy-rich-switch-buffer-path (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path x (ivy-rich-minibuffer-width 0.3))))))
+                :predicate
+                (lambda (cand) (get-buffer cand)))))
+
+(after! counsel
+  (setq counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
+        counsel-describe-function-function 'helpful-callable
+        counsel-describe-variable-function 'helpful-variable
+        counsel-rg-base-command "rg -zS --no-heading --line-number --max-columns 1000 --color never %s ."
+        counsel-grep-base-command counsel-rg-base-command))
+
 (load-library "find-lisp")
 (after! org
   (remove-hook 'org-mode-hook #'org-superstar-mode)
@@ -638,3 +670,8 @@ DEADLINE: %^t
                    (org-agenda-files '("~/org/tasks.org")))))))))
 (after! evil-org
   (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
+
+(after! nav-flash
+  (defun +advice/nav-flash-show (orig-fn &rest args)
+    (ignore-errors (apply orig-fn args)))
+  (advice-add 'nav-flash-show :around #'+advice/nav-flash-show))
