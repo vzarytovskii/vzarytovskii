@@ -303,9 +303,9 @@ region-end is used."
 (use-package! dap-mode
   :ensure t
   :after lsp-mode
-  :hook ((dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
-         (dap-mode . dap-ui-mode)
-         (dap-mode . dap-tooltip-mode))
+  :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
+  :hook (dap-mode . dap-ui-mode)
+  :hook (dap-mode . dap-tooltip-mode)
   :config
   (dap-mode t))
 
@@ -313,9 +313,9 @@ region-end is used."
   :ensure t
   :demand t
   :commands lsp lsp-deferred
-  :hook ((lsp-after-open . lsp-enable-imenu)
-         (lsp-mode . lsp-lens-mode)
-         (lsp-mode . lsp-enable-which-key-integration))
+  :hook (lsp-after-open . lsp-enable-imenu)
+  :hook (lsp-mode . lsp-lens-mode)
+  :hook (lsp-mode . lsp-enable-which-key-integration)
   :config
   (setq lsp-navigation 'both
         lsp-signature-render-all t
@@ -344,7 +344,7 @@ region-end is used."
   :ensure t
   :demand t
   :after lsp-mode
-  :hook ((lsp-after-open . lsp-ui-mode))
+  :hook (lsp-after-open . lsp-ui-mode)
   :config
   (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
   (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
@@ -385,7 +385,7 @@ region-end is used."
 (use-package! magit
   :ensure t
   :after magit
-  :hook (add-hook 'git-commit-setup-hook #'git-commit-turn-on-flyspell)
+  :hook (git-commit-setup #'git-commit-turn-on-flyspell)
   :config
   (setq magit-diff-refine-hunk t)
   (setq magit-commit-arguments '("--verbose"))
@@ -468,9 +468,8 @@ region-end is used."
 
 (use-package highlight-symbol
   :delight highlight-symbol-mode
-  :hook
-  ((highlight-symbol-mode . highlight-symbol-nav-mode)
-   (prog-mode . highlight-symbol-mode))
+  :hook (highlight-symbol-mode . highlight-symbol-nav-mode)
+  :hook (prog-mode . highlight-symbol-mode)
   :custom
   (highlight-symbol-highlight-single-occurrence nil)
   (highlight-symbol-idle-delay 0.25)
