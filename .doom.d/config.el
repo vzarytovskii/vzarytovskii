@@ -235,7 +235,6 @@ region-end is used."
 
 (use-package! async
   :ensure t
-  :defer t
   :init
   (dired-async-mode 1)
   (async-bytecomp-package-mode 1)
@@ -274,6 +273,10 @@ region-end is used."
   :config
   (gcmh-mode 1))
 
+(use-package! expand-region
+  :init
+  (map! "C-=" 'er/expand-region))
+
 (use-package! multiple-cursors
   :config
   (add-to-list 'mc/unsupported-minor-modes 'lispy-mode)
@@ -286,7 +289,6 @@ region-end is used."
 
 (use-package! projectile
   :ensure t
-  :defer 2
   :init
   (map! "C-c C-p" 'projectile-command-map)
   :custom
@@ -300,17 +302,19 @@ region-end is used."
 (use-package! dap-mode
   :ensure t
   :after lsp-mode
+  :hook ((dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
+         (dap-mode . dap-ui-mode)
+         (dap-mode . dap-tooltip-mode))
   :config
-  (dap-mode t)
-  (dap-ui-mode t))
+  (dap-mode t))
 
 (use-package! lsp-mode
   :ensure t
-  :defer t
+  :demand t
+  :commands lsp lsp-deferred
   :hook ((lsp-after-open . lsp-enable-imenu)
          (lsp-mode . lsp-lens-mode)
          (lsp-mode . lsp-enable-which-key-integration))
-         (lsp-after-open . lsp-ui-mode)
   :config
   (setq lsp-navigation 'both
         lsp-signature-render-all t
@@ -321,6 +325,7 @@ region-end is used."
         lsp-enable-on-type-formatting t
         lsp-enable-file-watchers t
         lsp-enable-xref t
+        lsp-flycheck-live-reporting t
         lsp-prefer-capf t
         lsp-semantic-highlighting t
         lsp-eldoc-enable-hover nil
@@ -333,13 +338,15 @@ region-end is used."
   (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
   (lsp-response-timeout 10)
   (lsp-prefer-flymake nil))
-  ;(lsp-mode t)
-  ;(lsp-ui-mode t))
 
 (use-package! lsp-ui
   :ensure t
+  :demand t
   :after lsp-mode
+  :hook ((lsp-after-open . lsp-ui-mode))
   :config
+  (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
   (set-lookup-handlers! 'lsp-ui-mode :async t
     :definition #'lsp-ui-peek-find-definitions
     :references #'lsp-ui-peek-find-references)
@@ -352,8 +359,8 @@ region-end is used."
         lsp-ui-doc-delay 0.0
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-use-childframe t
-        lsp-ui-doc-use-webkit nil
         lsp-ui-flycheck-enable t
+        lsp-ui-flycheck-list-position 'right
         lsp-ui-peek-enable t
         lsp-ui-peek-fontify 'on-demand
         lsp-ui-peek-peek-height 20
@@ -366,254 +373,265 @@ region-end is used."
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-ignore-duplicate t
         lsp-ui-sideline-delay 0.0
-        lsp-ui-sideline-code-actions-prefix " "
         lsp-ui-imenu-enable t
-        lsp-ui-imenu-kind-position 'top))
+        lsp-ui-imenu-kind-position 'top)
+  (if (display-graphic-p)
+      (progn
+        (setq lsp-ui-sideline-code-actions-prefix " ")
+        (when (require 'xwidget nil 'noerror)
+          (setq lsp-ui-doc-use-webkit t)))))
 
-(use-package! magit
-  :defer 2
-  :ensure t
-  :after magit
-  :hook (add-hook 'git-commit-setup-hook #'git-commit-turn-on-flyspell)
-  :config
-  (setq magit-diff-refine-hunk t)
-  (setq magit-commit-arguments '("--verbose"))
-  (add-to-list 'magit-section-initial-visibility-alist '(unpulled . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(unpushed . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(untracked . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(unstaged . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(todos . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(recent . show))
-  (magit-todos-mode))
+  (use-package! magit
+    :ensure t
+    :after magit
+    :hook (add-hook 'git-commit-setup-hook #'git-commit-turn-on-flyspell)
+    :config
+    (setq magit-diff-refine-hunk t)
+    (setq magit-commit-arguments '("--verbose"))
+    (add-to-list 'magit-section-initial-visibility-alist '(unpulled . show))
+    (add-to-list 'magit-section-initial-visibility-alist '(unpushed . show))
+    (add-to-list 'magit-section-initial-visibility-alist '(untracked . show))
+    (add-to-list 'magit-section-initial-visibility-alist '(unstaged . show))
+    (add-to-list 'magit-section-initial-visibility-alist '(todos . show))
+    (add-to-list 'magit-section-initial-visibility-alist '(recent . show))
+    (magit-todos-mode))
 
-(use-package! imenu-list
-  :config
-  (setq imenu-list-auto-resize t)
-  (setq imenu-list-focus-after-activation t)
-  (setq imenu-list-after-jump-hook nil)
-  (add-hook 'imenu-list-after-jump-hook #'recenter-top-bottom))
+  (use-package! imenu-list
+    :config
+    (setq imenu-list-auto-resize t)
+    (setq imenu-list-focus-after-activation t)
+    (setq imenu-list-after-jump-hook nil)
+    (add-hook 'imenu-list-after-jump-hook #'recenter-top-bottom))
 
-(use-package! company
-  :defer 2
-  :ensure t
-  :after company
-  :config
-  (company-tng-configure-default)
-  (setq company-idle-delay 0.0
-        company-minimum-prefix-length 2
-        company-transformers nil
-        company-show-numbers nil)
+  (use-package! company
+    :ensure t
+    :after company
+    :init (global-company-mode 1)
+    :config
+    (company-tng-configure-default)
+    (setq company-idle-delay 0.0
+          company-minimum-prefix-length 1
+          company-transformers nil
+          company-show-numbers nil)
 
-  (setq company-frontends
-        '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
-  (set-company-backend! '(prog-mode)
-    '(:separate company-lsp company-dabbrev company-files company-keywords company-yasnippet))
-  (setq +lsp-company-backend '(company-lsp :with company-dabbrev :separate company-files company-keywords company-yasnippet)))
+    (setq company-frontends
+          '(company-tng-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend))
+    (set-company-backend! '(prog-mode)
+      '(:separate company-lsp company-dabbrev company-files company-keywords company-yasnippet))
+    (setq +lsp-company-backend '(company-lsp :with company-dabbrev :separate company-files company-keywords company-yasnippet)))
 
-(use-package! company-lsp
-  :defer 2
-  :ensure t
-  :after company
-  :commands company-lsp
-  :preface
-  (defun push-company-lsp-backends ()
-    "Push company-lsp to the backends."
-    (general-pushnew
-     '(company-lsp
-       company-dabbrev
-       company-files
-       company-keywords
-       company-yasnippet)
-     company-backends))
-  :init
-  (setq company-lsp-async               t
-        company-lsp-enable-recompletion t
-        company-lsp-enable-snippet      t
-        company-lsp-cache-candidates    'auto)
-  :config
-  (push-company-lsp-backends))
+  (use-package! company-flx
+    :ensure t
+    :after company
+    :init (company-flx-mode t))
 
-(use-package! treemacs
-  :defer 2
-  :ensure t
-  :config
-  (treemacs-follow-mode 1))
+  (use-package company-quickhelp
+    :after company
+    :ensure t
+    ;; :init (company-quickhelp-mode t)
+    :hook (prog-mode . (lambda ()
+                         (when (window-system)
+                           (company-quickhelp-local-mode))))
+    :config
+    (setq company-quickhelp-delay 0.1
+          company-quickhelp-max-lines nil))
 
-(use-package highlight-symbol
-  :delight highlight-symbol-mode
-  :hook
-  ((highlight-symbol-mode . highlight-symbol-nav-mode)
-   (prog-mode . highlight-symbol-mode))
-  :custom
-  (highlight-symbol-highlight-single-occurrence nil)
-  (highlight-symbol-idle-delay 0.25)
-  (highlight-symbol-on-navigation-p t))
+  (use-package! company-lsp
+    :ensure t
+    :after company
+    :commands company-lsp
+    :hook (lsp-after-open . (lambda()
+                              (add-to-list (make-local-variable 'company-backends)
+                                           'company-lsp)))
+    :preface
+    (defun push-company-lsp-backends ()
+      "Push company-lsp to the backends."
+      (general-pushnew
+       '(company-lsp
+         company-dabbrev
+         company-files
+         company-keywords
+         company-yasnippet)
+       company-backends))
+    :init
+    (setq company-lsp-async               t
+          company-lsp-enable-recompletion t
+          company-lsp-enable-snippet      t
+          company-lsp-cache-candidates    'auto)
+    (push-company-lsp-backends))
 
-(use-package! highlight-blocks
-  :defer 2
-  :commands (highlight-blocks-mode highlight-blocks-now)
-  :config
-  (custom-theme-set-faces! nil
-    `(highlight-blocks-depth-1-face :background ,(doom-color 'base1))
-    `(highlight-blocks-depth-2-face :background ,(doom-lighten 'base1 0.03))
-    `(highlight-blocks-depth-3-face :background ,(doom-lighten 'base1 0.06))
-    `(highlight-blocks-depth-4-face :background ,(doom-lighten 'base1 0.09))
-    `(highlight-blocks-depth-5-face :background ,(doom-lighten 'base1 0.12))
-    `(highlight-blocks-depth-6-face :background ,(doom-lighten 'base1 0.15))
-    `(highlight-blocks-depth-7-face :background ,(doom-lighten 'base1 0.17))
-    `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
-    `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
+  (use-package! treemacs
+    :ensure t
+    :config
+    (treemacs-follow-mode 1))
 
-;(use-package! highlight-escape-sequences
-;  :defer 2
-;  :commands highlight-escape-sequences-mode
-;  :config
-;  (hes-mode t))
+  (use-package highlight-symbol
+    :delight highlight-symbol-mode
+    :hook
+    ((highlight-symbol-mode . highlight-symbol-nav-mode)
+     (prog-mode . highlight-symbol-mode))
+    :custom
+    (highlight-symbol-highlight-single-occurrence nil)
+    (highlight-symbol-idle-delay 0.25)
+    (highlight-symbol-on-navigation-p t))
 
-(use-package! undo-tree
-  :defer 2
-  :init
-  (setq undo-tree-auto-save-history t
-        undo-tree-visualizer-diff t
-        undo-tree-visualizer-timestamps t)
-  :config
-  (progn
-    (defun my/undo-tree-restore-default ()
-      (setq undo-tree-visualizer-diff t))
-    (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
-  (global-undo-tree-mode 1)
-  ;; make ctrl-z undo
-  (global-set-key (kbd "C-z") 'undo)
-  ;; make ctrl-Z redo
-  (defalias 'redo 'undo-tree-redo)
-  (global-set-key (kbd "C-S-z") 'redo))
+  (use-package! highlight-blocks
+    :commands (highlight-blocks-mode highlight-blocks-now)
+    :config
+    (custom-theme-set-faces! nil
+      `(highlight-blocks-depth-1-face :background ,(doom-color 'base1))
+      `(highlight-blocks-depth-2-face :background ,(doom-lighten 'base1 0.03))
+      `(highlight-blocks-depth-3-face :background ,(doom-lighten 'base1 0.06))
+      `(highlight-blocks-depth-4-face :background ,(doom-lighten 'base1 0.09))
+      `(highlight-blocks-depth-5-face :background ,(doom-lighten 'base1 0.12))
+      `(highlight-blocks-depth-6-face :background ,(doom-lighten 'base1 0.15))
+      `(highlight-blocks-depth-7-face :background ,(doom-lighten 'base1 0.17))
+      `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
+      `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
 
-(use-package! deadgrep
-              :if (executable-find "rg")
-              :init
-              (map! "M-s" #'deadgrep))
+                                        ;(use-package! highlight-escape-sequences
+                                        ;  :defer 2
+                                        ;  :commands highlight-escape-sequences-mode
+                                        ;  :config
+                                        ;  (hes-mode t))
 
-(use-package! restclient
-  :ensure t
-  :defer 2
-  :config
-  (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode)))
+  (use-package! undo-tree
+    :init
+    (setq undo-tree-auto-save-history t
+          undo-tree-visualizer-diff t
+          undo-tree-visualizer-timestamps t)
+    :config
+    (progn
+      (defun my/undo-tree-restore-default ()
+        (setq undo-tree-visualizer-diff t))
+      (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
+    (global-undo-tree-mode 1)
+    ;; make ctrl-z undo
+    (global-set-key (kbd "C-z") 'undo)
+    ;; make ctrl-Z redo
+    (defalias 'redo 'undo-tree-redo)
+    (global-set-key (kbd "C-S-z") 'redo))
 
-(use-package! company-restclient
-  :ensure t
-  :defer 2
-  :after company
-  :config
-  (add-to-list 'company-backends 'company-restclient))
+  (use-package! deadgrep
+    :if (executable-find "rg")
+    :init
+    (map! "M-s" #'deadgrep))
 
-(use-package! dimmer
-  :defer 2
-  :hook (after-init . dimmer-mode)
-  :init
-  (setq dimmer-fraction 0.50)
-  :config
-  (dimmer-configure-magit)
-  (dimmer-configure-posframe)
-  (dimmer-mode t))
+  (use-package! restclient
+    :ensure t
+    :config
+    (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode)))
 
-(use-package ace-window
-  :defer 2
-  :ensure t
-  :config
-  (global-set-key (kbd "<M-RET>") 'ace-window))
+  (use-package! company-restclient
+    :ensure t
+    :after company
+    :config
+    (add-to-list 'company-backends 'company-restclient))
 
-(use-package! focus
-  :hook (prog-mode . focus-mode)
-  :defer 2
+  (use-package! dimmer
+    :hook (after-init . dimmer-mode)
+    :init
+    (setq dimmer-fraction 0.50)
+    :config
+    (dimmer-configure-magit)
+    (dimmer-configure-posframe)
+    (dimmer-mode t))
 
-  :disabled t
-  :config
-  (add-to-list 'focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence)))
-  (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))
-  (focus-mode t))
+  (use-package ace-window
+    :ensure t
+    :config
+    (global-set-key (kbd "<M-RET>") 'ace-window))
 
-(load-library "find-lisp")
-(after! org
-  (remove-hook 'org-mode-hook #'org-superstar-mode)
-  (add-to-list 'org-modules 'org-habit)
-  (add-to-list 'org-modules 'org-id)
-  (setq org-use-property-inheritance t ; We like to inhert properties from their parents
-        org-catch-invisible-edits 'smart) ; Catch invisible edits
-  (setq org-hide-leading-stars nil
-        org-startup-indented nil
-        org-adapt-indentation nil)
-  (setq org-todo-keywords
-        '((sequence
-           "TODO(t)"
-           "INPROGRESS(i@/!)"
-           "|"
-           "DONE(d!)")
-          (sequence
-           "[ ](T)"
-           "[-](I)"
-           "|"
-           "[X](D)")))
-  (setq org-capture-templates
-        '(("t" "TODO" entry (file "tasks.org")
-           "* TODO [#%^{priority}] %^{taskname}%? %^{CATEGORY}p
+  (use-package! focus
+    :hook (prog-mode . focus-mode)
+    :disabled t
+    :config
+    (add-to-list 'focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence)))
+    (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))
+    (focus-mode t))
+
+  (load-library "find-lisp")
+  (after! org
+    (remove-hook 'org-mode-hook #'org-superstar-mode)
+    (add-to-list 'org-modules 'org-habit)
+    (add-to-list 'org-modules 'org-id)
+    (setq org-use-property-inheritance t ; We like to inhert properties from their parents
+          org-catch-invisible-edits 'smart) ; Catch invisible edits
+    (setq org-hide-leading-stars nil
+          org-startup-indented nil
+          org-adapt-indentation nil)
+    (setq org-todo-keywords
+          '((sequence
+             "TODO(t)"
+             "INPROGRESS(i@/!)"
+             "|"
+             "DONE(d!)")
+            (sequence
+             "[ ](T)"
+             "[-](I)"
+             "|"
+             "[X](D)")))
+    (setq org-capture-templates
+          '(("t" "TODO" entry (file "tasks.org")
+             "* TODO [#%^{priority}] %^{taskname}%? %^{CATEGORY}p
 :PROPERTIES:
 :CREATED: %U
 :END:
 " :empty-lines 1)
 
-          ("s" "Scheduled TODO" entry (file "tasks.org")
-           "* TODO %^{taskname}%? %^{CATEGORY}p
+            ("s" "Scheduled TODO" entry (file "tasks.org")
+             "* TODO %^{taskname}%? %^{CATEGORY}p
 SCHEDULED: %^t
 :PROPERTIES:
 :CREATED: %U
 :END:
 " :empty-lines 1)
 
-          ("d" "Deadline TODO" entry (file "tasks.org")
-           "* TODO %^{taskname}%? %^{CATEGORY}p
+            ("d" "Deadline TODO" entry (file "tasks.org")
+             "* TODO %^{taskname}%? %^{CATEGORY}p
 DEADLINE: %^t
 :PROPERTIES:
 :CREATED: %U
 :END:
 " :empty-lines 1)
 
-          ("p" "Priority TODO" entry (file "tasks.org")
-           "* TODO [#A] %^{taskname}%? %^{CATEGORY}p
+            ("p" "Priority TODO" entry (file "tasks.org")
+             "* TODO [#A] %^{taskname}%? %^{CATEGORY}p
 DEADLINE: %^t
 :PROPERTIES:
 :CREATED: %U
 :END:
 " :empty-lines 1)
 
-          ("n" "Note" entry (file "notes.org")
-           "* NOTE %?\n%U" :empty-lines 1))))
+            ("n" "Note" entry (file "notes.org")
+             "* NOTE %?\n%U" :empty-lines 1))))
 
-(after! org-agenda
-  (setq org-agenda-span 'week)
-  (setq org-agenda-start-on-weekday 1)
-  (setq org-agenda-block-separator "")
-  (setq org-agenda-start-with-log-mode '(clock))
-  (setq org-agenda-files
-        (find-lisp-find-files "~/org/" "\.org$"))
-  (setq org-agenda-files '("~/org/tasks.org"))
-  (setq org-agenda-diary-file "~/.org/diary.org"
-        org-agenda-dim-blocked-tasks t
-        org-agenda-use-time-grid t
-        org-agenda-hide-tags-regexp ":\\w+:"
-        org-agenda-compact-blocks t
-        org-agenda-block-separator nil
-        org-agenda-skip-scheduled-if-done t
-        org-agenda-skip-deadline-if-done t
-        org-enforce-todo-checkbox-dependencies nil
-        org-habit-show-habits t)
-  (setq org-agenda-custom-commands
-        '((" " "Agenda"
-           ((agenda ""
-                    ((org-agenda-span 'day)
-                     (org-agenda-start-day nil)
-                     (org-deadline-warning-days 365)))
-            (todo "TODO"
-                  ((org-agenda-overriding-header "Tasks")
-                   (org-agenda-files '("~/org/tasks.org")))))))))
-(after! evil-org
-  (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
+  (after! org-agenda
+    (setq org-agenda-span 'week)
+    (setq org-agenda-start-on-weekday 1)
+    (setq org-agenda-block-separator "")
+    (setq org-agenda-start-with-log-mode '(clock))
+    (setq org-agenda-files
+          (find-lisp-find-files "~/org/" "\.org$"))
+    (setq org-agenda-files '("~/org/tasks.org"))
+    (setq org-agenda-diary-file "~/.org/diary.org"
+          org-agenda-dim-blocked-tasks t
+          org-agenda-use-time-grid t
+          org-agenda-hide-tags-regexp ":\\w+:"
+          org-agenda-compact-blocks t
+          org-agenda-block-separator nil
+          org-agenda-skip-scheduled-if-done t
+          org-agenda-skip-deadline-if-done t
+          org-enforce-todo-checkbox-dependencies nil
+          org-habit-show-habits t)
+    (setq org-agenda-custom-commands
+          '((" " "Agenda"
+             ((agenda ""
+                      ((org-agenda-span 'day)
+                       (org-agenda-start-day nil)
+                       (org-deadline-warning-days 365)))
+              (todo "TODO"
+                    ((org-agenda-overriding-header "Tasks")
+                     (org-agenda-files '("~/org/tasks.org")))))))))
+  (after! evil-org
+    (remove-hook 'org-tab-first-hook #'+org-cycle-only-current-subtree-h))
