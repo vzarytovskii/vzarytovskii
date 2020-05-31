@@ -35,7 +35,7 @@
       doom-themes-treemacs-line-spacing 0
       doom-themes-treemacs-enable-variable-pitch t
       doom-modeline-height 22
-      doom-theme 'doom-acario-dark
+      doom-theme 'doom-one
       doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
@@ -81,11 +81,10 @@
 
 (use-package! doom-themes
   :config
-  ;; Global settings (defaults)
   (setq doom-themes-enable-bold t      ; if nil, bold is universally disabled
         doom-themes-enable-italic t)   ; if nil, italics is universally disabled
-  ;; (load-theme 'doom-acario-dark t)
-  ;; (load-theme 'doom-one-light t)
+  (load-theme 'doom-one t)
+  (load-theme 'doom-one-light t)
 
   ;; Enable flashing mode-line on errors
   (doom-themes-visual-bell-config)
@@ -96,8 +95,8 @@
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
 (setq theme-autoswitch t)
-(setq theme-autoswitch/light-theme 'doom-acario-light)
-(setq theme-autoswitch/dark-theme 'doom-acario-dark)
+(setq theme-autoswitch/light-theme 'doom-one-light)
+(setq theme-autoswitch/dark-theme 'doom-one)
 (setq theme-autoswitch/day-start-hour 7)
 (setq theme-autoswitch/day-end-hour 19)
 (setq theme-autoswitch/sync-timer 300)
@@ -344,8 +343,6 @@ region-end is used."
   :after lsp-mode
   :hook (lsp-after-open . lsp-ui-mode)
   :config
-  (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
-  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
   (set-lookup-handlers! 'lsp-ui-mode :async t
     :definition #'lsp-ui-peek-find-definitions
     :references #'lsp-ui-peek-find-references)
@@ -381,9 +378,12 @@ region-end is used."
           (setq lsp-ui-doc-use-webkit t)))))
 
 (use-package! magit
+  :commands (magit-status magit-blame magit-mode)
   :ensure t
-  :after magit
-  :hook (git-commit-setup #'git-commit-turn-on-flyspell)
+  :bind (("C-x g" . magit-status)
+         ("C-c C-g l" . magit-file-log)
+         ("C-c C-g c" . magit-commit)
+         ("C-c C-g f" . magit-grep))
   :config
   (setq magit-diff-refine-hunk t)
   (setq magit-commit-arguments '("--verbose"))
@@ -393,7 +393,20 @@ region-end is used."
   (add-to-list 'magit-section-initial-visibility-alist '(unstaged . show))
   (add-to-list 'magit-section-initial-visibility-alist '(todos . show))
   (add-to-list 'magit-section-initial-visibility-alist '(recent . show))
-  (magit-todos-mode))
+  (magit-todos-mode)
+  (progn
+    ;; Set `magit-status' fullscreen
+    (setq magit-post-display-buffer-hook
+          #'(lambda ()
+              (when (derived-mode-p 'magit-status-mode)
+                (delete-other-windows))))
+
+    (setenv "GIT_PAGER" "")
+    (add-hook 'magit-log-edit-mode-hook
+              '(lambda ()
+                 (auto-fill-mode)
+                 (flyspell-mode)
+                 (set-fill-column 80)))))
 
 (use-package! imenu-list
   :config
@@ -545,20 +558,6 @@ region-end is used."
 
 (after! lsp-python-ms
   (set-lsp-priority! 'mspyls 1))
-
-(after! (:and ivy ivy-prescient)
-  (setq ivy-prescient-retain-classic-highlighting t))
-
-
-(after! ivy-posframe
-  ;; Lower internal-border-width on MacOS
-  (when IS-MAC
-    (setq ivy-posframe-border-width 5))
-
-  ;; Use minibuffer to display ivy functions
-  (dolist (fn '(+ivy/switch-workspace-buffer
-                ivy-switch-buffer))
-    (setf (alist-get fn ivy-posframe-display-functions-alist) #'ivy-display-function-fallback)))
 
 (after! ivy-rich
   (plist-put! ivy-rich-display-transformers-list

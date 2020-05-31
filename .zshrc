@@ -1,4 +1,3 @@
-
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export EDITOR="emacsclient -nw -c"
 export ZSH="/home/v/.oh-my-zsh"
@@ -26,7 +25,7 @@ export ARCHFLAGS="-arch x86_64"
 
 export DOTNET_ROOT=~/.dotnet
 
-export PATH=~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
+export PATH=~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
 alias cat="bat"
 alias br="br -h"
@@ -36,6 +35,8 @@ alias la="ls -a"
 alias ll="exa -alF"
 alias tree="br"
 alias g="git"
+alias gitf="git fuzzy"
+alias gf="git fuzzy"
 alias mc="ranger"
 alias twitch="kpl"
 alias reddit="tuir"
