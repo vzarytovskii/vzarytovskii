@@ -143,6 +143,9 @@ docker-compose-git
 docker-machine
 dontpanic-latest
 dosfstools
+dotnet-host
+dotnet-runtime
+dotnet-sdk
 double-conversion
 dunst-git
 dynamic-wallpaper-editor
@@ -371,6 +374,7 @@ icoutils
 icu
 ijs
 illyria-wallpaper
+ilspymono-git
 imagemagick
 imagewriter
 imlib2
@@ -391,6 +395,7 @@ isync
 iw
 jack
 jansson
+jasper
 java-runtime-common
 jbig2dec
 jemalloc
@@ -638,6 +643,7 @@ libhandy
 libibus
 libical
 libice
+libicns
 libid3tag
 libidn
 libidn2
@@ -1047,6 +1053,7 @@ perl-http-daemon
 perl-http-date
 perl-http-message
 perl-http-negotiate
+perl-image-exiftool
 perl-io-html
 perl-io-socket-ssl
 perl-json
@@ -1091,6 +1098,7 @@ ppp
 pptpclient
 procps-ng
 procs
+procyon-decompiler
 protobuf
 psmisc
 pulseaudio
@@ -1520,6 +1528,7 @@ yelp
 yelp-xsl
 youtube-dl
 youtube-viewer-git
+z
 z3-bin
 zbar
 zenity

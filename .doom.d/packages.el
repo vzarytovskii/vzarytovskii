@@ -15,3 +15,4 @@
 (package! undo-tree)
 (package! deadgrep)
 (package! iedit)
+(package! snails :recipe (:host github :repo "manateelazycat/snails"))
