@@ -10,6 +10,9 @@
 (setq jit-lock-defer-time 0    ; only defer while processing input
       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
 
+(add-hook 'doom-init-ui-hook #'doom-init-theme-h)
+(remove-hook 'after-make-frame-functions #'doom-init-theme-h)
+
 (prefer-coding-system 'utf-8)
 (setq locale-coding-system 'utf-8)
 (set-language-environment "UTF-8")
@@ -17,6 +20,40 @@
 (set-terminal-coding-system 'utf-8)
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
+
+(defvar file-name-handler-alist-old file-name-handler-alist)
+
+(setq-default gc-cons-threshold 402653184
+              file-name-handler-alist nil
+              gc-cons-percentage 0.6
+              auto-window-vscroll nil
+              message-log-max 16384)
+
+(add-hook 'after-init-hook
+          `(lambda ()
+             (setq file-name-handler-alist file-name-handler-alist-old
+                   gc-cons-threshold 800000
+                   gc-cons-percentage 0.1)
+             (garbage-collect)) t)
+
+(when IS-WINDOWS
+  (setq
+   inhibit-compacting-font-caches t)) ; speed-up on windows
+
+(when IS-WINDOWS
+
+  (defun daemon-open-client-frame ())
+  "open a client frame from within emacs, if emacs was started within daemon mode"
+
+  (when (daemonp) ;; only run if emacs process started as a daemon (i.e. runemacs --daemon)
+    (make-process ; asynchronously launches emacsclientw.exe
+     :name "emacsclientw"
+     :buffer nil
+     :command (list (format "%s/bin/emacsclientw.exe" (getenv "emacs_dir")) "-c") ; use directly, not the shim
+     :noquery t))) ; dont ask about running process when exiting
+
+;; add to the hook that runs after emacs has loaded
+(add-hook 'emacs-startup-hook #'daemon-open-client-frame t)
 
 (setq bidi-paragraph-direction 'left-to-right)
 
@@ -94,7 +131,7 @@
 
 ;; Auto theme switch
 ;; -- Automatically switch between ligh and dark theme based on time of day
-(setq theme-autoswitch t)
+(setq theme-autoswitch nil)
 (setq theme-autoswitch/light-theme 'doom-one-light)
 (setq theme-autoswitch/dark-theme 'doom-one)
 (setq theme-autoswitch/day-start-hour 7)
@@ -246,22 +283,6 @@ region-end is used."
         compilation-window-height 100
         compilation-scroll-output 'first-error))
 
-(defvar file-name-handler-alist-old file-name-handler-alist)
-
-(setq-default gc-cons-threshold 402653184
-              file-name-handler-alist nil
-              gc-cons-percentage 0.6
-              auto-window-vscroll nil
-              message-log-max 16384)
-
-(add-hook 'after-init-hook
-          `(lambda ()
-             (setq file-name-handler-alist file-name-handler-alist-old
-                   gc-cons-threshold 800000
-                   gc-cons-percentage 0.1)
-             (garbage-collect)) t)
-(setq inhibit-compacting-font-caches t)
-
 (use-package! gcmh
   :ensure t
   :disabled t
@@ -269,6 +290,8 @@ region-end is used."
   (setq gcmh-verbose nil)
   :config
   (gcmh-mode 1))
+
+(after! persp-mode (setq persp-emacsclient-init-frame-behaviour-override -1))
 
 (use-package! expand-region
   :init
