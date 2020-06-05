@@ -16,3 +16,4 @@
 (package! deadgrep)
 (package! iedit)
 (package! snails :recipe (:host github :repo "manateelazycat/snails"))
+(package! solaire-mode)

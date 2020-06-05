@@ -36,9 +36,7 @@
                    gc-cons-percentage 0.1)
              (garbage-collect)) t)
 
-(when IS-WINDOWS
-  (setq
-   inhibit-compacting-font-caches t)) ; speed-up on windows
+(setq inhibit-compacting-font-caches t)
 
 (when IS-WINDOWS
 
@@ -50,10 +48,9 @@
      :name "emacsclientw"
      :buffer nil
      :command (list (format "%s/bin/emacsclientw.exe" (getenv "emacs_dir")) "-c") ; use directly, not the shim
-     :noquery t))) ; dont ask about running process when exiting
+     :noquery t)) ; dont ask about running process when exiting
 
-;; add to the hook that runs after emacs has loaded
-(add-hook 'emacs-startup-hook #'daemon-open-client-frame t)
+  (add-hook 'emacs-startup-hook #'daemon-open-client-frame t))
 
 (setq bidi-paragraph-direction 'left-to-right)
 
@@ -72,10 +69,12 @@
       doom-themes-treemacs-line-spacing 0
       doom-themes-treemacs-enable-variable-pitch t
       doom-modeline-height 22
-      doom-theme 'doom-one
+      doom-theme 'doom-palenight
       doom-font (font-spec :family "JetBrains Mono" :size 17)
       all-the-icons-scale-factor 1)
 
+(setq frame-resize-pixelwise t)
+(setq show-trailing-whitespace t)
 
 (setq org-directory "~/org/")
 (setq display-line-numbers-type nil)
@@ -120,37 +119,9 @@
   :config
   (setq doom-themes-enable-bold t      ; if nil, bold is universally disabled
         doom-themes-enable-italic t)   ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
-  (load-theme 'doom-one-light t)
-
-  ;; Enable flashing mode-line on errors
+  (load-theme 'doom-palenight t)
   (doom-themes-visual-bell-config)
-
-  ;; Corrects (and improves) org-mode's native fontification.
   (doom-themes-org-config))
-
-;; Auto theme switch
-;; -- Automatically switch between ligh and dark theme based on time of day
-(setq theme-autoswitch nil)
-(setq theme-autoswitch/light-theme 'doom-one-light)
-(setq theme-autoswitch/dark-theme 'doom-one)
-(setq theme-autoswitch/day-start-hour 7)
-(setq theme-autoswitch/day-end-hour 19)
-(setq theme-autoswitch/sync-timer 300)
-(if (and theme-autoswitch (display-graphic-p))
-    (progn
-      (defun sync-theme-with-time ()
-        (setq theme-autoswitch/hour (string-to-number (substring (current-time-string) 11 13)))
-        (if (member theme-autoswitch/hour (number-sequence theme-autoswitch/day-start-hour theme-autoswitch/day-end-hour))
-            (setq theme-autoswitch/now theme-autoswitch/light-theme)
-          (setq theme-autoswitch/now theme-autoswitch/dark-theme))
-        (unless (and (boundp 'current-theme) (eq theme-autoswitch/now current-theme))
-          (progn
-            (setq current-theme theme-autoswitch/now)
-            (load-theme theme-autoswitch/now t))))
-      (sync-theme-with-time)
-      (run-with-timer 0 theme-autoswitch/sync-timer #'sync-theme-with-time))
-  (load-theme theme-autoswitch/dark-theme t))
 
 (defun howdoi ()
   "Call `howdoi' and ask for help"
@@ -523,7 +494,6 @@ region-end is used."
     `(highlight-blocks-depth-8-face :background ,(doom-lighten 'base1 0.2))
     `(highlight-blocks-depth-9-face :background ,(doom-lighten 'base1 0.23))))
 
-
 (use-package! undo-tree
   :init
   (setq undo-tree-auto-save-history t
@@ -627,7 +597,76 @@ region-end is used."
 (after! lsp-python-ms
   (set-lsp-priority! 'mspyls 1))
 
+(after! ivy
+  (setq ivy-re-builders-alist
+      '((t . ivy--regex-fuzzy)))
+  (setq ivy-use-selectable-prompt t
+        ivy-auto-select-single-candidate t
+        ivy-rich-parse-remote-buffer nil
+        +ivy-buffer-icons nil
+        ivy-use-virtual-buffers nil
+        ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-cd-selected
+        ivy-height 30
+        ivy-rich-switch-buffer-name-max-length 50)
+  (setq ivy-posframe-parameters
+        `((min-width . 200)
+          (min-height . ,ivy-height)
+          (left-fringe . 0)
+          (right-fringe . 0)
+          (internal-border-width . 10))
+        ivy-display-functions-alist
+        '((counsel-git-grep)
+          (counsel-rg)
+          (swiper)
+          (counsel-irony . ivy-display-function-overlay)
+          (ivy-completion-in-region . ivy-display-function-overlay)
+          (t . ivy-posframe-display-at-frame-center))))
+
+(use-package! ivy-posframe
+  :config
+  (setq ivy-posframe-display-functions-alist
+        '((swiper          . ivy-posframe-display-at-point)
+          (complete-symbol . ivy-posframe-display-at-point)
+          (counsel-M-x     . ivy-posframe-display-at-frame-top-center)
+          (t               . ivy-posframe-display-at-frame-top-center)))
+  (ivy-posframe-mode 1))
+
 (after! ivy-rich
+  (setq ivy-rich--display-transformers-list
+        '(ivy-switch-buffer
+          (:columns
+           ((ivy-rich-candidate (:width 30 :face bold))
+            (ivy-rich-switch-buffer-size (:width 7 :face font-lock-doc-face))
+            (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
+            (ivy-rich-switch-buffer-major-mode (:width 18 :face doom-modeline-buffer-major-mode))
+            (ivy-rich-switch-buffer-path (:width 50)))
+           :predicate
+           (lambda (cand) (get-buffer cand)))
+          +ivy/switch-workspace-buffer
+          (:columns
+           ((ivy-rich-candidate (:width 30 :face bold))
+            (ivy-rich-switch-buffer-size (:width 7 :face font-lock-doc-face))
+            (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right))
+            (ivy-rich-switch-buffer-major-mode (:width 18 :face doom-modeline-buffer-major-mode))
+            (ivy-rich-switch-buffer-path (:width 50)))
+           :predicate
+           (lambda (cand) (get-buffer cand)))
+          counsel-M-x
+          (:columns
+           ((counsel-M-x-transformer (:width 40))
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face :width 80))))
+          counsel-describe-function
+          (:columns
+           ((counsel-describe-function-transformer (:width 40))
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face :width 80))))
+          counsel-describe-variable
+          (:columns
+           ((counsel-describe-variable-transformer (:width 40))
+            (ivy-rich-counsel-variable-docstring (:face font-lock-doc-face :width 80))))
+          counsel-recentf
+          (:columns
+           ((ivy-rich-candidate (:width 100))
+            (ivy-rich-file-last-modified-time (:face font-lock-doc-face))))))
   (plist-put! ivy-rich-display-transformers-list
               'ivy-switch-buffer
               '(:columns
@@ -641,10 +680,15 @@ region-end is used."
                 (lambda (cand) (get-buffer cand)))))
 
 (after! counsel
-  (setq counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
+  (setq counsel-yank-pop-height 20
+        counsel-org-goto-face-style 'org
+        counsel-org-headline-display-style 'title
+        counsel-org-headline-display-tags t
+        counsel-org-headline-display-todo t
+        counsel-find-file-ignore-regexp "\\(?:^[#.]\\)\\|\\(?:[#~]$\\)\\|\\(?:^Icon?\\)"
         counsel-describe-function-function 'helpful-callable
         counsel-describe-variable-function 'helpful-variable
-        counsel-rg-base-command "rg -zS --no-heading --line-number --max-columns 1000 --color never %s ."
+        counsel-rg-base-command "rg -zS --no-heading --line-number --max-columns 1000 %s ."
         counsel-grep-base-command counsel-rg-base-command))
 
 (use-package! swiper
@@ -754,3 +798,11 @@ DEADLINE: %^t
   (defun +advice/nav-flash-show (orig-fn &rest args)
     (ignore-errors (apply orig-fn args)))
   (advice-add 'nav-flash-show :around #'+advice/nav-flash-show))
+
+(use-package solaire-mode
+  :hook
+  ((change-major-mode after-revert ediff-prepare-buffer) . turn-on-solaire-mode)
+  (minibuffer-setup . solaire-mode-in-minibuffer)
+  :config
+  (solaire-global-mode +1)
+  (solaire-mode-swap-bg))
