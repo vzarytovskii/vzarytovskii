@@ -150,7 +150,9 @@ double-conversion
 dunst-git
 dynamic-wallpaper-editor
 e2fsprogs
+ebtables
 ecryptfs-utils
+edk2-ovmf
 efibootmgr
 efivar
 electron
@@ -195,6 +197,7 @@ freetube-bin
 freetype2
 frei0r-plugins
 fribidi
+fsharp
 fuse2
 fuse3
 fuse-common
@@ -919,6 +922,7 @@ mobile-broadband-provider-info
 mod_dnssd
 modemmanager
 mono
+mono-msbuild
 mousetweaks
 mpfr
 mpg123
@@ -1160,10 +1164,13 @@ python-jinja
 python-jsonpickle
 python-jsonschema
 python-libconfigparser
+python-lz4
 python-markupsafe
 python-msgpack
 python-nautilus
+python-netifaces
 python-npyscreen
+python-opengl
 python-ordered-set
 python-packaging
 python-paramiko
@@ -1196,6 +1203,7 @@ python-pytz
 python-pyxdg
 python-qtpy
 python-recommonmark
+python-rencode
 python-reportlab
 python-requests
 python-retrying
@@ -1451,6 +1459,7 @@ wpebackend-fdo
 wxgtk2
 wxgtk3
 wxgtk-common
+x11docker-git
 x264
 x265
 xapian-core
@@ -1478,10 +1487,12 @@ xdotool
 xf86-input-elographics
 xf86-input-evdev
 xf86-input-libinput
+xf86-input-synaptics
 xf86-input-void
 xf86-input-wacom
 xf86-video-amdgpu
 xf86-video-ati
+xf86-video-dummy
 xf86-video-intel
 xf86-video-nouveau
 xfsprogs
@@ -1498,10 +1509,12 @@ xorg-mkfontscale
 xorgproto
 xorg-server
 xorg-server-common
+xorg-server-xephyr
 xorg-server-xwayland
 xorg-setxkbmap
 xorg-twm
 xorg-xauth
+xorg-xdpyinfo
 xorg-xfontsel
 xorg-xhost
 xorg-xinit
@@ -1515,6 +1528,7 @@ xorg-xrdb
 xorg-xset
 xorg-xwininfo
 xosd-ex
+xpra
 xsel
 xterm
 xtitle

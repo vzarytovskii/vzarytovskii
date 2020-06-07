@@ -6,6 +6,7 @@
 ;; TODO: Reorder, sort, and join some settings into blocks by category.
 ;; TODO: Move some of these to separate modules, grouped by category.
 ;; TODO: Look at existing literate configs and how they're organized, e.g.: https://github.com/dangirsh/.doom.d
+;; TODO: Factor out keybinds to a separate module + use doom's "map!"
 
 (setq jit-lock-defer-time 0    ; only defer while processing input
       jit-lock-stealth-time 2) ; fontify the rest of the buffer after a delay
@@ -305,7 +306,7 @@ region-end is used."
   :demand t
   :commands lsp lsp-deferred
   :hook (lsp-after-open . lsp-enable-imenu)
-  :hook (lsp-mode . lsp-lens-mode)
+  :hook (lsp-after-open . lsp-lens-mode)
   :hook (lsp-mode . lsp-enable-which-key-integration)
   :config
   (setq lsp-navigation 'both
@@ -335,7 +336,9 @@ region-end is used."
   :ensure t
   :demand t
   :after lsp-mode
+  :bind (("C-." . lsp-ui-sideline-apply-code-actions))
   :hook (lsp-after-open . lsp-ui-mode)
+  :hook (lsp-after-open . lsp-lens-mode)
   :config
   (set-lookup-handlers! 'lsp-ui-mode :async t
     :definition #'lsp-ui-peek-find-definitions
@@ -343,8 +346,8 @@ region-end is used."
   (setq lsp-ui-doc-enable nil
         lsp-ui-doc-header nil
         lsp-ui-doc-border "green"
-        lsp-ui-doc-max-height 30
-        lsp-ui-doc-max-width 120
+        lsp-ui-doc-max-height 50
+        lsp-ui-doc-max-width 150
         lsp-ui-doc-include-signature t
         lsp-ui-doc-delay 0.0
         lsp-ui-doc-position 'at-point
@@ -353,13 +356,13 @@ region-end is used."
         lsp-ui-flycheck-list-position 'right
         lsp-ui-peek-enable t
         lsp-ui-peek-fontify 'on-demand
-        lsp-ui-peek-peek-height 20
+        lsp-ui-peek-peek-height 30
         lsp-ui-peek-list-width 50
         lsp-ui-sideline-enable t
         lsp-ui-sideline-update-mode 'line
         lsp-ui-sideline-show-symbol nil
         lsp-ui-sideline-show-diagnostics t
-        lsp-ui-sideline-show-hover t
+        lsp-ui-sideline-show-hover nil
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-ignore-duplicate t
         lsp-ui-sideline-delay 0.0
@@ -371,6 +374,55 @@ region-end is used."
         (when (require 'xwidget nil 'noerror)
           (setq lsp-ui-doc-use-webkit t)))))
 
+(use-package! dumb-jump
+  :commands dumb-jump-result-follow
+  :bind (("M-g o" . dumb-jump-go-other-window)
+         ("M-g j" . dumb-jump-go)
+         ("M-g b" . dumb-jump-back)
+         ("M-g i" . dumb-jump-go-prompt)
+         ("M-g x" . dumb-jump-go-prefer-external)
+         ("M-g z" . dumb-jump-go-prefer-external-other-window))
+  :config
+  (setq dumb-jump-default-project doom-emacs-dir
+        dumb-jump-aggressive nil
+        dumb-jump-selector
+        (cond ((featurep! :completion ivy)  'ivy)
+              ((featurep! :completion helm) 'helm)
+              ('popup)))
+  (add-hook 'dumb-jump-after-jump-hook #'better-jumper-set-jump))
+
+(after! xref
+  (remove-hook 'xref-backend-functions #'etags--xref-backend)
+  (defadvice! +lookup--projectile-find-tag-a (orig-fn)
+    :around #'projectile-find-tag
+    (let ((xref-backend-functions '(etags--xref-backend t)))
+      (funcall orig-fn)))
+
+  (advice-add #'xref-push-marker-stack :around #'doom-set-jump-a)
+
+  (use-package! ivy-xref
+    :when (featurep! :completion ivy)
+    :config
+    (setq xref-show-xrefs-function #'ivy-xref-show-xrefs)
+    (set-popup-rule! "^\\*xref\\*$" :ignore t)))
+
+(use-package dotnet
+  :ensure t
+  :config
+  (add-hook 'csharp-mode-hook 'dotnet-mode)
+  (add-hook 'fsharp-mode-hook 'dotnet-mode))
+
+(use-package! fsharp-mode
+  :ensure t
+  :mode ("\\.[iylx]?$" . fsharp-mode)
+;  :hook (fsharp-mode . whitespace-mode)
+  :init
+  (setq inferior-fsharp-program "dotnet fsi --readline-"
+        fsharp-compiler "fsc"))
+
+(use-package! csharp-mode
+  :ensure t)
+
 (use-package! magit
   :commands (magit-status magit-blame magit-mode)
   :ensure t
@@ -379,14 +431,17 @@ region-end is used."
          ("C-c C-g c" . magit-commit)
          ("C-c C-g f" . magit-grep))
   :config
+  (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))
   (setq magit-diff-refine-hunk t)
   (setq magit-commit-arguments '("--verbose"))
-  (add-to-list 'magit-section-initial-visibility-alist '(unpulled . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(unpushed . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(untracked . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(unstaged . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(todos . show))
-  (add-to-list 'magit-section-initial-visibility-alist '(recent . show))
+  (setq magit-section-initial-visibility-alist
+               '((unpulled . show)
+                 (unpushed . show)
+                 (untracked . show)
+                 (unstaged . show)
+                 (stashes . show)
+                 (todos . show)
+                 (recent . show)))
   (magit-todos-mode)
   (progn
     ;; Set `magit-status' fullscreen
@@ -400,7 +455,7 @@ region-end is used."
               '(lambda ()
                  (auto-fill-mode)
                  (flyspell-mode)
-                 (set-fill-column 80)))))
+                 (set-fill-column 120)))))
 
 (use-package! imenu-list
   :config
@@ -417,7 +472,6 @@ region-end is used."
   (company-tng-configure-default)
   (setq company-idle-delay 0.0
         company-minimum-prefix-length 1
-        company-transformers nil
         company-show-numbers nil)
 
   (setq company-frontends
@@ -459,11 +513,20 @@ region-end is used."
        company-keywords
        company-yasnippet)
      company-backends))
-  :init
+  :config
   (setq company-lsp-async               t
         company-lsp-enable-recompletion t
         company-lsp-enable-snippet      t
         company-lsp-cache-candidates    'auto)
+  :init
+  (add-hook! 'lsp-mode-hook
+    (defun +lsp-init-company-h ()
+      (if (not (bound-and-true-p company-mode))
+          (add-hook 'company-mode-hook #'+lsp-init-company-h t t)
+        (setq-local company-backends
+                    (cons +lsp-company-backend
+                          (remq 'company-capf company-backends)))
+        (remove-hook 'company-mode-hook #'+lsp-init-company-h t))))
   (push-company-lsp-backends))
 
 (use-package! treemacs
@@ -477,7 +540,7 @@ region-end is used."
   :hook (prog-mode . highlight-symbol-mode)
   :custom
   (highlight-symbol-highlight-single-occurrence nil)
-  (highlight-symbol-idle-delay 0.25)
+  (highlight-symbol-idle-delay 0)
   (highlight-symbol-on-navigation-p t))
 
 (use-package! highlight-blocks
@@ -609,11 +672,11 @@ region-end is used."
         ivy-height 30
         ivy-rich-switch-buffer-name-max-length 50)
   (setq ivy-posframe-parameters
-        `((min-width . 200)
+        `((min-width . 22e0)
           (min-height . ,ivy-height)
           (left-fringe . 0)
           (right-fringe . 0)
-          (internal-border-width . 10))
+          (internal-border-width . 30))
         ivy-display-functions-alist
         '((counsel-git-grep)
           (counsel-rg)
@@ -625,8 +688,7 @@ region-end is used."
 (use-package! ivy-posframe
   :config
   (setq ivy-posframe-display-functions-alist
-        '((swiper          . ivy-posframe-display-at-point)
-          (complete-symbol . ivy-posframe-display-at-point)
+        '((complete-symbol . ivy-posframe-display-at-point)
           (counsel-M-x     . ivy-posframe-display-at-frame-top-center)
           (t               . ivy-posframe-display-at-frame-top-center)))
   (ivy-posframe-mode 1))
