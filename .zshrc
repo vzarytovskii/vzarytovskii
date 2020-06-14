@@ -25,7 +25,7 @@ export ARCHFLAGS="-arch x86_64"
 
 export DOTNET_ROOT=~/.dotnet
 
-export PATH=~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
+export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
 alias cat="bat"
 alias br="br -h"
@@ -53,3 +53,4 @@ alias cheat="cht.sh"
 alias how="howdoi"
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
+[ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"
