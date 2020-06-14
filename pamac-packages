@@ -484,6 +484,7 @@ lib32-libglvnd
 lib32-libgpg-error
 lib32-libice
 lib32-libidn
+lib32-libidn2
 lib32-libindicator-gtk2
 lib32-libinstpatch
 lib32-libjpeg-turbo
@@ -501,6 +502,7 @@ lib32-libsndfile
 lib32-libtasn1
 lib32-libthai
 lib32-libtiff
+lib32-libunistring
 lib32-libunwind
 lib32-libusb
 lib32-libva

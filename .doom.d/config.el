@@ -105,6 +105,7 @@
 
 ;; Binds:
 (map! "C-w" 'doom/delete-backward-word)
+(map! "C-x C-b" 'ibuffer)
 
 (defun display-startup-echo-area-message ()
   (message ""))
@@ -755,7 +756,25 @@ region-end is used."
 
 (use-package! swiper
   :after ivy
+  :bind (("C-s" . my/swiper))
   :config
+  (progn
+    (defun my/swiper (all)
+      "Run `swiper' or `swiper-all'.
+If a region is selected, the selected text is provided as initial input to
+`swiper'. Otherwise, `swiper' is started without any initial input.
+If ALL is non-nil, `swiper-all' is run."
+      (interactive "P")
+      (if all ; C-u
+          (swiper-all)
+        (if (use-region-p)
+            (progn
+              (deactivate-mark)
+              (swiper (buffer-substring-no-properties
+                       (region-beginning) (region-end))))
+          (swiper))))
+    (bind-key "M-a" #'swiper-avy swiper-map))
+
   (defun eh-ivy-open-current-typed-path ()
     (interactive)
     (when ivy--directory
@@ -764,8 +783,6 @@ region-end is used."
              (path (concat dir text-typed)))
         (delete-minibuffer-contents)
         (ivy--done path))))
-
-  (global-set-key (kbd "C-s") 'swiper)
   (define-key ivy-minibuffer-map (kbd "<return>") 'ivy-alt-done)
   (define-key ivy-minibuffer-map (kbd "C-f") 'eh-ivy-open-current-typed-path))
 
