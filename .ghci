@@ -1,27 +1,8 @@
-import           Text.Show.Pretty                    (ppShow)
-import qualified Language.Haskell.HsColour           as HSC
-import qualified Language.Haskell.HsColour.Colourise as HSC
-
-:{
-let myColourPrefs = HSC.defaultColourPrefs { HSC.conop    = [HSC.Foreground HSC.Yellow]
-                                           , HSC.conid    = [HSC.Foreground HSC.Yellow, HSC.Bold] 
-                                           , HSC.string   = [HSC.Foreground $ HSC.Rgb 29 193 57]
-                                           , HSC.char     = [HSC.Foreground HSC.Cyan]
-                                           , HSC.number   = [HSC.Foreground $ HSC.Rgb 202 170 236]
-                                           , HSC.keyglyph = [HSC.Foreground HSC.Yellow]
-                                           }
-:}
-
-:{
-ghciColorPrint :: Show a => a -> IO () 
-ghciColorPrint = putStrLn . HSC.hscolour HSC.TTY myColourPrefs False False "" False . ppShow
-:}
-
-:set -interactive-print=ghciColorPrint
-
 :set prompt "\ESC[94m\STX  \ESC[m\STX"
-:set prompt2 "\ESC[1;32mλ| \ESC[m"
+:set prompt-cont "\ESC[1;32mλ| \ESC[m"
 :set +t
+:set +m
+:set +s
 
 :set editor emacs
 
@@ -33,7 +14,6 @@ ghciColorPrint = putStrLn . HSC.hscolour HSC.TTY myColourPrefs False False "" Fa
 :set -fprint-explicit-kinds
 :set -ignore-package pretty-simple -package pretty-simple
 -- :set -fobject-code
-
 
 :seti -XFlexibleContexts
 :seti -XFlexibleInstances
@@ -48,9 +28,6 @@ ghciColorPrint = putStrLn . HSC.hscolour HSC.TTY myColourPrefs False False "" Fa
 :seti -XDataKinds
 :seti -XTypeApplications
 :seti -XTypeApplications
-
-:def! pretty \ _ -> pure ":set -interactive-print Text.Pretty.Simple.pPrint"
-:pretty
 
 :def hlint const . return $ ":! hlint \"src\""
 :def hoogle \s -> return $ ":! hoogle --count=15 \"" ++ s ++ "\""

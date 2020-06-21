@@ -1,14 +1,11 @@
 (doom! :input
        :completion
        company           ; the ultimate code completion backend
-       ;(helm +fuzzy +childframe)              ; the *other* search engine for love and life
-       ;ido               ; the other *other* search engine...
        (ivy +fuzzy +childframe +prescient +icons)               ; a search engine for love and life
 
        :ui
        doom              ; what makes DOOM look the way it does
        doom-dashboard    ; a nifty splash screen for Emacs
-       ;doom-quit         ; DOOM quit-message prompts when you quit Emacs
        hl-todo           ; highlight TODO/FIXME/NOTE/DEPRECATED/HACK/REVIEW
        modeline          ; snazzy, Atom-inspired modeline, plus API
        nav-flash         ; blink cursor line after big motions
@@ -24,7 +21,6 @@
        zen               ; distraction-free coding or writing
 
        :editor
-       ;(evil +everywhere); come to the dark side, we have cookies
        file-templates    ; auto-snippets for empty files
        fold              ; (nigh) universal code folding
        (format +onsave)  ; automated prettiness
@@ -65,9 +61,6 @@
        tmux              ; an API for interacting with tmux
 
        :lang
-       cc                ; C/C++/Obj-C madness
-       clojure           ; java with a lisp
-       common-lisp       ; if you've seen one lisp, you've seen them all
        csharp            ; unity, .NET, and mono shenanigans
        data              ; config/data formats
        emacs-lisp        ; drown in parentheses
@@ -75,9 +68,7 @@
        (haskell +lsp)  ; a language that's lazier than I am
        json              ; At least it ain't XML
        markdown          ; writing docs for people to ignore
-       (org +brain +journal +jupyter +noter +pandoc +pomodoro +present +roam)               ; organize your plain life in plain text
-       plantuml          ; diagrams for confusing people more
-       (python +lsp +pyenv)            ; beautiful is better than ugly
+       (org +brain +journal +noter +roam)               ; organize your plain life in plain text
        rest              ; Emacs as a REST client
        sh                ; she sells {ba,z,fi}sh shells on the C xor
        yaml              ; JSON, but readable
@@ -88,10 +79,7 @@
 
        :app
        calendar
-       twitter           ; twitter client https://twitter.com/vnought
 
        :config
-       ;;literate
        (default
-         ;+bindings
          +smartparens))

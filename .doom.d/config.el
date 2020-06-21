@@ -563,12 +563,13 @@ region-end is used."
   (setq undo-tree-auto-save-history t
         undo-tree-visualizer-diff t
         undo-tree-visualizer-timestamps t)
+  (global-undo-tree-mode t)
+  :bind (("C-x u" . undo-tree-visualize))
   :config
   (progn
     (defun my/undo-tree-restore-default ()
       (setq undo-tree-visualizer-diff t))
     (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
-  (global-undo-tree-mode 1)
   ;; make ctrl-z undo
   (global-set-key (kbd "C-z") 'undo)
   ;; make ctrl-Z redo
@@ -658,8 +659,8 @@ region-end is used."
   (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))
   (focus-mode t))
 
-(after! lsp-python-ms
-  (set-lsp-priority! 'mspyls 1))
+;(after! lsp-python-ms
+;  (set-lsp-priority! 'mspyls 1))
 
 (after! ivy
   (setq ivy-re-builders-alist
@@ -885,3 +886,25 @@ DEADLINE: %^t
   :config
   (solaire-global-mode +1)
   (solaire-mode-swap-bg))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(async-bytecomp-allowed-packages '(all))
+ '(highlight-symbol-highlight-single-occurrence nil)
+ '(highlight-symbol-idle-delay 0)
+ '(highlight-symbol-on-navigation-p t)
+ '(lsp-auto-guess-root t)
+ '(lsp-document-sync-method 'incremental)
+ '(lsp-prefer-flymake nil t)
+ '(lsp-response-timeout 10)
+ '(package-selected-packages
+   '(company-lsp company-quickhelp company-flx company magit csharp-mode fsharp-mode dotnet lsp-ui dap-mode projectile async))
+ '(projectile-mode 1 nil (projectile)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
