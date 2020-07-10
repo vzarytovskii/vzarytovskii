@@ -28,6 +28,7 @@
               file-name-handler-alist nil
               gc-cons-percentage 0.6
               auto-window-vscroll nil
+              read-process-output-max (* 1024 1024)
               message-log-max 16384)
 
 (add-hook 'after-init-hook
@@ -78,7 +79,7 @@
 (setq show-trailing-whitespace t)
 
 (setq org-directory "~/org/")
-(setq display-line-numbers-type nil)
+(setq display-line-numbers-type 'absolute)
 
 (setq split-width-threshold nil)
 (setq split-width-threshold 160)
@@ -97,10 +98,11 @@
 (setq make-backup-files nil)          ; Forbide to make backup files
 (setq auto-save-default nil)          ; Disable auto save
 (setq set-mark-command-repeat-pop t)  ; Repeating C-SPC after popping mark pops it again
-(setq track-eol t)      ; Keep cursor at end of lines.
+(setq track-eol nil)      ; Keep cursor at end of lines.
 (setq line-move-visual nil)    ; To be required by track-eol
 (setq-default kill-whole-line t)  ; Kill line including '\n'
 (setq-default indent-tabs-mode nil)   ; use space
+(setq-default truncate-lines t)
 (defalias 'yes-or-no-p #'y-or-n-p)
 
 ;; Binds:
@@ -325,14 +327,18 @@ region-end is used."
         lsp-eldoc-enable-hover nil
         lsp-eldoc-enable-signature-help nil
         lsp-document-sync-method 'incremental
-        lsp-signature-render-all t)
+        lsp-signature-auto-activate nil
+        lsp-signature-render-all nil)
+
+  (setq lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore"
+        lsp-fsharp-server-args '("-v"))
 
   :custom
   (lsp-auto-guess-root t)
   (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
   (lsp-response-timeout 10)
   (lsp-prefer-flymake nil))
-
+;;
 (use-package! lsp-ui
   :ensure t
   :demand t
@@ -407,18 +413,18 @@ region-end is used."
     (setq xref-show-xrefs-function #'ivy-xref-show-xrefs)
     (set-popup-rule! "^\\*xref\\*$" :ignore t)))
 
-(use-package dotnet
+(use-package! dotnet
   :ensure t
-  :config
-  (add-hook 'csharp-mode-hook 'dotnet-mode)
-  (add-hook 'fsharp-mode-hook 'dotnet-mode))
+  :hook (csharp-mode . dotnet-mode)
+  :hook (fsharp-mode . dotnet-mode))
 
 (use-package! fsharp-mode
   :ensure t
+  :after lsp-mode
   :mode ("\\.[iylx]?$" . fsharp-mode)
-;  :hook (fsharp-mode . whitespace-mode)
   :init
-  (setq inferior-fsharp-program "dotnet fsi --readline-"
+  (setq fsharp-ac-debug 2
+        inferior-fsharp-program "dotnet fsi --readline-"
         fsharp-compiler "fsc"))
 
 (use-package! csharp-mode
@@ -601,53 +607,53 @@ region-end is used."
   (dimmer-configure-posframe)
   (dimmer-mode t))
 
-(use-package ace-window
+(use-package! ace-window
   :ensure t
   :config
   (set-face-attribute
-     'aw-leading-char-face nil
-     :foreground "deep sky blue"
-     :weight 'bold
-     :height 2.0)
+   'aw-leading-char-face nil
+   :foreground "deep sky blue"
+   :weight 'bold
+   :height 2.0)
   (set-face-attribute
-     'aw-mode-line-face nil
-     :inherit 'mode-line-buffer-id
-     :foreground "lawn green")
+   'aw-mode-line-face nil
+   :inherit 'mode-line-buffer-id
+   :foreground "lawn green")
   (setq aw-keys '(?a ?s ?d ?f ?j ?k ?l)
-          aw-dispatch-always t
-          aw-dispatch-alist
-          '((?x aw-delete-window "Ace - Delete Window")
-            (?c aw-swap-window "Ace - Swap Window")
-            (?n aw-flip-window)
-            (?v aw-split-window-vert "Ace - Split Vert Window")
-            (?h aw-split-window-horz "Ace - Split Horz Window")
-            (?m delete-other-windows "Ace - Maximize Window")
-            (?g delete-other-windows)
-            (?b balance-windows)
-            (?u (lambda ()
-                  (progn
-                    (winner-undo)
-                    (setq this-command 'winner-undo))))
-            (?r winner-redo)))
+        aw-dispatch-always nil
+        aw-dispatch-alist
+        '((?x aw-delete-window "Ace - Delete Window")
+          (?c aw-swap-window "Ace - Swap Window")
+          (?n aw-flip-window)
+          (?v aw-split-window-vert "Ace - Split Vert Window")
+          (?h aw-split-window-horz "Ace - Split Horz Window")
+          (?m delete-other-windows "Ace - Maximize Window")
+          (?g delete-other-windows)
+          (?b balance-windows)
+          (?u (lambda ()
+                (progn
+                  (winner-undo)
+                  (setq this-command 'winner-undo))))
+          (?r winner-redo)))
 
   (when (package-installed-p 'hydra)
-      (defhydra hydra-window-size (:color red)
-        "Windows size"
-        ("h" shrink-window-horizontally "shrink horizontal")
-        ("j" shrink-window "shrink vertical")
-        ("k" enlarge-window "enlarge vertical")
-        ("l" enlarge-window-horizontally "enlarge horizontal"))
-      (defhydra hydra-window-frame (:color red)
-        "Frame"
-        ("f" make-frame "new frame")
-        ("x" delete-frame "delete frame"))
-      (defhydra hydra-window-scroll (:color red)
-        "Scroll other window"
-        ("n" joe-scroll-other-window "scroll")
-        ("p" joe-scroll-other-window-down "scroll down"))
-      (add-to-list 'aw-dispatch-alist '(?w hydra-window-size/body) t)
-      (add-to-list 'aw-dispatch-alist '(?o hydra-window-scroll/body) t)
-      (add-to-list 'aw-dispatch-alist '(?\; hydra-window-frame/body) t))
+    (defhydra hydra-window-size (:color red)
+      "Windows size"
+      ("h" shrink-window-horizontally "shrink horizontal")
+      ("j" shrink-window "shrink vertical")
+      ("k" enlarge-window "enlarge vertical")
+      ("l" enlarge-window-horizontally "enlarge horizontal"))
+    (defhydra hydra-window-frame (:color red)
+      "Frame"
+      ("f" make-frame "new frame")
+      ("x" delete-frame "delete frame"))
+    (defhydra hydra-window-scroll (:color red)
+      "Scroll other window"
+      ("n" joe-scroll-other-window "scroll")
+      ("p" joe-scroll-other-window-down "scroll down"))
+    (add-to-list 'aw-dispatch-alist '(?w hydra-window-size/body) t)
+    (add-to-list 'aw-dispatch-alist '(?o hydra-window-scroll/body) t)
+    (add-to-list 'aw-dispatch-alist '(?\; hydra-window-frame/body) t))
   (ace-window-display-mode t)
   (global-set-key (kbd "<M-RET>") 'ace-window))
 
@@ -659,12 +665,11 @@ region-end is used."
   (add-to-list 'focus-mode-to-thing '(lsp-mode . lsp-folding-range))
   (focus-mode t))
 
-;(after! lsp-python-ms
-;  (set-lsp-priority! 'mspyls 1))
-
-(after! ivy
+(use-package! ivy
+  :after flx
+  :config
   (setq ivy-re-builders-alist
-      '((t . ivy--regex-fuzzy)))
+        '((t . ivy--regex-fuzzy)))
   (setq ivy-use-selectable-prompt t
         ivy-auto-select-single-candidate t
         ivy-rich-parse-remote-buffer nil
@@ -674,7 +679,7 @@ region-end is used."
         ivy-height 30
         ivy-rich-switch-buffer-name-max-length 50)
   (setq ivy-posframe-parameters
-        `((min-width . 22e0)
+        `((min-width . 220)
           (min-height . ,ivy-height)
           (left-fringe . 0)
           (right-fringe . 0)
@@ -879,7 +884,7 @@ DEADLINE: %^t
     (ignore-errors (apply orig-fn args)))
   (advice-add 'nav-flash-show :around #'+advice/nav-flash-show))
 
-(use-package solaire-mode
+(use-package! solaire-mode
   :hook
   ((change-major-mode after-revert ediff-prepare-buffer) . turn-on-solaire-mode)
   (minibuffer-setup . solaire-mode-in-minibuffer)

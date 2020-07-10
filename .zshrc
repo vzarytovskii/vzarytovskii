@@ -24,6 +24,7 @@ export LANG=en_US.UTF-8
 export ARCHFLAGS="-arch x86_64"
 
 export DOTNET_ROOT=~/.dotnet
+export DOTNET_USE_POLLING_FILE_WATCHER=true
 
 export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
@@ -51,6 +52,7 @@ alias cap="emacs --eval \"(org-capture)\""
 alias spotify="spt"
 alias cheat="cht.sh"
 alias how="howdoi"
+alias rg="rg --no-heading"
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
 [ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"

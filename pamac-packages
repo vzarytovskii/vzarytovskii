@@ -122,6 +122,7 @@ dbus-glib
 dbus-x11
 dconf
 dconf-editor
+debootstrap
 desktop-file-utils
 device-mapper
 dhclient
@@ -617,6 +618,7 @@ libepoxy
 libev
 libevdev
 libevent
+libewf
 libexif
 libfakekey
 libfdk-aac
@@ -667,6 +669,7 @@ libjpeg-turbo
 libkate
 libksba
 libldap
+libldm
 liblouis
 liblqr
 liblrdf
@@ -827,8 +830,11 @@ libyaml
 libytnef
 licenses
 lilv
-linux56
 linux57
+linux58
+linux58-acpi_call
+linux58-headers
+linux58-tp_smapi
 linux-api-headers
 linux-firmware
 lirc
@@ -845,6 +851,7 @@ lsb-release
 lshw
 l-smash
 lsof
+lsscsi
 lttng-ust
 lua
 lua51
@@ -859,8 +866,10 @@ lua52-socket
 luajit
 lua-lgi
 lvm2
+lynx
 lz4
 lzo
+lzop
 m17n-db
 m17n-lib
 m4
@@ -932,8 +941,10 @@ mpv
 msgpack-c
 msmtp
 mtdev
+mtools
 mu-git
 mujs
+multipath-tools
 mutter
 nano
 nautilus
@@ -962,11 +973,12 @@ networkmanager-vpnc
 next-browser-git
 nfsidmap
 nfs-utils
+nilfs-utils
 ninja
 nm-connection-editor
 nnn
 node-gyp
-nodejs-lts-dubnium
+nodejs-lts-erbium
 notmuch-runtime
 noto-fonts
 noto-fonts-cjk
@@ -1007,7 +1019,6 @@ orion-git
 osinfo-db
 os-prober
 ostree
-otf-fira-code-git
 p11-kit
 p7zip
 pacman
@@ -1064,6 +1075,7 @@ perl-io-html
 perl-io-socket-ssl
 perl-json
 perl-json-xs
+perl-libintl-perl
 perl-libwww
 perl-lwp-mediatypes
 perl-lwp-protocol-https
@@ -1208,6 +1220,7 @@ python-recommonmark
 python-rencode
 python-reportlab
 python-requests
+python-resolvelib
 python-retrying
 python-setproctitle
 python-setuptools
@@ -1311,6 +1324,7 @@ signond
 silos
 simple-scan
 slang
+sleuthkit
 smbclient
 s-nail
 snapd
@@ -1342,10 +1356,12 @@ strace
 streamlink-git
 streamlink-twitch-gui
 sudo
+supermin
 surf-baitinq-git
 sushi
 swig
 sysfsutils
+syslinux
 system-config-printer
 systemd
 systemd-fsck-silent
@@ -1358,6 +1374,8 @@ talloc
 tar
 tcl
 tdb
+teams-for-linux
+teams-insiders
 telepathy-accounts-signon
 telepathy-farstream
 telepathy-glib
@@ -1500,8 +1518,9 @@ xf86-video-nouveau
 xfsprogs
 xkeyboard-config
 xmlsec
+xmlto
 xorg-bdftopcf
-xorg-fonts-alias
+xorg-fonts-alias-misc
 xorg-fonts-encodings
 xorg-fonts-misc
 xorg-font-util
@@ -1535,10 +1554,13 @@ xsel
 xterm
 xtitle
 xvidcore
+xxhash
 xz
 yad
 yadm-git
 yajl
+yank
+yara
 yarn
 yelp
 yelp-xsl
