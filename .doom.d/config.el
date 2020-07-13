@@ -344,7 +344,7 @@ region-end is used."
   :demand t
   :after lsp-mode
   :bind (("C-." . lsp-ui-sideline-apply-code-actions))
-  :hook (lsp-after-open . lsp-ui-mode)
+  ;:hook (lsp-after-open . lsp-ui-mode)
   :hook (lsp-after-open . lsp-lens-mode)
   :config
   (set-lookup-handlers! 'lsp-ui-mode :async t
@@ -502,6 +502,7 @@ region-end is used."
   :config
   (setq company-quickhelp-delay 0.1
         company-quickhelp-max-lines nil))
+
 
 (use-package! company-lsp
   :ensure t
