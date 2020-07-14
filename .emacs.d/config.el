@@ -199,7 +199,9 @@ region-end is used."
 
 	kill-whole-line t
 	indent-tabs-mode nil
-	truncate-lines t))
+	truncate-lines t
+
+	initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
 
 (use-package all-the-icons)
 
@@ -385,12 +387,8 @@ region-end is used."
 	 ("M-g x" . dumb-jump-go-prefer-external)
 	 ("M-g z" . dumb-jump-go-prefer-external-other-window))
   :config
-  (setq dumb-jump-default-project doom-emacs-dir
-	dumb-jump-aggressive nil
-	dumb-jump-selector
-	(cond ((featurep! :completion ivy)  'ivy)
-	      ((featurep! :completion helm) 'helm)
-	      ('popup)))
+  (setq dumb-jump-aggressive nil
+	dumb-jump-selector 'ivy)
   (add-hook 'dumb-jump-after-jump-hook #'better-jumper-set-jump))
 
 (use-package magit
@@ -811,6 +809,22 @@ If ALL is non-nil, `swiper-all' is run."
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
 
 ;; UI
+
+(use-package dashboard
+  :config
+  (setq dashboard-banner-logo-title nil
+	dashboard-startup-banner nil
+	dashboard-show-shortcuts t
+	dashboard-set-heading-icons t
+	dashboard-set-file-icons t
+	dashboard-set-init-info t
+	dashboard-set-footer nil
+	show-week-agenda-p t
+	dashboard-items '((recents  . 10)
+			  (projects . 5)
+			  (agenda . 5)))
+  (dashboard-setup-startup-hook))
+
 (use-package ibuffer
   ;;:bind (("C-x C-b" . ibuffer))
   :preface
@@ -997,13 +1011,11 @@ If ALL is non-nil, `swiper-all' is run."
   :after yasnippet)
 
 (use-package lsp-mode
-  :defer t
-  :commands lsp lsp-deferred
   :hook (lsp-after-open . lsp-enable-imenu)
   :hook (lsp-after-open . lsp-lens-mode)
   :hook (lsp-after-open . lsp-headerline-breadcrumbs-mode)
   :hook (lsp-mode . lsp-enable-which-key-integration)
-  :hook (fsharp-mode . lsp)
+  :commands (lsp lsp-deferred)
   :config
   (setq lsp-navigation 'both
 	lsp-auto-guess-root t
@@ -1023,7 +1035,9 @@ If ALL is non-nil, `swiper-all' is run."
 	lsp-prefer-flymake nil
 	lsp-response-timeout 10
 	lsp-signature-auto-activate nil
-	lsp-signature-render-all nil)
+	lsp-signature-render-all nil
+	lsp-headerline-breadcrumbs-mode 1
+	lsp-headerline-breadcrumb-segments '(project file symbols))
   :custom
   (lsp-file-watch-threshold 2000)
   (read-process-output-max (* 1024 1024))
@@ -1031,11 +1045,9 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package lsp-ui
   :after lsp-mode
-  :diminish
   :commands lsp-ui-mode
-  :after lsp-mode
   :bind (("C-." . lsp-ui-sideline-apply-code-actions))
-  ;; :hook (lsp-after-open . lsp-ui-mode)
+  :hook (lsp-after-open . lsp-ui-mode)
   :hook (lsp-after-open . lsp-lens-mode)
   :custom-face
   (lsp-ui-doc-background ((t (:background nil))))
@@ -1085,10 +1097,10 @@ If ALL is non-nil, `swiper-all' is run."
     (setq mode-line-format nil)))
 
 (use-package lsp-ivy
-  :after (:all lsp ivy))
+  :after (:all lsp-mode ivy)
+  :commands lsp-ivy-workspace-symbol)
 
 (use-package dap-mode
-  :diminish
   :after lsp-mode
   :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
   :hook (dap-mode . dap-ui-mode)
@@ -1342,11 +1354,31 @@ If failed try to complete the common part with `company-complete-common'"
 (use-package counsel-gtags)
 
 (use-package fsharp-mode
-  :after lsp
-  ;; TODO move from fsac to fsharp lsp
+  :after lsp-mode
+  :commands fsharp-mode
+  :hook (fsharp-mode . lsp)
   :config
-  (setq fsharp-doc-idle-delay .2
-	fsharp-ac-intellisense-enabled t))
+  (setq fsharp-doc-idle-delay .1
+	fsharp-ac-intellisense-enabled t
+	lsp-fsharp-server-runtime 'net-core
+	lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
+	lsp-fsharp-server-args '("--verbose")
+	lsp-fsharp-keywords-autocomplete t
+	lsp-fsharp-external-autocomplete t
+	lsp-fsharp-linter t
+	lsp-fsharp-union-case-stub-generation t
+	lsp-fsharp-union-case-stub-generation-body "failwith \"TODO\""
+	lsp-fsharp-record-stub-generation t
+	lsp-fsharp-record-stub-generation-body "failwith \"TODO\""
+	lsp-fsharp-interface-stub-generation t
+	lsp-fsharp-interface-stub-generation-object-identifier "_"
+	lsp-fsharp-interface-stub-generation-method-body "failwith \"TODO\""
+	lsp-fsharp-unused-opens-analyzer t
+	lsp-fsharp-unused-declarations-analyzer t
+	lsp-fsharp-simplify-name-analyzer t
+	lsp-fsharp-resolve-namespaces t
+	lsp-fsharp-enable-reference-code-lens t
+	lsp-fsharp-auto-workspace-init t))
 
 ;; Spelling and stuff
 (use-package bing-dict

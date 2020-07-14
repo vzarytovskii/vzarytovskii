@@ -13,11 +13,11 @@
 
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (add-hook 'emacs-startup-hook
-          `(lambda ()
+	  `(lambda ()
 	     (setq file-name-handler-alist file-name-handler-alist-old
-                   gc-cons-threshold 800000
-                   gc-cons-percentage 0.1)
-             (garbage-collect)) t)
+		   gc-cons-threshold 800000
+		   gc-cons-percentage 0.1)
+	     (garbage-collect)) t)
 
 
 ;; Setup straight.el
@@ -30,14 +30,19 @@
       (bootstrap-version 5))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
+	(url-retrieve-synchronously
+	 "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	 'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
 (straight-use-package 'use-package)
+
+;; Setup use-package
+(setq use-package-always-demand t
+      use-package-always-defer nil
+      use-package-always-ensure nil)
 
 ;; Encoding
 (setq locale-coding-system 'utf-8)
