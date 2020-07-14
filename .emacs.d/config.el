@@ -235,8 +235,6 @@ region-end is used."
   :config
   (gcmh-mode 1))
 
-(use-package no-littering)
-
 (use-package which-key
   :diminish which-key-mode
   :config
@@ -262,6 +260,10 @@ region-end is used."
 (use-package projectile
   :diminish projectile-mode
   :bind ("C-c C-p" . 'projectile-command-map)
+  :config
+  (setq projectile-project-search-path '("~/code/fsharp")
+	projectile-indexing-method 'hybrid
+	projectile-completion-system 'ivy)
   :custom
   (projectile-mode +1))
 
@@ -561,6 +563,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (dimmer-configure-magit)
   (dimmer-configure-posframe)
+  (dimmer-configure-company-box)
   (dimmer-mode t))
 
 (use-package ace-window
@@ -931,8 +934,6 @@ If ALL is non-nil, `swiper-all' is run."
 	treemacs-no-png-images                 nil
 	treemacs-no-delete-other-windows       t
 	treemacs-project-follow-cleanup        nil
-	treemacs-persist-file
-	(no-littering-expand-var-file-name "treemacs-persist")
 	treemacs-position                      'left
 	treemacs-recenter-distance             0.1
 	treemacs-recenter-after-file-follow    nil
@@ -1100,186 +1101,111 @@ If ALL is non-nil, `swiper-all' is run."
 	       ("C-M-<f11>" . dap-step-out)
 	       ("<f7>" . dap-breakpoint-toggle))))
 
-(defvar company-backend-alist
-  '((text-mode company-dabbrev company-yasnippet company-ispell company-files)
-    (prog-mode company-capf company-yasnippet company-files)
-    (conf-mode company-capf company-dabbrev-code company-yasnippet company-files)))
-
-(defun add-company-backend (modes &rest backends)
- (declare (indent defun))
- (dolist (mode (nasy-enlist modes))
-   (if (null (car backends))
-       (setq company-backend-alist
-	     (delq (assq mode company-backend-alist)
-		   company-backend-alist))
-     (setf (alist-get mode company-backend-alist)
-	   backends))))
-
-(defun company-backends ()
- (let (backends)
-   (let ((mode major-mode)
-	 (modes (list major-mode)))
-     (while (setq mode (get mode 'derived-mode-parent))
-       (push mode modes))
-     (dolist (mode modes)
-       (dolist (backend (append (cdr (assq mode company-backend-alist))
-				(default-value 'company-backends)))
-	 (push backend backends)))
-     (delete-dups
-      (append (cl-loop for (mode . backends) in company-backend-alist
-		       if (or (eq major-mode mode)  ; major modes
-			      (and (boundp mode)
-				   (symbol-value mode))) ; minor modes
-		       append backends)
-	      (nreverse backends))))))
-
-(defun company-init-backends-h ()
- "Set `company-backends' for the current buffer."
- (if (not company-mode)
-     (remove-hook 'change-major-mode-after-body-hook #'company-init-backends-h 'local)
-   (unless (eq major-mode 'fundamental-mode)
-     (setq-local company-backends (company-backends)))
-   (add-hook 'change-major-mode-after-body-hook #'company-init-backends-h nil 'local)))
-
-(put 'company-init-backends-h 'permanent-local-hook t)
-
 (use-package company
   :diminish company-mode
-  :hook ((prog-mode) . company-mode)
-  :commands (company-backends
-	     company-init-backends-h
-	     company-has-completion-p
-	     company-toggle-auto-completion
-	     company-complete
-	     company-dabbrev-setup
-	     company-whole-lines
-	     company-dict-or-keywords
-	     company-dabbrev-code-previous)
-  :preface
-  (defun company-has-completion-p ()
-    "Return non-nil if a completion candidate exists at point."
-    (and (company-manual-begin)
-	 (= company-candidates-length 1)))
-
-  (defun company-toggle-auto-completion ()
-    "Toggle as-you-type code completion."
-    (interactive)
-    (require 'company)
-    (setq company-idle-delay (unless company-idle-delay 0.2))
-    (message "Auto completion %s"
-	     (if company-idle-delay "enabled" "disabled")))
-
-  (defun company-complete ()
-    "Bring up the completion popup. If only one result, complete it."
-    (interactive)
-    (require 'company)
-    (when (ignore-errors
-	    (/= (point)
-		(cdr (bounds-of-thing-at-point 'symbol))))
-      (save-excursion (insert " ")))
-    (when (and (company-manual-begin)
-	       (= company-candidates-length 1))
-      (company-complete-common)))
-
-  (defun company-dabbrev-setup ()
-    "Invokes `company-dabbrev-code' in prog-mode buffers and `company-dabbrev'
-  everywhere else."
-    (interactive)
-    (call-interactively
-     (if (derived-mode-p 'prog-mode)
-	 #'company-dabbrev-code
-       #'company-dabbrev)))
-
-  (defun company-whole-lines (command &optional arg &rest ignored)
-    "`company-mode' completion backend that completes whole-lines, akin to vim's
-  C-x C-l."
-    (interactive (list 'interactive))
-    (require 'company)
-    (pcase command
-      (`interactive (company-begin-backend 'company-whole-lines))
-      (`prefix      (company-grab-line "^[\t\s]*\\(.+\\)" 1))
-      (`candidates
-       (all-completions
-	arg
-	(delete-dups
-	 (split-string
-	  (replace-regexp-in-string
-	   "^[\t\s]+" ""
-	   (concat (buffer-substring-no-properties (point-min) (line-beginning-position))
-		   (buffer-substring-no-properties (line-end-position) (point-max))))
-	  "\\(\r\n\\|[\n\r]\\)" t))))))
-
-  (defun company-dict-or-keywords ()
-    "`company-mode' completion combining `company-dict' and `company-keywords'."
-    (interactive)
-    (require 'company-dict)
-    (require 'company-keywords)
-    (let ((company-backends '((company-keywords company-dict))))
-      (call-interactively #'company-complete)))
-
-  (defun company-dabbrev-code-previous ()
-    (interactive)
-    (require 'company-dabbrev)
-    (let ((company-selection-wrap-around t))
-      (call-interactively #'company-dabbrev-setup)
-      (company-select-previous-or-abort)))
+  :hook (after-init . global-company-mode)
   :bind (:map company-active-map
 	      ([tab] . smarter-yas-expand-next-field-complete)
 	      ("TAB" . smarter-yas-expand-next-field-complete))
+  :preface
+  (defun smarter-yas-expand-next-field-complete ()
+    "Try to `yas-expand' and `yas-next-field' at current cursor position.
+
+If failed try to complete the common part with `company-complete-common'"
+    (interactive)
+    (if yas-minor-mode
+	(let ((old-point (point))
+	      (old-tick (buffer-chars-modified-tick)))
+	  (yas-expand)
+	  (when (and (eq old-point (point))
+		     (eq old-tick (buffer-chars-modified-tick)))
+	    (ignore-errors (yas-next-field))
+	    (when (and (eq old-point (point))
+		       (eq old-tick (buffer-chars-modified-tick)))
+	      (company-complete-common))))
+      (company-complete-common)))
   :init
-  (add-to-list 'completion-styles 'initials t)
   (setq company-tooltip-limit 10
+	company-tooltip-idle-delay .2
+	company-tooltip-flip-when-above t
+	company-tooltip-align-annotations t
 	company-dabbrev-downcase nil
 	company-dabbrev-ignore-case t
-	company-global-modes '(not erc-mode message-mode help-mode gud-mode eshell-mode)
-	company-backends '(company-capf)
-	company-frontends'(company-pseudo-tooltip-frontend company-echo-metadata-frontend)
 	company-dabbrev-other-buffers 'all
-	company-tooltip-align-annotations t
 	company-minimum-prefix-length 1
 	company-idle-delay .2
-	company-tooltip-idle-delay .2
 	company-require-match 'never)
-  :hook ((company-mode . company-init-backends-h))
   :config
   (global-company-mode +1)
-  (defvar prev-whitespace-mode nil)
-  (make-variable-buffer-local 'prev-whitespace-mode)
-  (defvar show-trailing-whitespace nil)
-  (make-variable-buffer-local 'show-trailing-whitespace)
-  (defun pre-popup-draw ()
-    "Turn off whitespace mode before showing company complete tooltip"
-    (if whitespace-mode
-	(progn
-	  (setq my-prev-whitespace-mode t)
-	  (whitespace-mode -1)))
-    (setq show-trailing-whitespace show-trailing-whitespace)
-    (setq show-trailing-whitespace nil))
-  (defun post-popup-draw ()
-    "Restore previous whitespace mode after showing company tooltip"
-    (if prev-whitespace-mode
-	(progn
-	  (whitespace-mode 1)
-	  (setq prev-whitespace-mode nil)))
-    (setq show-trailing-whitespace show-trailing-whitespace))
-  (advice-add 'company-pseudo-tooltip-unhide :before #'pre-popup-draw)
-  (advice-add 'company-pseudo-tooltip-hide :after #'post-popup-draw)
+  :custom
+  (custom-set-faces
+   '(company-preview
+     ((t (:foreground "darkgray" :underline t))))
+   '(company-preview-common
+     ((t (:inherit company-preview))))
+   '(company-tooltip
+     ((t (:background "lightgray" :foreground "black"))))
+   '(company-tooltip-selection
+     ((t (:background "steelblue" :foreground "white"))))
+   '(company-tooltip-common
+     ((((type x)) (:inherit company-tooltip :weight bold))
+      (t (:inherit company-tooltip))))
+   '(company-tooltip-common-selection
+     ((((type x)) (:inherit company-tooltip-selection :weight bold))
+      (t (:inherit company-tooltip-selection))))))
 
-  (defun company-backend-with-yas (backends)
-    "Add :with company-yasnippet to company BACKENDS.
-  Taken from https://github.com/syl20bnr/spacemacs/pull/179."
-    (if (and (listp backends) (memq 'company-yasnippet backends))
-	backends
-      (append (if (consp backends)
-		  backends
-		(list backends))
-	      '(:with company-yasnippet))))
-  :diminish company-mode)
+(use-package company-prescient
+  :after company)
 
-(use-package company-lsp
-  :defer t
-  :after (:all company lsp)
-  :custom (company-lsp-cache-candidates 'auto))
+;(use-package company-lsp
+;  :defer t
+;  :after (:all company lsp)
+;  :custom (company-lsp-cache-candidates 'auto))
+
+(use-package company-tabnine
+  :after company
+  :custom
+  (company-tabnine-max-num-results 9)
+  :hook
+  (lsp-after-open . (lambda ()
+		      (setq company-tabnine-max-num-results 3)
+		      (add-to-list 'company-transformers 'company//sort-by-tabnine t)
+		      (add-to-list 'company-backends '(company-lsp :with company-tabnine :separate))))
+  (kill-emacs . company-tabnine-kill-process)
+  :config
+  (add-to-list 'company-backends #'company-tabnine)
+  :preface
+  (defun company//sort-by-tabnine (candidates)
+    (if (or (functionp company-backend)
+	    (not (and (listp company-backend) (memq 'company-tabnine company-backend))))
+	candidates
+      (let ((candidates-table (make-hash-table :test #'equal))
+	    candidates-lsp
+	    candidates-tabnine)
+	(dolist (candidate candidates)
+	  (if (eq (get-text-property 0 'company-backend candidate)
+		  'company-tabnine)
+	      (unless (gethash candidate candidates-table)
+		(push candidate candidates-tabnine))
+	    (push candidate candidates-lsp)
+	    (puthash candidate t candidates-table)))
+	(setq candidates-lsp (nreverse candidates-lsp))
+	(setq candidates-tabnine (nreverse candidates-tabnine))
+	(nconc (seq-take candidates-tabnine 3)
+	       (seq-take candidates-lsp 6))))))
+
+(use-package company-flx
+  :after company)
+
+(use-package company-dict
+  :after company)
+
+(use-package company-quickhelp
+  :after company
+  :bind (:map company-active-map
+	      ("C-c h" . company-quickhelp-manual-begin))
+  :hook #'after-init-hook
+  :init (setq pos-tip-use-relative-coordinates t))
 
 (use-package company-box
   :diminish
@@ -1374,7 +1300,8 @@ If ALL is non-nil, `swiper-all' is run."
 	  company-box-icons-alist 'company-box-icons-all-the-icons)))
 
 (use-package company-posframe
-    :hook (company-mode . company-posframe-mode))
+  :after company
+  :hook (company-mode . company-posframe-mode))
 
 (use-package flycheck
   :preface
@@ -1410,17 +1337,23 @@ If ALL is non-nil, `swiper-all' is run."
   (after! elisp-mode
     (flycheck-package-setup)))
 
+(use-package ggtags)
+
+(use-package counsel-gtags)
+
+(use-package fsharp-mode
+  :after lsp
+  ;; TODO move from fsac to fsharp lsp
+  :config
+  (setq fsharp-doc-idle-delay .2
+	fsharp-ac-intellisense-enabled t))
 
 ;; Spelling and stuff
 (use-package bing-dict
   :bind (("C-c d" . bing-dict-brief))
   :init (setq bing-dict-show-thesaurus  'both
 	       bing-dict-vocabulary-save t
-	       bing-dict-cache-auto-save t
-	       bing-dict-vocabulary-file
-	       (no-littering-expand-var-file-name "bing-dict/vocabulary.org")
-	       bing-dict-cache-file
-	       (no-littering-expand-var-file-name "bing-dict/bing-dict-save.el")))
+	       bing-dict-cache-auto-save t))
 
 (use-package ispell
   :init
@@ -1428,9 +1361,7 @@ If ALL is non-nil, `swiper-all' is run."
 
   (setq-default ispell-program-name ispell
 		ispell-silently-savep t
-		ispell-dictionary "english"
-		ispell-personal-dictionary
-		(no-littering-expand-var-file-name "ispell/dictionary"))
+		ispell-dictionary "english")
   (when (string-suffix-p "aspell" ispell)
     (setq-default ispell-extra-args '("--reverse"))))
 
