@@ -222,7 +222,7 @@ region-end is used."
         indent-tabs-mode nil
         truncate-lines t
 
-        show-paren-style 'expression))
+        show-paren-style 'parenthesis))
 
 (use-package all-the-icons)
 
@@ -289,10 +289,15 @@ region-end is used."
 
 (use-package projectile
   :diminish
-  :bind ("C-c C-p" . 'projectile-command-map)
+  ;; :bind ("C-c C-p" . 'projectile-command-map)
   :config
-  (setq projectile-project-search-path '("~/code/fsharp")
-        projectile-indexing-method 'hybrid
+  (setq projectile-project-search-path '("~/code/")
+        projectile-auto-discover t
+        projectile-enable-caching nil
+        projectile-indexing-method 'alien
+        projectile-globally-ignored-file-suffixes '("#" "~" ".swp" ".o" ".so" ".exe" ".dll" ".elc" ".pyc" ".jar")
+        projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
+        projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
         projectile-completion-system 'ivy)
   :init
   (defun my-projectile-hook ()
@@ -304,6 +309,12 @@ region-end is used."
   (add-hook 'projectile-after-switch-project-hook #'my-projectile-hook)
   :custom
   (projectile-mode +1))
+
+(use-package counsel-projectile
+  :after (:all counsel projectile)
+  :bind ("C-x C-p" . counsel-projectile)
+  :bind ("C-x f" . counsel-projectile-find-file)
+  :bind ("C-x s". counsel-projectile-rg))
 
 (use-package dired
   :straight nil
@@ -429,7 +440,7 @@ region-end is used."
 
 (use-package autorevert
   :straight nil
-  :diminish)
+  :diminish autorevert-mode)
 
 (use-package eldoc
   :diminish eldoc-mode)
@@ -693,18 +704,19 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         +ivy-buffer-icons nil
         ivy-use-virtual-buffers nil
         ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-cd-selected
-        ivy-height 30
+        ivy-height 25
         ivy-rich-switch-buffer-name-max-length 50))
 
 (use-package ivy-posframe
+  :diminish
   :after ivy
   :config
   (setq ivy-posframe-parameters
-        `((min-width . 220)
+        `((min-width . 100)
           (min-height . ,ivy-height)
           (left-fringe . 0)
           (right-fringe . 0)
-          (internal-border-width . 30))
+          (internal-border-width . 10))
         ivy-display-functions-alist
         '((counsel-git-grep)
           (counsel-rg)
@@ -714,7 +726,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (t . ivy-posframe-display-at-frame-center)))
   (setq ivy-posframe-display-functions-alist
         '((complete-symbol . ivy-posframe-display-at-point)
-          (counsel-M-x     . ivy-posframe-display-at-frame-top-center)
           (t               . ivy-posframe-display-at-frame-top-center)))
   (ivy-posframe-mode 1))
 
@@ -1022,15 +1033,17 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package yasnippet
   :diminish
-  :bind (:map yas-minor-mode-map
-              ("C-'" . yas-expand))
+  :after company
   :commands (yas-minor-mode)
   :hook ((prog-mode      . yas-minor-mode)
          (yas-minor-mode . (lambda ()
                              (add-to-list
                               'yas-snippet-dirs
                               (concat user-emacs-directory "snippets")))))
-  :config (yas-reload-all))
+  :config
+  (add-to-list 'company-backends #'company-yasnippet)
+  (yas-global-mode)
+  (yas-reload-all))
 
 (use-package yasnippet-snippets
   :after yasnippet)
@@ -1141,36 +1154,20 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package company
   :diminish
   :hook (after-init . global-company-mode)
-  :bind (:map company-active-map
-              ([tab] . smarter-yas-expand-next-field-complete)
-              ("TAB" . smarter-yas-expand-next-field-complete))
-  :preface
-  (defun smarter-yas-expand-next-field-complete ()
-    "Try to `yas-expand' and `yas-next-field' at current cursor position.
-
-If failed try to complete the common part with `company-complete-common'"
-    (interactive)
-    (if yas-minor-mode
-        (let ((old-point (point))
-              (old-tick (buffer-chars-modified-tick)))
-          (yas-expand)
-          (when (and (eq old-point (point))
-                     (eq old-tick (buffer-chars-modified-tick)))
-            (ignore-errors (yas-next-field))
-            (when (and (eq old-point (point))
-                       (eq old-tick (buffer-chars-modified-tick)))
-              (company-complete-common))))
-      (company-complete-common)))
+  :commands (company-mode global-company-mode company-complete
+             company-complete-common company-manual-begin company-grab-line)
   :init
-  (setq company-tooltip-limit 10
-        company-tooltip-idle-delay .2
+  (with-eval-after-load 'company
+    (add-to-list 'company-transformers 'delete-consecutive-dups t))
+  (setq company-tooltip-limit 15
+        company-tooltip-idle-delay 0.0
         company-tooltip-flip-when-above t
         company-tooltip-align-annotations t
         company-dabbrev-downcase nil
         company-dabbrev-ignore-case t
         company-dabbrev-other-buffers 'all
         company-minimum-prefix-length 1
-        company-idle-delay .2
+        company-idle-delay 0.0
         company-require-match 'never)
   :config
   (global-company-mode +1)
@@ -1194,39 +1191,6 @@ If failed try to complete the common part with `company-complete-common'"
 (use-package company-prescient
   :after company)
 
-(use-package company-tabnine
-  :after company
-  :disabled
-  :custom
-  (company-tabnine-max-num-results 9)
-  :hook
-  (lsp-after-open . (lambda ()
-                      (setq company-tabnine-max-num-results 3)
-                      (add-to-list 'company-transformers 'company//sort-by-tabnine t)
-                      (add-to-list 'company-backends '(company-lsp :with company-tabnine :separate))))
-  (kill-emacs . company-tabnine-kill-process)
-  :config
-  (add-to-list 'company-backends #'company-tabnine)
-  :preface
-  (defun company//sort-by-tabnine (candidates)
-    (if (or (functionp company-backend)
-            (not (and (listp company-backend) (memq 'company-tabnine company-backend))))
-        candidates
-      (let ((candidates-table (make-hash-table :test #'equal))
-            candidates-lsp
-            candidates-tabnine)
-        (dolist (candidate candidates)
-          (if (eq (get-text-property 0 'company-backend candidate)
-                  'company-tabnine)
-              (unless (gethash candidate candidates-table)
-                (push candidate candidates-tabnine))
-            (push candidate candidates-lsp)
-            (puthash candidate t candidates-table)))
-        (setq candidates-lsp (nreverse candidates-lsp))
-        (setq candidates-tabnine (nreverse candidates-tabnine))
-        (nconc (seq-take candidates-tabnine 3)
-               (seq-take candidates-lsp 6))))))
-
 (use-package company-flx
   :after company)
 
@@ -1235,10 +1199,12 @@ If failed try to complete the common part with `company-complete-common'"
 
 (use-package company-quickhelp
   :after company
-  :bind (:map company-active-map
-              ("C-c h" . company-quickhelp-manual-begin))
-  :hook #'after-init-hook
-  :init (setq pos-tip-use-relative-coordinates t))
+  :bind (:map company-active-map ("C-c h" . company-quickhelp-manual-begin))
+  :preface
+  (setq pos-tip-use-relative-coordinates t
+        company-quickhelp-delay 0.0)
+  :config
+  (company-quickhelp-mode))
 
 (use-package company-box
   :diminish
@@ -1350,18 +1316,18 @@ If failed try to complete the common part with `company-complete-common'"
              flycheck-previous-error
              flycheck-add-next-checker)
   ;; :bind (("C-x C-s" . save-buffer-maybe-show-errors))
-  :hook ((after-init . global-flycheck-mode))
-  :init (setq flycheck-display-errors-function
-               #'flycheck-display-error-messages-unless-error-list
+  :hook (prog-mode . flycheck-mode)
+  :init (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list
                flycheck-check-syntax-automatically '(save mode-enabled)
-               flycheck-display-errors-delay       0.25)
+               flycheck-display-errors-delay 0.0
+               flycheck-idle-change-delay 0.0)
   :bind (:map flycheck-error-list-mode-map
               ("C-n"    . flycheck-error-list-next-error)
               ("C-p"    . flycheck-error-list-previous-error)
               ("RET"    . flycheck-error-list-goto-error)
               ([return] . flycheck-error-list-goto-error))
-  :config (defalias 'show-error-at-point-soon
-            'flycheck-show-error-at-point)
+  :config
+  (defalias 'show-error-at-point-soon 'flycheck-show-error-at-point)
   (add-to-list 'flycheck-emacs-lisp-checkdoc-variables 'sentence-end-double-space))
 
 
@@ -1375,10 +1341,41 @@ If failed try to complete the common part with `company-complete-common'"
 
 (use-package counsel-gtags)
 
+(use-package dotnet)
+
+(use-package csharp-mode
+  :after dotnet
+  :mode  "\\.c\\(s\\|sx\\)$"
+  ;; :hook (csharp-mode . lsp)
+  :hook (csharp-mode . dotnet-mode)
+  :hook (csharp-mode . company-mode)
+  :hook (csharp-mode . flycheck-mode))
+
+(use-package omnisharp
+  :after (:all company flycheck)
+  :hook (csharp-mode . omnisharp-mode)
+  :hook (omnisharp-mode . company-mode)
+  :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
+  :preface
+  (setq omnisharp-auto-complete-want-documentation nil
+        omnisharp-eldoc-support t
+        omnisharp-imenu-support t
+        omnisharp-company-ignore-case t)
+  :config
+  (add-to-list 'company-backends #'company-omnisharp)
+  (setq indent-tabs-mode nil
+        c-syntactic-indentation t
+        c-basic-offset 4
+        truncate-lines t
+        tab-width 4))
+
 (use-package fsharp-mode
+  :mode  "\\.f\\(s\\|sx\\|si\\|sy\\)$"
   :after (:all lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
+  :hook (fsharp-mode . dotnet-mode)
+  ;; :hook (fsharp-mode . omnisharp-mode)
   :config
   (setq fsharp-doc-idle-delay .1
         fsharp-ac-intellisense-enabled t
@@ -1404,6 +1401,19 @@ If failed try to complete the common part with `company-complete-common'"
         lsp-fsharp-enable-reference-code-lens t
         lsp-fsharp-auto-workspace-init t)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
+
+(use-package nxml-mode
+  :straight nil
+  :mode (("\\.\\(fs\\|cs\\|cc\\)proj$" . nxml-mode)
+         ("\\.xml$" . nxml-mode)))
+
+(use-package typescript-mode)
+
+(use-package tide
+  :after (typescript-mode company flycheck)
+  :hook ((typescript-mode . tide-setup)
+         (typescript-mode . tide-hl-identifier-mode)
+         (before-save . tide-format-before-save)))
 
 ;; Spelling and stuff
 (use-package bing-dict

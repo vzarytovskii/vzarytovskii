@@ -1274,6 +1274,7 @@ qtws-base
 qutebrowser-git
 ranger-git
 raptor
+rav1e
 rclone
 re2
 readline
@@ -1417,6 +1418,7 @@ ttf-liberation
 twitch-curses
 twitchy-git
 twolame
+typescript
 tzdata
 uchardet
 udisks2
