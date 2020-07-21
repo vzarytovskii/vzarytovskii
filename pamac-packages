@@ -44,6 +44,7 @@ autoconf
 autojump
 automake
 avahi
+avaloniailspy
 awesome
 awesome-terminal-fonts
 awesome-wallpapers
@@ -992,6 +993,7 @@ nss-mdns
 nteract-bin
 ntfs-3g
 ntp
+nuget
 numactl
 numlockx
 oath-toolkit

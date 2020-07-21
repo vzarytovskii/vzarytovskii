@@ -21,7 +21,7 @@
 (defalias 'lambda! 'λ!)
 
 (defmacro after! (package &rest body)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug t))2
   (if (symbolp package)
       (list (if (or (not (bound-and-true-p byte-compile-current-file))
                     (require package nil 'noerror))
@@ -140,19 +140,6 @@ region-end is used."
     (forward-char -1))
   (duplicate-region num (point-at-bol) (1+ (point-at-eol))))
 
-(defun smarter-move-beginning-of-line (arg)
-  "Move depending on ARG to beginning of visible line or not.
-  From https://emacsredux.com/blog/2013/05/22/smarter-navigation-to-the-beginning-of-a-line/."
-  (interactive "^p")
-  (setq arg (or arg 1))
-  (when (/= arg 1)
-    (let ((line-move-visual nil))
-      (forward-line (1- arg))))
-  (let ((orig-point (point)))
-    (back-to-indentation)
-    (when (= orig-point (point))
-      (move-beginning-of-line 1))))
-
 (defun move-line-up ()
   "Move up the current line."
   (interactive)
@@ -169,7 +156,6 @@ region-end is used."
   (indent-according-to-mode))
 
 (global-set-key [remap kill-whole-line] 'smart-kill-whole-line)
-(global-set-key [remap move-beginning-of-line] 'smarter-move-beginning-of-line)
 
 ;;(global-set-key (kbd "C-x 2") 'vsplit-last-buffer)
 (global-set-key (kbd "C-x 2") 'vsplit-current-buffer)
@@ -299,14 +285,6 @@ region-end is used."
         projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
         projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
         projectile-completion-system 'ivy)
-  :init
-  (defun my-projectile-hook ()
-    (interactive)
-    (message (concat "Current project name is " (projectile-project-name)))
-    ;; HACK: only for F# compiler, disable certain projects inside, since they are only for stress testing:
-    (if (string= projectile-project-name "fsharp")
-        (add-to-list 'lsp-file-watch-ignored "tests/projects/")))
-  (add-hook 'projectile-after-switch-project-hook #'my-projectile-hook)
   :custom
   (projectile-mode +1))
 
@@ -334,9 +312,9 @@ region-end is used."
   :straight nil
   :init  ;; nicer naming of buffers for files with identical names
   (setq uniquify-buffer-name-style   'reverse
-         uniquify-separator           " • "
-         uniquify-after-kill-buffer-p t
-         uniquify-ignore-buffers-re   "^\\*"))
+        uniquify-separator           " • "
+        uniquify-after-kill-buffer-p t
+        uniquify-ignore-buffers-re   "^\\*"))
 
 (use-package diff-hl
   :after dired
@@ -414,6 +392,13 @@ region-end is used."
 
 (use-package dired-collapse
   :hook 'dired-mode-hook)
+
+(use-package ranger
+  :preface
+  (setq ranger-cleanup-on-disable t
+        ranger-show-hidden t
+        ranger-modify-header t
+        ranger-preview-file t))
 
 (use-package vlf
   :init
@@ -1032,6 +1017,7 @@ If ALL is non-nil, `swiper-all' is run."
 ;; Programming stuff:
 
 (use-package yasnippet
+  :disabled t
   :diminish
   :after company
   :commands (yas-minor-mode)
@@ -1042,7 +1028,6 @@ If ALL is non-nil, `swiper-all' is run."
                               (concat user-emacs-directory "snippets")))))
   :config
   (add-to-list 'company-backends #'company-yasnippet)
-  (yas-global-mode)
   (yas-reload-all))
 
 (use-package yasnippet-snippets
@@ -1052,7 +1037,7 @@ If ALL is non-nil, `swiper-all' is run."
   :hook (lsp-after-open . lsp-enable-imenu)
   :hook (lsp-after-open . lsp-lens-mode)
   :hook (lsp-after-open . lsp-headerline-breadcrumbs-mode)
-  :hook (lsp-mode . lsp-enable-which-key-integration)
+  :hook (lsp-mode       . lsp-enable-which-key-integration)
   :commands (lsp lsp-deferred)
   :config
   (setq lsp-navigation 'both
@@ -1202,7 +1187,7 @@ If ALL is non-nil, `swiper-all' is run."
   :bind (:map company-active-map ("C-c h" . company-quickhelp-manual-begin))
   :preface
   (setq pos-tip-use-relative-coordinates t
-        company-quickhelp-delay 0.0)
+        company-quickhelp-delay 0.1)
   :config
   (company-quickhelp-mode))
 
@@ -1344,15 +1329,14 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package dotnet)
 
 (use-package csharp-mode
-  :after dotnet
-  :mode  "\\.c\\(s\\|sx\\)$"
+  :after (:all lsp-mode company flycheck dotnet)
   ;; :hook (csharp-mode . lsp)
   :hook (csharp-mode . dotnet-mode)
   :hook (csharp-mode . company-mode)
   :hook (csharp-mode . flycheck-mode))
 
 (use-package omnisharp
-  :after (:all company flycheck)
+  :after (:all csharp-mode company flycheck)
   :hook (csharp-mode . omnisharp-mode)
   :hook (omnisharp-mode . company-mode)
   :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
