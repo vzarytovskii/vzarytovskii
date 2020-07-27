@@ -75,6 +75,7 @@ ca-certificates-utils
 caffeine-ng
 cairo
 cairomm
+cairo-perl
 cantarell-fonts
 c-ares
 catdoc
@@ -236,6 +237,7 @@ glib2
 glibc
 glibmm
 glib-networking
+glib-perl
 glslang
 glu
 glusterfs
@@ -365,6 +367,7 @@ hplip
 hspell
 htop
 http-parser
+hub
 hunspell
 hwids
 hwinfo
@@ -953,6 +956,7 @@ nautilus
 nautilus-admin
 nautilus-empty-file
 nautilus-sendto
+ncdu
 ncurses
 ndctl
 neomutt-git
@@ -1055,7 +1059,9 @@ perl-alien-build
 perl-alien-libxml2
 perl-anyevent
 perl-anyevent-i3
+perl-cairo-gobject
 perl-capture-tiny
+perl-class-inspector
 perl-clone
 perl-common-sense
 perl-data-dump
@@ -1065,7 +1071,10 @@ perl-error
 perl-ffi-checklib
 perl-file-chdir
 perl-file-listing
+perl-file-sharedir
 perl-file-which
+perl-glib-object-introspection
+perl-gtk3
 perl-html-parser
 perl-html-tagset
 perl-http-cookies
@@ -1074,6 +1083,7 @@ perl-http-date
 perl-http-message
 perl-http-negotiate
 perl-image-exiftool
+perl-inc-latest
 perl-io-html
 perl-io-socket-ssl
 perl-json
@@ -1083,6 +1093,7 @@ perl-libwww
 perl-lwp-mediatypes
 perl-lwp-protocol-https
 perl-mailtools
+perl-module-build
 perl-net-http
 perl-net-ssleay
 perl-path-tiny
@@ -1283,6 +1294,7 @@ readline
 reiserfsprogs
 rest
 rhash
+rider-eap
 ripcord
 ripgrep
 rlwrap
@@ -1327,6 +1339,8 @@ shared-mime-info
 signond
 silos
 simple-scan
+skype-electron
+slack-desktop
 slang
 sleuthkit
 smbclient
@@ -1357,6 +1371,7 @@ steam-manjaro
 st-git
 stoken
 strace
+straw-viewer-git
 streamlink-git
 streamlink-twitch-gui
 sudo

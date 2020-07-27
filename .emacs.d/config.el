@@ -644,7 +644,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :config
   (custom-set-variables
-   '(zoom-size '(0.9 . 0.9))
+   '(zoom-size '(0.5 . 0.9))
    '(zoom-ignored-major-modes '(dired-mode markdown-mode))
    '(zoom-ignored-buffer-names '("zoom.el" "init.el"))
    '(zoom-ignored-buffer-name-regexps '("^*calc"))
@@ -693,6 +693,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ivy-rich-switch-buffer-name-max-length 50))
 
 (use-package ivy-posframe
+  :disabled t
   :diminish
   :after ivy
   :config
@@ -711,7 +712,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (t . ivy-posframe-display-at-frame-center)))
   (setq ivy-posframe-display-functions-alist
         '((complete-symbol . ivy-posframe-display-at-point)
-          (t               . ivy-posframe-display-at-frame-top-center)))
+          (t               . ivy-posframe-display-at-frame-center)))
   (ivy-posframe-mode 1))
 
 (use-package ivy-rich
@@ -1136,6 +1137,9 @@ If ALL is non-nil, `swiper-all' is run."
                ("C-M-<f11>" . dap-step-out)
                ("<f7>" . dap-breakpoint-toggle))))
 
+(use-package eglot
+  :commands eglot)
+
 (use-package company
   :diminish
   :hook (after-init . global-company-mode)
@@ -1354,20 +1358,24 @@ If ALL is non-nil, `swiper-all' is run."
         tab-width 4))
 
 (use-package fsharp-mode
-  :mode  "\\.f\\(s\\|sx\\|si\\|sy\\)$"
-  :after (:all lsp-mode projectile)
+  :after (:all eglot lsp-mode projectile)
   :commands fsharp-mode
-  :hook (fsharp-mode . lsp)
+  ;; :hook (fsharp-mode . lsp)
   :hook (fsharp-mode . dotnet-mode)
-  ;; :hook (fsharp-mode . omnisharp-mode)
   :config
-  (setq fsharp-doc-idle-delay .1
+  (require 'eglot-fsharp)
+  (setq indent-tabs-mode nil
+        truncate-lines t
+        tab-width 4)
+  (setq fsharp-doc-idle-delay 0.0
+        fsharp-ac-use-popup t
         fsharp-ac-intellisense-enabled t
         fsharp-smart-indentation t
-        fsharp-indent-offset 2
+        fsharp-indent-offset 4
+        inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
         lsp-fsharp-server-install-dir "~/.emacs.d/.lsp/"
-        lsp-fsharp-server-args '("--verbose")
+        ;; lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
@@ -1383,7 +1391,8 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-fsharp-simplify-name-analyzer t
         lsp-fsharp-resolve-namespaces t
         lsp-fsharp-enable-reference-code-lens t
-        lsp-fsharp-auto-workspace-init t)
+        lsp-fsharp-auto-workspace-init nil)
+  (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 
 (use-package nxml-mode
