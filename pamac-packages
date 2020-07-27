@@ -878,7 +878,6 @@ lzop
 m17n-db
 m17n-lib
 m4
-mailwizard-git
 make
 makeself
 man-db
@@ -959,7 +958,6 @@ nautilus-sendto
 ncdu
 ncurses
 ndctl
-neomutt-git
 neon
 neovim-git
 nerd-fonts-complete

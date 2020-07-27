@@ -1,7 +1,7 @@
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export EDITOR="emacsclient -nw -c"
 export ZSH="/home/v/.oh-my-zsh"
-ZSH_THEME="robbyrussell"
+ZSH_THEME="simple"
 CASE_SENSITIVE="false"
 HYPHEN_INSENSITIVE="true"
 DISABLE_AUTO_UPDATE="false"
@@ -15,7 +15,7 @@ COMPLETION_WAITING_DOTS="true"
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
 # HIST_STAMPS="mm/dd/yyyy"
 # ZSH_CUSTOM=/path/to/new-custom-folder
-plugins=(git archlinux autojump cargo colorize fd fasd fzf git-prompt gitfast gitignore man z)
+plugins=(git archlinux autojump colorize fd fasd fzf man z)
 
 source $ZSH/oh-my-zsh.sh
 source /home/v/.config/broot/launcher/bash/br

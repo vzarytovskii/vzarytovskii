@@ -216,7 +216,7 @@ region-end is used."
 
 (use-package doom-themes
   :config
-  (load-theme 'doom-tomorrow-night t))
+  (load-theme 'doom-vibrant t))
 
 (use-package async
   :init
@@ -262,8 +262,6 @@ region-end is used."
 (use-package projectile
   :diminish
   ;; :bind ("C-c C-p" . 'projectile-command-map)
-  :init
-  (projectile-discover-projects-in-search-path)
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
@@ -274,6 +272,7 @@ region-end is used."
         projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
         projectile-completion-system 'ivy)
   :custom
+  (projectile-discover-projects-in-search-path)
   (projectile-mode +1))
 
 (use-package counsel-projectile
@@ -758,6 +757,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package counsel
   :bind ("M-x" . 'counsel-M-x)
+  :bind ("C-x C-f" . 'counsel-find-file)
+  :bind ("M-g s" . counsel-imenu)
   :diminish
   :config
   (setq counsel-yank-pop-height 20
@@ -1370,7 +1371,7 @@ If ALL is non-nil, `swiper-all' is run."
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
         lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
-        ;; lsp-fsharp-server-args '("-v")
+        lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
