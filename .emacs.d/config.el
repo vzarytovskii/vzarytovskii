@@ -216,21 +216,7 @@ region-end is used."
 
 (use-package doom-themes
   :config
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
-  (doom-themes-visual-bell-config)
-  (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
-  (doom-themes-treemacs-config)
-  (doom-themes-org-config))
-
-(use-package smart-mode-line
-  :after emacs
-  :disabled
-  :config
-  (setq sml/theme 'dark
-        sml/no-confirm-load-theme t)
-  (add-hook 'after-init-hook 'sml/setup))
+  (load-theme 'doom-tomorrow-night t))
 
 (use-package async
   :init
@@ -276,6 +262,8 @@ region-end is used."
 (use-package projectile
   :diminish
   ;; :bind ("C-c C-p" . 'projectile-command-map)
+  :init
+  (projectile-discover-projects-in-search-path)
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
@@ -581,7 +569,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package deadgrep
   :if (executable-find "rg")
-  :bind ("M-s" . 'deadgrep))
+  :bind ("M-s" . 'deadgrep)
+  :bind (:map deadgrep-mode-map
+              ("RET" . deadgrep-visit-result-other-window)
+              ("o" . deadgrep-visit-result)))
 
 (use-package dimmer
   :disabled
@@ -1037,7 +1028,7 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package lsp-mode
   :hook (lsp-after-open . lsp-enable-imenu)
   :hook (lsp-after-open . lsp-lens-mode)
-  :hook (lsp-after-open . lsp-headerline-breadcrumbs-mode)
+  :hook (lsp-after-open . lsp-headerline-breadcrumb-mode)
   :hook (lsp-mode       . lsp-enable-which-key-integration)
   :commands (lsp lsp-deferred)
   :config
@@ -1060,7 +1051,7 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-response-timeout 10
         lsp-signature-auto-activate nil
         lsp-signature-render-all nil
-        lsp-headerline-breadcrumbs-mode 1
+        lsp-headerlin-breadcrumbs-mode 1
         lsp-headerline-breadcrumb-segments '(project file symbols))
   :custom
   (lsp-file-watch-threshold 2000)
@@ -1068,6 +1059,7 @@ If ALL is non-nil, `swiper-all' is run."
   (lsp-eldoc-hook nil))
 
 (use-package lsp-ui
+  :diminish lsp-lens-mode
   :after lsp-mode
   :commands lsp-ui-mode
   :bind (("C-." . lsp-ui-sideline-apply-code-actions))
@@ -1358,9 +1350,12 @@ If ALL is non-nil, `swiper-all' is run."
         tab-width 4))
 
 (use-package fsharp-mode
-  :after (:all eglot lsp-mode projectile)
+  :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
+  :straight nil
+  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
+  :after (:all lsp-mode projectile)
   :commands fsharp-mode
-  ;; :hook (fsharp-mode . lsp)
+  :hook (fsharp-mode . lsp)
   :hook (fsharp-mode . dotnet-mode)
   :config
   (require 'eglot-fsharp)
@@ -1374,8 +1369,8 @@ If ALL is non-nil, `swiper-all' is run."
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
-        lsp-fsharp-server-install-dir "~/.emacs.d/.lsp/"
-        ;; lsp-fsharp-server-args '("--verbose")
+        lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
+        ;; lsp-fsharp-server-args '("-v")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
@@ -1399,14 +1394,6 @@ If ALL is non-nil, `swiper-all' is run."
   :straight nil
   :mode (("\\.\\(fs\\|cs\\|cc\\)proj$" . nxml-mode)
          ("\\.xml$" . nxml-mode)))
-
-(use-package typescript-mode)
-
-(use-package tide
-  :after (typescript-mode company flycheck)
-  :hook ((typescript-mode . tide-setup)
-         (typescript-mode . tide-hl-identifier-mode)
-         (before-save . tide-format-before-save)))
 
 ;; Spelling and stuff
 (use-package bing-dict

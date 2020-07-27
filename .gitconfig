@@ -53,3 +53,5 @@
 	default = simple
 [merge "theirs"]
 	driver = true
+[merge]
+	conflictStyle = diff3
