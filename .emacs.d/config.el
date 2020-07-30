@@ -9,6 +9,9 @@
 (size-indication-mode t)
 (show-paren-mode t)
 
+(add-to-list 'default-frame-alist
+             '(vertical-scroll-bars . nil))
+
 (defconst *sys/gui*
   (display-graphic-p)
   "Are we running on a GUI Emacs?")
@@ -156,10 +159,9 @@ region-end is used."
   (indent-according-to-mode))
 
 (global-set-key [remap kill-whole-line] 'smart-kill-whole-line)
-
-;;(global-set-key (kbd "C-x 2") 'vsplit-last-buffer)
+(global-set-key (kbd "C-x C-2") 'vsplit-last-buffer)
 (global-set-key (kbd "C-x 2") 'vsplit-current-buffer)
-;;(global-set-key (kbd "C-x 3") 'hsplit-last-buffer)
+(global-set-key (kbd "C-x C-3") 'hsplit-last-buffer)
 (global-set-key (kbd "C-x 3") 'hsplit-current-buffer)
 
 
@@ -173,7 +175,7 @@ region-end is used."
 
 (use-package emacs
   :config
-  (set-frame-font "JetBrains Mono 12" nil t)
+  (add-to-list 'default-frame-alist '(font . "JetBrains Mono 12"))
   (setq-default major-mode 'text-mode
                 compilation-scroll-output t
                 indent-tabs-mode nil)
@@ -259,20 +261,26 @@ region-end is used."
   :config
   (move-text-default-bindings))
 
+(use-package mwim
+  :bind (("C-a" . 'mwim-beginning-of-code-or-line)
+         ("C-e" . 'mwim-end-of-code-or-line)
+         ("<home>" . 'mwim-beginning-of-code-or-line)
+         ("<end>" . 'mwim-end-of-code-or-line)))
+
 (use-package projectile
   :diminish
   ;; :bind ("C-c C-p" . 'projectile-command-map)
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
-        projectile-enable-caching nil
+        projectile-enable-caching t
         projectile-indexing-method 'alien
         projectile-globally-ignored-file-suffixes '("#" "~" ".swp" ".o" ".so" ".exe" ".dll" ".elc" ".pyc" ".jar")
         projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
         projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
         projectile-completion-system 'ivy)
-  :custom
   (projectile-discover-projects-in-search-path)
+  :custom
   (projectile-mode +1))
 
 (use-package counsel-projectile
@@ -371,7 +379,7 @@ region-end is used."
   :bind ("M-i" . 'iedit-mode))
 
 (use-package dired-narrow
-  :after    dired
+  :after dired
   :bind (:map dired-narrow-map
               ("<down>"  . dired-narrow-next-file)
               ("<up>"    . dired-narrow-previous-file)
@@ -408,6 +416,7 @@ region-end is used."
   :config
   (setq dumb-jump-aggressive nil
         dumb-jump-selector 'ivy)
+  (add-to-list 'xref-backend-functions 'dumb-jump-xref-activate t)
   (add-hook 'dumb-jump-after-jump-hook #'better-jumper-set-jump))
 
 (use-package autorevert
@@ -574,7 +583,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("o" . deadgrep-visit-result)))
 
 (use-package dimmer
-  :disabled
   :hook (after-init . dimmer-mode)
   :init
   (setq dimmer-fraction 0.50
@@ -596,7 +604,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dimmer-mode t))
 
 (use-package ace-window
-  :bind ("C-x o" . 'ace-window)
+  :bind (("C-x o" . 'ace-window)
+         ("M-o" . 'ace-window))
   :config
   (set-face-attribute
    'aw-leading-char-face nil
@@ -634,7 +643,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :config
   (custom-set-variables
-   '(zoom-size '(0.5 . 0.9))
+   '(zoom-size '(0.9 . 0.9))
    '(zoom-ignored-major-modes '(dired-mode markdown-mode))
    '(zoom-ignored-buffer-names '("zoom.el" "init.el"))
    '(zoom-ignored-buffer-name-regexps '("^*calc"))
@@ -1024,6 +1033,7 @@ If ALL is non-nil, `swiper-all' is run."
   (yas-reload-all))
 
 (use-package yasnippet-snippets
+  :disabled t
   :after yasnippet)
 
 (use-package lsp-mode
@@ -1036,7 +1046,7 @@ If ALL is non-nil, `swiper-all' is run."
   (setq lsp-navigation 'both
         lsp-auto-guess-root t
         lsp-enable-symbol-highlighting t
-        lsp-enable-snippet t
+        lsp-enable-snippet nil
         lsp-enable-folding t
         lsp-enable-indentation t
         lsp-enable-on-type-formatting t
@@ -1060,7 +1070,7 @@ If ALL is non-nil, `swiper-all' is run."
   (lsp-eldoc-hook nil))
 
 (use-package lsp-ui
-  :diminish lsp-lens-mode
+  :diminish
   :after lsp-mode
   :commands lsp-ui-mode
   :bind (("C-." . lsp-ui-sideline-apply-code-actions))
@@ -1122,6 +1132,7 @@ If ALL is non-nil, `swiper-all' is run."
   :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
   :hook (dap-mode . dap-ui-mode)
   :hook (dap-mode . dap-tooltip-mode)
+  :commands (dap-debug dap-debug-edit-template)
   :bind (:map dap-mode-map
               (("<f12>" . dap-debug)
                ("<f8>" . dap-continue)
@@ -1141,15 +1152,15 @@ If ALL is non-nil, `swiper-all' is run."
   :init
   (with-eval-after-load 'company
     (add-to-list 'company-transformers 'delete-consecutive-dups t))
-  (setq company-tooltip-limit 15
-        company-tooltip-idle-delay 0.0
+  (setq company-tooltip-limit 20
+        company-tooltip-idle-delay 0.1
         company-tooltip-flip-when-above t
         company-tooltip-align-annotations t
         company-dabbrev-downcase nil
         company-dabbrev-ignore-case t
         company-dabbrev-other-buffers 'all
         company-minimum-prefix-length 1
-        company-idle-delay 0.0
+        company-idle-delay 0.1
         company-require-match 'never)
   :config
   (global-company-mode +1)
@@ -1169,6 +1180,15 @@ If ALL is non-nil, `swiper-all' is run."
    '(company-tooltip-common-selection
      ((((type x)) (:inherit company-tooltip-selection :weight bold))
       (t (:inherit company-tooltip-selection))))))
+
+(use-package company-lsp
+  :after (:all company lsp)
+  :commands company-lsp
+  :config
+  (push 'company-lsp company-backends)
+  (setq company-transformers nil
+        company-lsp-async t
+        company-lsp-cache-candidates nil))
 
 (use-package company-prescient
   :after company)
@@ -1359,19 +1379,18 @@ If ALL is non-nil, `swiper-all' is run."
   :hook (fsharp-mode . lsp)
   :hook (fsharp-mode . dotnet-mode)
   :config
-  (require 'eglot-fsharp)
   (setq indent-tabs-mode nil
         truncate-lines t
         tab-width 4)
   (setq fsharp-doc-idle-delay 0.0
         fsharp-ac-use-popup t
-        fsharp-ac-intellisense-enabled t
+        fsharp-ac-intellisense-enabled nil
         fsharp-smart-indentation t
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
         lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
-        lsp-fsharp-server-args '("--verbose")
+        ;; lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
@@ -1387,7 +1406,8 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-fsharp-simplify-name-analyzer t
         lsp-fsharp-resolve-namespaces t
         lsp-fsharp-enable-reference-code-lens t
-        lsp-fsharp-auto-workspace-init nil)
+        lsp-fsharp-auto-workspace-init t
+        lsp-log-io t)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 

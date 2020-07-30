@@ -53,6 +53,12 @@
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
 
+;; PATH Setup
+;; TODO: Properly get it either from list, or user's shell
+(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet/"))
+(setq exec-path (append exec-path '("~/.dotnet/")))
+
+
 ;; Load actual config
 
 (load "~/.emacs.d/config.el")
