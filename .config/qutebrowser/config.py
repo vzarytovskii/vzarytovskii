@@ -217,9 +217,9 @@ c.fonts.contextmenu = None
 # c.fonts.web.family.sans_serif = ''
 # c.fonts.web.family.serif = ''
 # c.fonts.web.family.standard = ''
-# c.fonts.web.size.default = 16
-# c.fonts.web.size.default_fixed = 13
-# c.fonts.web.size.minimum = 0
+c.fonts.web.size.default = 16
+c.fonts.web.size.default_fixed = 13
+c.fonts.web.size.minimum = 0
 # c.fonts.web.size.minimum_logical = 6
 
 c.hints.auto_follow = "unique-match"
@@ -306,7 +306,7 @@ c.input.insert_mode.leave_on_load = True
 c.input.insert_mode.plugins = False
 c.input.links_included_in_focus_chain = True
 c.input.partial_timeout = 5000
-c.input.rocker_gestures = False
+c.input.mouse.rocker_gestures = False
 # c.input.spatial_navigation = False
 
 c.keyhint.blacklist = []
@@ -340,8 +340,8 @@ c.session.lazy_restore = False
 
 c.spellcheck.languages = []
 
-c.statusbar.hide = False
-c.statusbar.padding = {"top": 1, "bottom": 1, "left": 0, "right": 0}
+# c.statusbar.hide = False
+c.statusbar.padding = {"top": 0, "bottom": 0, "left": 0, "right": 0}
 c.statusbar.position = "bottom"
 c.statusbar.widgets = [
     "keypress",
