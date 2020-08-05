@@ -23,7 +23,16 @@
 ;; Setup straight.el
 (setq-default straight-repository-branch "develop"
               straight-use-package-by-default t
-              straight-check-for-modifications '(find-when-checking))
+              straight-check-for-modifications '(watch-files find-when-checking)
+              straight-disable-autoloads nil
+              straight-disable-byte-compilation nil
+              straight-disable-native-compilation nil
+              straight-use-symlinks t
+              straight-cache-autoloads t
+              straight-vc-git-default-branch "master"
+              straight-vc-git-default-remote-name "origin"
+              straight-fix-flycheck t)
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -44,6 +53,9 @@
       use-package-always-defer nil
       use-package-always-ensure nil)
 
+(eval-when-compile
+  (require 'use-package))
+
 ;; Encoding
 (setq locale-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
@@ -53,12 +65,5 @@
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
 
-;; PATH Setup
-;; TODO: Properly get it either from list, or user's shell
-(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet/"))
-(setq exec-path (append exec-path '("~/.dotnet/")))
-
-
 ;; Load actual config
-
 (load "~/.emacs.d/config.el")

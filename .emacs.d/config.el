@@ -249,8 +249,7 @@ region-end is used."
         dashboard-show-shortcuts t
         dashboard-set-heading-icons nil
         dashboard-set-file-icons nil
-        dashboard-items '((recents  . 5)
-                          (projects . 5)))
+        dashboard-items '((recents  . 50)))
 
   (dashboard-setup-startup-hook))
 
