@@ -236,6 +236,24 @@ region-end is used."
   :config
   (gcmh-mode 1))
 
+(use-package dashboard
+  :diminish
+  :config
+  (if *sys/gui*
+    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
+  (setq dashboard-banner-logo-title nil
+        dashboard-startup-banner nil
+        dashboard-set-navigator nil
+        dashboard-set-footer nil
+        dashboard-center-content t
+        dashboard-show-shortcuts t
+        dashboard-set-heading-icons nil
+        dashboard-set-file-icons nil
+        dashboard-items '((recents  . 5)
+                          (projects . 5)))
+
+  (dashboard-setup-startup-hook))
+
 (use-package which-key
   :diminish
   :config
@@ -273,7 +291,7 @@ region-end is used."
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
-        projectile-enable-caching t
+        projectile-enable-caching nil
         projectile-indexing-method 'alien
         projectile-globally-ignored-file-suffixes '("#" "~" ".swp" ".o" ".so" ".exe" ".dll" ".elc" ".pyc" ".jar")
         projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
@@ -643,7 +661,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :diminish
   :config
   (custom-set-variables
-   '(zoom-size '(0.9 . 0.9))
+   '(zoom-size '(0.5 . 0.5))
    '(zoom-ignored-major-modes '(dired-mode markdown-mode))
    '(zoom-ignored-buffer-names '("zoom.el" "init.el"))
    '(zoom-ignored-buffer-name-regexps '("^*calc"))
@@ -1350,7 +1368,9 @@ If ALL is non-nil, `swiper-all' is run."
   ;; :hook (csharp-mode . lsp)
   :hook (csharp-mode . dotnet-mode)
   :hook (csharp-mode . company-mode)
-  :hook (csharp-mode . flycheck-mode))
+  :hook (csharp-mode . flycheck-mode)
+  :config
+  (electric-pair-local-mode 11))
 
 (use-package omnisharp
   :after (:all csharp-mode company flycheck)
@@ -1371,9 +1391,9 @@ If ALL is non-nil, `swiper-all' is run."
         tab-width 4))
 
 (use-package fsharp-mode
-  :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
+  ;; :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
   :straight nil
-  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
+  :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
