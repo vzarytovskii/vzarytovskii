@@ -880,7 +880,7 @@ If ALL is non-nil, `swiper-all' is run."
 
 ;; UI
 (use-package ibuffer
-  ;;:bind (("C-x C-b" . ibuffer))
+  :bind (("C-x C-b" . ibuffer))
   :preface
   (defun ibuffer-switch-to-normal ()
     "ibuffer swith to normal filter groups."
@@ -941,13 +941,6 @@ If ALL is non-nil, `swiper-all' is run."
          ibuffer-show-empty-filter-groups nil
          ibuffer-default-sorting-mode     'filename/process)
   :hook ((ibuffer-mode . ibuffer-switch-to-normal)))
-
-(use-package ibuffer-sidebar
-  :after ibuffer
-  :bind ("C-x C-b" . 'ibuffer-sidebar-toggle-sidebar)
-  :commands (ibuffer-sidebar-toggle-sidebar)
-  :config
-  (setq ibuffer-sidebar-use-custom-font t))
 
 (use-package ibuffer-vc)
 
