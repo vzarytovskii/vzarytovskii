@@ -263,6 +263,7 @@ region-end is used."
 
 (use-package which-key
   :delight
+  :disabled t
   :config
   (which-key-mode +1))
 
@@ -776,7 +777,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package anzu
   :delight
   :hook ((after-init . global-anzu-mode))
-  :bind ([remap query-replace] . anzu-query-replace-regexp))
+  :bind (([remap query-replace] . anzu-query-replace)
+         ([remap query-replace-regexp] . anzu-query-replace-regexp)))
 
 (use-package zoom
   :delight
