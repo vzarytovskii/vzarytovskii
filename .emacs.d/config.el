@@ -255,7 +255,7 @@ region-end is used."
 (use-package doom-themes
   :after solaire-mode
   :config
-  (load-theme 'doom-vibrant t))
+  (load-theme 'doom-one t))
 
 (use-package doom-modeline
   :after doom-themes
@@ -1580,7 +1580,7 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package fsharp-mode
   ;;:straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
   ;;:load-path "~/code/elisp/emacs-fsharp-mode"
-  :straight nil
+  ;;:straight nil
   :after (:all lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
