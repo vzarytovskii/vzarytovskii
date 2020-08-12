@@ -87,32 +87,6 @@
           (select-window first-win)
           (if this-win-2nd (other-window 1))))))
 
-(defun vsplit-last-buffer ()
-  "Split the window vertically and display the previous buffer."
-  (interactive)
-  (split-window-vertically)
-  (other-window 1 nil)
-  (switch-to-next-buffer))
-
-(defun vsplit-current-buffer ()
-  "Split the window vertically and display the current buffer."
-  (interactive)
-  (split-window-vertically)
-  (other-window 1 nil))
-
-(defun hsplit-last-buffer ()
-  "Split the window horizontally and display the previous buffer."
-  (interactive)
-  (split-window-horizontally)
-  (other-window 1 nil)
-  (switch-to-next-buffer))
-
-(defun hsplit-current-buffer ()
-  "Split the window horizontally and display the current buffer."
-  (interactive)
-  (split-window-horizontally)
-  (other-window 1 nil))
-
 (defun duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
 If there's no region, the current line will be duplicated."
@@ -143,36 +117,12 @@ region-end is used."
     (forward-char -1))
   (duplicate-region num (point-at-bol) (1+ (point-at-eol))))
 
-(defun move-line-up ()
-  "Move up the current line."
-  (interactive)
-  (transpose-lines 1)
-  (forward-line -2)
-  (indent-according-to-mode))
-
-(defun move-line-down ()
-  "Move down the current line."
-  (interactive)
-  (forward-line 1)
-  (transpose-lines 1)
-  (forward-line -1)
-  (indent-according-to-mode))
-
-
 (global-set-key [remap kill-whole-line] 'smart-kill-whole-line)
-(global-set-key (kbd "C-x C-2") 'vsplit-last-buffer)
-(global-set-key (kbd "C-x 2") 'vsplit-current-buffer)
-(global-set-key (kbd "C-x C-3") 'hsplit-last-buffer)
-(global-set-key (kbd "C-x 3") 'hsplit-current-buffer)
 
-
-(global-set-key (kbd "C-x |") 'toggle-window-split)
 (global-set-key (kbd "C-c 2") 'duplicate-current-line-or-region)
 (global-set-key (kbd "C-w") 'backward-kill-word)
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
 (global-set-key (kbd "C-x x") '+sidebar-toggle)
-(global-set-key [(meta up)] 'move-line-up)
-(global-set-key [(meta down)] 'move-line-down)
 
 (use-package emacs
   :config
@@ -276,32 +226,14 @@ region-end is used."
   (async-bytecomp-package-mode 1)
   :custom (async-bytecomp-allowed-packages '(all)))
 
-(use-package diminish
-  :ensure t)
+(use-package delight)
 
 (use-package gcmh
-  :diminish
+  :delight
   :init
   (setq gcmh-verbose nil)
   :config
   (gcmh-mode 1))
-
-(use-package dashboard
-  :diminish
-  :config
-  (if *sys/gui*
-    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
-  (setq dashboard-banner-logo-title nil
-        dashboard-startup-banner nil
-        dashboard-set-navigator nil
-        dashboard-set-footer nil
-        dashboard-center-content t
-        dashboard-show-shortcuts t
-        dashboard-set-heading-icons nil
-        dashboard-set-file-icons nil
-        dashboard-items '((recents  . 50)))
-
-  (dashboard-setup-startup-hook))
 
 (use-package shackle
   :hook (after-init . shackle-mode)
@@ -330,15 +262,20 @@ region-end is used."
                    ("\\*ivy-occur .*\\*"       :regexp t :select t :align right))))
 
 (use-package which-key
-  :diminish
+  :delight
   :config
   (which-key-mode +1))
 
 (use-package which-func
   :hook 'after-init-hook)
 
+(use-package hungry-delete
+  :defer 0.7
+  :config (global-hungry-delete-mode))
+
 (use-package expand-region
-  :bind ("C-=" . 'er/expand-region))
+  :bind (("C-=" . 'er/expand-region)
+         ("C-+" . 'er/contract-region)))
 
 (use-package multiple-cursors
   :config
@@ -350,9 +287,10 @@ region-end is used."
          ("C-<" . 'mc/mark-previous-like-this)
          ("C-c C-<" . 'mc/mark-all-like-this)))
 
-(use-package move-text
+(use-package drag-stuff
   :config
-  (move-text-default-bindings))
+  (drag-stuff-define-keys)
+  (drag-stuff-global-mode 1))
 
 (use-package browse-kill-ring
   :config
@@ -417,7 +355,7 @@ region-end is used."
          ("<end>" . 'mwim-end-of-code-or-line)))
 
 (use-package projectile
-  :diminish
+  :delight
   ;; :bind ("C-c C-p" . 'projectile-command-map)
   :config
   (setq projectile-project-search-path '("~/code/")
@@ -570,10 +508,10 @@ region-end is used."
 
 (use-package autorevert
   :straight nil
-  :diminish autorevert-mode)
+  :delight autorevert-mode)
 
 (use-package eldoc
-  :diminish eldoc-mode)
+  :delight eldoc-mode)
 
 (use-package magit
   :commands (magit-status magit-blame magit-mode)
@@ -621,7 +559,7 @@ region-end is used."
               ("p" . git-messenger:popup-message)))
 
 (use-package git-gutter
-  :diminish
+  :delight
   :hook (after-init . global-git-gutter-mode)
   :init (setq git-gutter:visual-line t
               git-gutter:disabled-modes '(asm-mode image-mode)
@@ -640,7 +578,7 @@ region-end is used."
 (use-package gitignore-mode)
 
 (use-package smerge-mode
-  :diminish
+  :delight
   :preface
   (with-eval-after-load 'hydra
     (defhydra smerge-hydra
@@ -699,7 +637,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (add-hook 'imenu-list-after-jump-hook #'recenter-top-bottom))
 
 (use-package highlight-symbol
-  :diminish
+  :delight
   :delight highlight-symbol-mode
   :hook (highlight-symbol-mode . highlight-symbol-nav-mode)
   :hook (prog-mode . highlight-symbol-mode)
@@ -709,7 +647,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (highlight-symbol-on-navigation-p t))
 
 (use-package undo-tree
-  :diminish
+  :delight
   :init
   (setq undo-tree-auto-save-history t
         undo-tree-visualizer-diff t
@@ -758,6 +696,41 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (dimmer-configure-company-box)
   (dimmer-mode t))
 
+(use-package emacs ;; Only window configurations
+  :straight nil
+  :ensure nil
+  :bind (("C-x C-2" . 'vsplit-last-buffer)
+         ("C-x 2"   . 'vsplit-current-buffer)
+         ("C-x C-3" . 'hsplit-last-buffer)
+         ("C-x 3"   . 'hsplit-current-buffer)
+         ("C-x |"   . 'toggle-window-split))
+  :preface
+  (defun vsplit-last-buffer ()
+    "Split the window vertically and display the previous buffer."
+    (interactive)
+    (split-window-vertically)
+    (other-window 1 nil)
+    (switch-to-next-buffer))
+
+  (defun vsplit-current-buffer ()
+    "Split the window vertically and display the current buffer."
+    (interactive)
+    (split-window-vertically)
+    (other-window 1 nil))
+
+  (defun hsplit-last-buffer ()
+    "Split the window horizontally and display the previous buffer."
+    (interactive)
+    (split-window-horizontally)
+    (other-window 1 nil)
+    (switch-to-next-buffer))
+
+  (defun hsplit-current-buffer ()
+    "Split the window horizontally and display the current buffer."
+    (interactive)
+    (split-window-horizontally)
+    (other-window 1 nil)))
+
 (use-package ace-window
   :bind (("C-x o" . 'ace-window)
          ("M-o" . 'ace-window))
@@ -789,18 +762,24 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           (?r winner-redo)))
   (ace-window-display-mode t))
 
+(use-package windmove
+  :bind (("C-c h" . windmove-left)
+         ("C-c j" . windmove-down)
+         ("C-c k" . windmove-up)
+         ("C-c l" . windmove-right)))
+
 (use-package ace-jump-mode
   :bind
   ("C-c j" . ace-jump-word-mode)
   ("C-c l" .  ace-jump-line-mode))
 
 (use-package anzu
-  :diminish
+  :delight
   :hook ((after-init . global-anzu-mode))
   :bind ([remap query-replace] . anzu-query-replace-regexp))
 
 (use-package zoom
-  :diminish
+  :delight
   :config
   (custom-set-variables
    '(zoom-size '(0.5 . 0.5))
@@ -830,10 +809,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package popwin)
 
 (use-package point-history
-  :diminish
+  :delight
   :straight (:host github :repo "blue0513/point-history" :branch "master")
   :config
   (point-history-mode t))
+
+(use-package prescient
+  :config
+  (prescient-persist-mode 1))
 
 (use-package ivy
   :bind ("C-x b" . ivy-switch-buffer)
@@ -851,9 +834,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ivy-height 25
         ivy-rich-switch-buffer-name-max-length 50))
 
+(use-package ivy-prescient
+  :after (:all ivy prescient)
+  :config
+  (ivy-prescient-mode 1)
+  (setq ivy-prescient-enable-sorting t
+        ivy-prescient-enable-filtering t))
+
 (use-package ivy-posframe
   :disabled t
-  :diminish
+  :delight
   :after ivy
   :config
   (setq ivy-posframe-parameters
@@ -928,7 +918,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind ("M-x" . 'counsel-M-x)
   :bind ("C-x C-f" . 'counsel-find-file)
   :bind ("M-g s" . counsel-imenu)
-  :diminish
+  :delight
   :config
   (setq counsel-yank-pop-height 20
         counsel-org-goto-face-style 'org
@@ -991,16 +981,22 @@ If ALL is non-nil, `swiper-all' is run."
   (pulse-highlight-start-face ((t (:inherit highlight))))
   (pulse-highlight-face ((t (:inherit highlight)))))
 
+(use-package electric-operator
+  :hook (python-mode . electric-operator-mode))
+
 (use-package smartparens
-  :diminish
+  :delight
   :config
   (progn
     (require 'smartparens-config)
     (smartparens-global-mode 1)
     (show-paren-mode t)))
 
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
  (use-package whitespace
-   :diminish
+   :delight
    :hook (prog-mode . whitespace-mode)
    :custom
    (whitespace-style '(trailing))
@@ -1025,7 +1021,7 @@ If ALL is non-nil, `swiper-all' is run."
      (add-hook hook #'no-trailing-whitespace)))
 
 (use-package whitespace-cleanup-mode
-  :diminish
+  :delight
   :init
   (setq whitespace-cleanup-mode-only-if-initially-clean nil)
   (setq-default whitespace-style
@@ -1118,10 +1114,6 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package ibuffer-vc)
 
-(use-package hl-line
-
-  :hook ((after-init . global-hl-line-mode)))
-
 (use-package symbol-overlay
   :bind (("M-i"  . symbol-overlay-put)
          ("M-n"  . symbol-overlay-switch-forward)
@@ -1210,7 +1202,7 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package yasnippet
   :disabled t
-  :diminish
+  :delight
   :after company
   :commands (yas-minor-mode)
   :hook ((prog-mode      . yas-minor-mode)
@@ -1260,7 +1252,7 @@ If ALL is non-nil, `swiper-all' is run."
   (lsp-eldoc-hook nil))
 
 (use-package lsp-ui
-  :diminish
+  :delight
   :after lsp-mode
   :commands lsp-ui-mode
   :hook (lsp-after-open . lsp-ui-mode)
@@ -1336,7 +1328,7 @@ If ALL is non-nil, `swiper-all' is run."
   :commands eglot)
 
 (use-package company
-  :diminish
+  :delight
   :hook (after-init . global-company-mode)
   :commands (company-mode global-company-mode company-complete
              company-complete-common company-manual-begin company-grab-line)
@@ -1344,14 +1336,14 @@ If ALL is non-nil, `swiper-all' is run."
   (with-eval-after-load 'company
     (add-to-list 'company-transformers 'delete-consecutive-dups t))
   (setq company-tooltip-limit 20
-        company-tooltip-idle-delay 0.1
+        company-tooltip-idle-delay 0.3
         company-tooltip-flip-when-above t
         company-tooltip-align-annotations t
         company-dabbrev-downcase nil
         company-dabbrev-ignore-case t
         company-dabbrev-other-buffers 'all
         company-minimum-prefix-length 1
-        company-idle-delay 0.1
+        company-idle-delay 0.3
         company-require-match 'never)
   :config
   (global-company-mode +1)
@@ -1382,7 +1374,7 @@ If ALL is non-nil, `swiper-all' is run."
         company-lsp-cache-candidates nil))
 
 (use-package company-prescient
-  :after company)
+  :after (:all company prescient))
 
 (use-package company-flx
   :after company)
@@ -1400,7 +1392,7 @@ If ALL is non-nil, `swiper-all' is run."
   (company-quickhelp-mode))
 
 (use-package company-box
-  :diminish
+  :delight
   :after (:all all-the-icons company)
   :functions (my-company-box--make-line
               my-company-box-icons--elisp)
@@ -1492,7 +1484,7 @@ If ALL is non-nil, `swiper-all' is run."
           company-box-icons-alist 'company-box-icons-all-the-icons)))
 
 (use-package company-posframe
-  :diminish
+  :delight
   :hook (company-mode . company-posframe-mode)
   :after company)
 
@@ -1532,6 +1524,9 @@ If ALL is non-nil, `swiper-all' is run."
   :init
   (after! elisp-mode
     (flycheck-package-setup)))
+
+(use-package editorconfig
+  :config (editorconfig-mode 1))
 
 (use-package ggtags)
 
@@ -1579,8 +1574,8 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package fsharp-mode
   ;;:straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
-  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
-  ;;:straight nil
+  :straight nil
+  :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
@@ -1649,7 +1644,7 @@ If ALL is non-nil, `swiper-all' is run."
     (setq-default ispell-extra-args '("--reverse"))))
 
 (use-package flyspell
-  :diminish
+  :delight
   :if (executable-find "aspell")
   :hook
   ((org-mode yaml-mode markdown-mode git-commit-mode) . flyspell-mode)
@@ -1683,3 +1678,16 @@ If ALL is non-nil, `swiper-all' is run."
       (progn
         (global-set-key (kbd "C-M-;") 'flyspell-correct-at-point)))
     (setq flyspell-correct-interface #'flyspell-correct-ivy)))
+
+(use-package flyspell-popup
+  :delight
+  :after (flyspell))
+
+(use-package synosaurus
+  :delight
+  :custom
+  (synosaurus-backend 'synosaurus-backend-wordnet)
+  (synosaurus-choose-method 'popup))
+
+(provide 'config)
+;;; config.el ends here
