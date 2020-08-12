@@ -1,3 +1,10 @@
+;;; config.el --- Emacs configuration
+;;; Commentary:
+;; Main Emacs config, for bootstrap, see init.el
+
+;;; -*- lexical-binding: t -*-
+
+;;; Code:
 (menu-bar-mode -1)
 (toggle-scroll-bar -1)
 (tool-bar-mode -1)
@@ -16,15 +23,9 @@
   (display-graphic-p)
   "Are we running on a GUI Emacs?")
 
-(defmacro λ! (&rest body)
-  "A shortcut for inline interactive lambdas."
-  (declare (doc-string 1))
-  `(lambda () (interactive) ,@body))
-
-(defalias 'lambda! 'λ!)
-
 (defmacro after! (package &rest body)
-  (declare (indent defun) (debug t))2
+  "Evaluate BODY after PACKAGE."
+  (declare (indent defun) (debug t))
   (if (symbolp package)
       (list (if (or (not (bound-and-true-p byte-compile-current-file))
                     (require package nil 'noerror))
@@ -56,37 +57,6 @@
 
 (defalias 'yes-or-no-p #'y-or-n-p)
 
-(defun smart-kill-whole-line (&optional arg)
-  "A simple wrapper around `kill-whole-line' that respects indentation."
-  (interactive "P")
-  (kill-whole-line arg)
-  (back-to-indentation))
-
-(defun toggle-window-split ()
-  (interactive)
-  (if (= (count-windows) 2)
-      (let* ((this-win-buffer (window-buffer))
-             (next-win-buffer (window-buffer (next-window)))
-             (this-win-edges (window-edges (selected-window)))
-             (next-win-edges (window-edges (next-window)))
-             (this-win-2nd (not (and (<= (car this-win-edges)
-                                         (car next-win-edges))
-                                     (<= (cadr this-win-edges)
-                                         (cadr next-win-edges)))))
-             (splitter
-              (if (= (car this-win-edges)
-                     (car (window-edges (next-window))))
-                  'split-window-horizontally
-                'split-window-vertically)))
-        (delete-other-windows)
-        (let ((first-win (selected-window)))
-          (funcall splitter)
-          (if this-win-2nd (other-window 1))
-          (set-window-buffer (selected-window) this-win-buffer)
-          (set-window-buffer (next-window) next-win-buffer)
-          (select-window first-win)
-          (if this-win-2nd (other-window 1))))))
-
 (defun duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
 If there's no region, the current line will be duplicated."
@@ -116,8 +86,6 @@ region-end is used."
     (newline)
     (forward-char -1))
   (duplicate-region num (point-at-bol) (1+ (point-at-eol))))
-
-(global-set-key [remap kill-whole-line] 'smart-kill-whole-line)
 
 (global-set-key (kbd "C-c 2") 'duplicate-current-line-or-region)
 (global-set-key (kbd "C-w") 'backward-kill-word)
@@ -149,13 +117,20 @@ region-end is used."
       (setq initial-frame-alist '( (tool-bar-lines . 0)))
       (setq default-frame-alist '( (tool-bar-lines . 0)))))
   (setq-default major-mode 'text-mode
-                compilation-scroll-output t
-                indent-tabs-mode nil)
-  (setq compilation-always-kill t
-        compilation-ask-about-save nil
-        compilation-context-lines 10
+                cursor-type 'box
+                x-stretch-cursor t
+                cursor-in-non-selected-windows nil
+                compilation-always-kill t
+                compilation-context-lines 10
+                compilation-scroll-output 'first-error
+                indent-tabs-mode nil
+                fringes-outside-margins t
+                left-fringe-width 8
+                right-fringe-width 8
+                indicate-buffer-boundaries 'left
+                bidi-display-reordering nil)
+  (setq compilation-ask-about-save nil
         compilation-window-height 100
-        compilation-scroll-output 'first-error
         inhibit-startup-screen t
         inhibit-startup-message t
         inhibit-startup-echo-area-message t
@@ -192,11 +167,11 @@ region-end is used."
 (use-package hydra)
 
 (use-package solaire-mode
-  :hook (change-major-mode . turn-on-solaire-mode)
-  :hook (after-revert . turn-on-solaire-mode)
-  :hook (ediff-prepare-buffer . solaire-mode)
-  :hook (minibuffer-setup . solaire-mode-in-minibuffer)
   :hook (after-init . solaire-global-mode)
+  :hook (after-revert . turn-on-solaire-mode)
+  :hook (minibuffer-setup . solaire-mode-in-minibuffer)
+  :hook (change-major-mode . turn-on-solaire-mode)
+  :hook (ediff-prepare-buffer . solaire-mode)
   :config
   (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
   (setq solaire-mode-auto-swap-bg nil)
@@ -339,6 +314,15 @@ region-end is used."
 (use-package hl-line
   :hook (after-init . global-hl-line-mode))
 
+(use-package hl-block-mode
+  :config
+  (setq hl-block-delay 0.3))
+
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :config
+  (setq highlight-indent-guides-method 'character))
+
 (use-package ediff
   :hook (ediff-quit . winner-undo)
   :custom
@@ -358,18 +342,16 @@ region-end is used."
 (use-package projectile
   :delight
   ;; :bind ("C-c C-p" . 'projectile-command-map)
+  :hook (after-init . projectile-global-mode)
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
-        projectile-enable-caching nil
+        projectile-enable-caching t
         projectile-indexing-method 'alien
         projectile-globally-ignored-file-suffixes '("#" "~" ".swp" ".o" ".so" ".exe" ".dll" ".elc" ".pyc" ".jar")
         projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
         projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
-        projectile-completion-system 'ivy)
-  (projectile-discover-projects-in-search-path)
-  :custom
-  (projectile-mode +1))
+        projectile-completion-system 'ivy))
 
 (use-package counsel-projectile
   :after (:all counsel projectile)
@@ -730,7 +712,32 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     "Split the window horizontally and display the current buffer."
     (interactive)
     (split-window-horizontally)
-    (other-window 1 nil)))
+    (other-window 1 nil))
+  (defun toggle-window-split ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+             (next-win-buffer (window-buffer (next-window)))
+             (this-win-edges (window-edges (selected-window)))
+             (next-win-edges (window-edges (next-window)))
+             (this-win-2nd (not (and (<= (car this-win-edges)
+                                         (car next-win-edges))
+                                     (<= (cadr this-win-edges)
+                                         (cadr next-win-edges)))))
+             (splitter
+              (if (= (car this-win-edges)
+                     (car (window-edges (next-window))))
+                  'split-window-horizontally
+                'split-window-vertically)))
+        (delete-other-windows)
+        (let ((first-win (selected-window)))
+          (funcall splitter)
+          (if this-win-2nd (other-window 1))
+          (set-window-buffer (selected-window) this-win-buffer)
+          (set-window-buffer (next-window) next-win-buffer)
+          (select-window first-win)
+          (if this-win-2nd (other-window 1))))))
+)
 
 (use-package ace-window
   :bind (("C-x o" . 'ace-window)
@@ -837,7 +844,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ivy-rich-switch-buffer-name-max-length 50))
 
 (use-package ivy-prescient
-  :after (:all ivy prescient)
   :config
   (ivy-prescient-mode 1)
   (setq ivy-prescient-enable-sorting t
@@ -1000,36 +1006,16 @@ If ALL is non-nil, `swiper-all' is run."
  (use-package whitespace
    :delight
    :hook (prog-mode . whitespace-mode)
-   :custom
-   (whitespace-style '(trailing))
-   :preface
-   (defun no-trailing-whitespace ()
-     "Turn off display of trailing whitespace in this buffer."
-     (setq show-trailing-whitespace nil))
    :init
-   ;; But don't show trailing whitespace in SQLi, inf-ruby etc.
-   (dolist (hook '(artist-mode-hook
-                   picture-mode-hook
-                   special-mode-hook
-                   Info-mode-hook
-                   eww-mode-hook
-                   term-mode-hook
-                   vterm-mode-hook
-                   comint-mode-hook
-                   compilation-mode-hook
-                   twittering-mode-hook
-                   minibuffer-setup-hook
-                   fundamental-mode))
-     (add-hook hook #'no-trailing-whitespace)))
+   (setq-default whitespace-style
+                 '(tabs trailing space-before-tab
+                        newline space-after-tab
+                        newline-mark)))
 
 (use-package whitespace-cleanup-mode
   :delight
   :init
   (setq whitespace-cleanup-mode-only-if-initially-clean nil)
-  (setq-default whitespace-style
-                '(face tabs spaces trailing space-before-tab
-                       newline indentation empty space-after-tab
-                       space-mark tab-mark newline-mark))
   :hook ((after-init . global-whitespace-cleanup-mode))
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
 
@@ -1224,7 +1210,7 @@ If ALL is non-nil, `swiper-all' is run."
   :hook (lsp-after-open . lsp-enable-imenu)
   :hook (lsp-after-open . lsp-lens-mode)
   :hook (lsp-after-open . lsp-headerline-breadcrumb-mode)
-  :hook (lsp-mode       . lsp-enable-which-key-integration)
+  ;; :hook (lsp-mode       . lsp-enable-which-key-integration)
   :commands (lsp lsp-deferred)
   :config
   (setq lsp-navigation 'both
@@ -1610,7 +1596,7 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-fsharp-simplify-name-analyzer t
         lsp-fsharp-resolve-namespaces t
         lsp-fsharp-enable-reference-code-lens t
-        lsp-fsharp-auto-workspace-init t
+        lsp-fsharp-auto-workspace-init nil
         lsp-log-io t)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))

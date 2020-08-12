@@ -1,3 +1,11 @@
+;;; init.el --- Emacs configuration bootstrap
+;;; Commentary:
+;; Emacs bootstrap, for main configuration, see config.el
+
+;;; -*- lexical-binding: t -*-
+
+;;; Code:
+
 ;; GC and JIT
 
 (setq inhibit-compacting-font-caches t)
@@ -8,8 +16,10 @@
       auto-window-vscroll nil
       read-process-output-max (* 1024 1024 3)
       message-log-max 16384
+      idle-update-delay 2
       jit-lock-defer-time 0
-      jit-lock-stealth-time 2)
+      jit-lock-stealth-time 0.2
+      jit-lock-stealth-verbose nil)
 
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (add-hook 'emacs-startup-hook
@@ -49,9 +59,9 @@
 (straight-use-package 'use-package)
 
 ;; Setup use-package
-(setq use-package-always-demand t
-      use-package-always-defer nil
-      use-package-always-ensure nil)
+(setq-default use-package-always-demand t
+              use-package-always-defer nil
+              use-package-always-ensure nil)
 
 (eval-when-compile
   (require 'use-package))
@@ -72,3 +82,6 @@
 
 ;; Load actual config
 (load "~/.emacs.d/config.el")
+
+(provide 'init)
+;;; init.el ends here
