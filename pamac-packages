@@ -848,7 +848,6 @@ libyaml
 libytnef
 licenses
 lilv
-linux57
 linux58
 linux58-acpi_call
 linux58-headers
@@ -881,8 +880,9 @@ lua52-expat
 lua52-lpeg
 lua52-luajson
 lua52-socket
+lua53
+lua53-lgi
 luajit
-lua-lgi
 lvm2
 lynx
 lz4
@@ -1489,6 +1489,7 @@ vulkan-radeon
 w3m
 wallpapers-2018
 wallpapers-juhraya
+watchexec
 wavpack
 wayland
 wayland-protocols

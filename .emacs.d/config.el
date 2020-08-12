@@ -2,9 +2,9 @@
 (toggle-scroll-bar -1)
 (tool-bar-mode -1)
 (blink-cursor-mode -1)
-(global-hl-line-mode +1)
-(line-number-mode +1)
 (global-display-line-numbers-mode 1)
+(global-subword-mode t)
+(line-number-mode +1)
 (column-number-mode t)
 (size-indication-mode t)
 (show-paren-mode t)
@@ -158,6 +158,7 @@ region-end is used."
   (forward-line -1)
   (indent-according-to-mode))
 
+
 (global-set-key [remap kill-whole-line] 'smart-kill-whole-line)
 (global-set-key (kbd "C-x C-2") 'vsplit-last-buffer)
 (global-set-key (kbd "C-x 2") 'vsplit-current-buffer)
@@ -176,6 +177,27 @@ region-end is used."
 (use-package emacs
   :config
   (add-to-list 'default-frame-alist '(font . "JetBrains Mono 12"))
+  (if *sys/gui*
+      (progn
+        (setq initial-frame-alist
+              '(
+                (tool-bar-lines . 0)
+                (font . "JetBrains Mono 12")
+                (width . 140) ; chars
+                (height . 30) ; lines
+                (left . 0)
+                (top . 0)))
+        (setq default-frame-alist
+              '(
+                (tool-bar-lines . 0)
+                (font . "JetBrains Mono 12")
+                (width . 140)
+                (height . 30)
+                (left . 0)
+                (top . 0))))
+    (progn
+      (setq initial-frame-alist '( (tool-bar-lines . 0)))
+      (setq default-frame-alist '( (tool-bar-lines . 0)))))
   (setq-default major-mode 'text-mode
                 compilation-scroll-output t
                 indent-tabs-mode nil)
@@ -191,6 +213,7 @@ region-end is used."
 
         tab-width 4
 
+        scroll-step 1
         scroll-margin 0
         scroll-conservatively 100000
         scroll-preserve-screen-position 1
@@ -210,15 +233,42 @@ region-end is used."
         indent-tabs-mode nil
         truncate-lines t
 
-        show-paren-style 'parenthesis))
+        show-paren-style 'parenthesis
+
+        load-prefer-newer t))
 
 (use-package all-the-icons)
 
 (use-package hydra)
 
+(use-package solaire-mode
+  :hook (change-major-mode . turn-on-solaire-mode)
+  :hook (after-revert . turn-on-solaire-mode)
+  :hook (ediff-prepare-buffer . solaire-mode)
+  :hook (minibuffer-setup . solaire-mode-in-minibuffer)
+  :hook (after-init . solaire-global-mode)
+  :config
+  (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
+  (setq solaire-mode-auto-swap-bg nil)
+  (solaire-global-mode +1))
+
 (use-package doom-themes
+  :after solaire-mode
   :config
   (load-theme 'doom-vibrant t))
+
+(use-package doom-modeline
+  :after doom-themes
+  :init (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 1
+        doom-modeline-buffer-file-name-style 'auto
+        doom-modeline-icon nil
+        doom-modeline-buffer-encoding t
+        doom-modeline-indent-info t
+        doom-modeline-checker-simple-format nil)
+  (set-face-attribute 'mode-line nil :family "JetBrains Mono" :height 100)
+  (set-face-attribute 'mode-line-inactive nil :family "JetBrains Mono" :height 100))
 
 (use-package async
   :init
@@ -253,6 +303,32 @@ region-end is used."
 
   (dashboard-setup-startup-hook))
 
+(use-package shackle
+  :hook (after-init . shackle-mode)
+  :custom
+  (shackle-default-size 0.5)
+  (shackle-default-alignment 'below)
+  (shackle-rules '((magit-status-mode    :select t :inhibit-window-quit t :same t)
+                   (magit-log-mode       :select t :inhibit-window-quit t :same t)
+                   ("*quickrun*"         :select t :inhibit-window-quit t :same t)
+                   (profiler-report-mode :select t)
+                   (apropos-mode         :select t :align t :size 0.3)
+                   (help-mode            :select t :align t :size 0.4)
+                   (comint-mode          :select t :align t :size 0.4)
+                   (grep-mode            :select t :align t)
+                   (rg-mode              :select t :align t)
+                   ("*bm-bookmarks*"           :select t   :align t)
+                   ("*Flycheck errors*"        :select t   :align t :size 10)
+                   ("*Backtrace*"              :select t   :align t :size 15)
+                   ("*Shell Command Output*"   :select nil :align t :size 0.4)
+                   ("*Org-Babel Error Output*" :select nil :align t :size 0.3)
+                   ("*Async Shell Command*"    :ignore t)
+                   ("*package update results*" :select nil :align t :size 10)
+                   ("*Process List*"           :select t   :align t :size 0.3)
+                   ("*Help*"                   :select t   :align t :size 0.3)
+                   ("*Occur*"                  :select t   :align right)
+                   ("\\*ivy-occur .*\\*"       :regexp t :select t :align right))))
+
 (use-package which-key
   :diminish
   :config
@@ -277,6 +353,62 @@ region-end is used."
 (use-package move-text
   :config
   (move-text-default-bindings))
+
+(use-package browse-kill-ring
+  :config
+  (browse-kill-ring-default-keybindings))
+
+(use-package delsel
+  :hook (after-init . delete-selection-mode))
+
+(use-package text-mode
+  :straight nil
+  :custom
+  (adaptive-fill-regexp "[ t]+|[ t]*([0-9]+.|*+)[ t]*")
+  (adaptive-fill-first-line-regexp "^* *$")
+  (sentence-end "\\([。、！？]\\|……\\|[,.?!][]\"')}]*\\($\\|[ \t]\\)\\)[ \t\n]*")
+  (sentence-end-double-space nil))
+
+(use-package markdown-mode
+  :init
+  (advice-add #'markdown--command-map-prompt :override #'ignore)
+  (advice-add #'markdown--style-map-prompt   :override #'ignore)
+  :mode ("README\\(?:\\.md\\)?\\'" . gfm-mode)
+  :hook (markdown-mode . auto-fill-mode)
+  :custom
+  (markdown-header-scaling t)
+  (markdown-enable-wiki-links t)
+  (markdown-italic-underscore t)
+  (markdown-asymmetric-header t)
+  (markdown-gfm-uppercase-checkbox t)
+  (markdown-fontify-code-blocks-natively t))
+
+(use-package markdown-toc
+  :after markdown-mode)
+
+(use-package autorevert
+  :ensure nil
+  :hook (after-init . global-auto-revert-mode)
+  :custom
+  (auto-revert-interval 3)
+  (auto-revert-avoid-polling t)
+  (auto-revert-verbose nil)
+  (auto-revert-remote-files t)
+  (auto-revert-check-vc-info t)
+  (global-auto-revert-non-file-buffers t))
+
+(use-package hl-line
+  :hook (after-init . global-hl-line-mode))
+
+(use-package ediff
+  :hook (ediff-quit . winner-undo)
+  :custom
+  (ediff-diff-options "-w")
+  (ediff-highlight-all-diffs t)
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
+  (ediff-split-window-function 'split-window-horizontally)
+  (ediff-merge-split-window-function 'split-window-horizontally))
+
 
 (use-package mwim
   :bind (("C-a" . 'mwim-beginning-of-code-or-line)
@@ -492,10 +624,10 @@ region-end is used."
   :diminish
   :hook (after-init . global-git-gutter-mode)
   :init (setq git-gutter:visual-line t
-               git-gutter:disabled-modes '(asm-mode image-mode)
-               git-gutter:modified-sign "❚"
-               git-gutter:added-sign "✚"
-               git-gutter:deleted-sign "✘")
+              git-gutter:disabled-modes '(asm-mode image-mode)
+              git-gutter:modified-sign "❚"
+              git-gutter:added-sign "✚"
+              git-gutter:deleted-sign "✖")
 
   :bind (("C-c v =" . git-gutter:popup-hunk)
          ("C-c p" . git-gutter:previous-hunk)
@@ -596,8 +728,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :if (executable-find "rg")
   :bind ("M-s" . 'deadgrep)
   :bind (:map deadgrep-mode-map
+              ("M-e" . deadgrep-edit-mode)
               ("RET" . deadgrep-visit-result-other-window)
               ("o" . deadgrep-visit-result)))
+
+(use-package wgrep
+  :custom
+  (wgrep-auto-save-buffer t)
+  (wgrep-change-readonly-file t))
 
 (use-package dimmer
   :hook (after-init . dimmer-mode)
@@ -650,6 +788,11 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                   (setq this-command 'winner-undo))))
           (?r winner-redo)))
   (ace-window-display-mode t))
+
+(use-package ace-jump-mode
+  :bind
+  ("C-c j" . ace-jump-word-mode)
+  ("C-c l" .  ace-jump-line-mode))
 
 (use-package anzu
   :diminish
@@ -830,11 +973,23 @@ If ALL is non-nil, `swiper-all' is run."
   (define-key ivy-minibuffer-map (kbd "<return>") 'ivy-alt-done)
   (define-key ivy-minibuffer-map (kbd "C-f") 'eh-ivy-open-current-typed-path))
 
-(use-package nav-flash
-  :config
-  (defun +advice/nav-flash-show (orig-fn &rest args)
-    (ignore-errors (apply orig-fn args)))
-  (advice-add 'nav-flash-show :around #'+advice/nav-flash-show))
+(use-package pulse
+  :preface
+  (defun my/pulse-line (&rest _)
+    "Pulse the current line."
+    (pulse-momentary-highlight-one-line (point)))
+  (defun my/recenter-and-pulse (&rest _)
+    "Recenter and pulse the current line."
+    (recenter)
+    (my/pulse-line))
+  :init
+  :hook ((counsel-grep-post-action
+          dumb-jump-after-jump
+          bookmark-after-jump
+          imenu-after-jump) . my/recenter-and-pulse)
+  :custom-face
+  (pulse-highlight-start-face ((t (:inherit highlight))))
+  (pulse-highlight-face ((t (:inherit highlight)))))
 
 (use-package smartparens
   :diminish
@@ -844,27 +999,30 @@ If ALL is non-nil, `swiper-all' is run."
     (smartparens-global-mode 1)
     (show-paren-mode t)))
 
-(use-package whitespace
-  :diminish
-  :preface
-  (defun no-trailing-whitespace ()
-    "Turn off display of trailing whitespace in this buffer."
-    (setq show-trailing-whitespace nil))
-  :init
-  ;; But don't show trailing whitespace in SQLi, inf-ruby etc.
-  (dolist (hook '(artist-mode-hook
-                  picture-mode-hook
-                  special-mode-hook
-                  Info-mode-hook
-                  eww-mode-hook
-                  term-mode-hook
-                  vterm-mode-hook
-                  comint-mode-hook
-                  compilation-mode-hook
-                  twittering-mode-hook
-                  minibuffer-setup-hook
-                  fundamental-mode))
-    (add-hook hook #'no-trailing-whitespace)))
+ (use-package whitespace
+   :diminish
+   :hook (prog-mode . whitespace-mode)
+   :custom
+   (whitespace-style '(trailing))
+   :preface
+   (defun no-trailing-whitespace ()
+     "Turn off display of trailing whitespace in this buffer."
+     (setq show-trailing-whitespace nil))
+   :init
+   ;; But don't show trailing whitespace in SQLi, inf-ruby etc.
+   (dolist (hook '(artist-mode-hook
+                   picture-mode-hook
+                   special-mode-hook
+                   Info-mode-hook
+                   eww-mode-hook
+                   term-mode-hook
+                   vterm-mode-hook
+                   comint-mode-hook
+                   compilation-mode-hook
+                   twittering-mode-hook
+                   minibuffer-setup-hook
+                   fundamental-mode))
+     (add-hook hook #'no-trailing-whitespace)))
 
 (use-package whitespace-cleanup-mode
   :diminish
@@ -876,6 +1034,23 @@ If ALL is non-nil, `swiper-all' is run."
                        space-mark tab-mark newline-mark))
   :hook ((after-init . global-whitespace-cleanup-mode))
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
+
+(use-package fill-function-arguments
+  :commands (fill-function-arguments-dwim)
+  :custom
+  (fill-function-arguments-indent-after-fill t)
+  :config
+  (add-hook 'prog-mode-hook (lambda () (local-set-key (kbd "M-q") #'fill-function-arguments-dwim)))
+  (add-hook 'sgml-mode-hook (lambda ()
+                              (setq-local fill-function-arguments-first-argument-same-line t)
+                              (setq-local fill-function-arguments-argument-sep " ")
+                              (local-set-key (kbd "M-q") #'fill-function-arguments-dwim)))
+  (add-hook 'emacs-lisp-mode-hook (lambda ()
+                                    (setq-local fill-function-arguments-first-argument-same-line t)
+                                    (setq-local fill-function-arguments-second-argument-same-line t)
+                                    (setq-local fill-function-arguments-last-argument-same-line t)
+                                    (setq-local fill-function-arguments-argument-separator " ")
+                                    (local-set-key (kbd "M-q") #'fill-function-arguments-dwim))))
 
 ;; UI
 (use-package ibuffer
@@ -955,11 +1130,16 @@ If ALL is non-nil, `swiper-all' is run."
          ("<f7>" . symbol-overlay-mode)))
 
 (use-package hl-todo
+  :hook (after-init . global-hl-todo-mode)
+  :bind (:map hl-todo-mode-map
+         ("C-c t p" . hl-todo-previous)
+         ("C-c t n" . hl-todo-next)
+         ("C-c t o" . hl-todo-occur))
   :config
-  (global-hl-todo-mode +1))
+  (dolist (keyword '("BUG" "ISSUE"))
+    (cl-pushnew `(,keyword . ,(face-foreground 'error)) hl-todo-keyword-faces)))
 
 (use-package treemacs
-
   :init
   (after! winum
     (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
@@ -1083,13 +1263,14 @@ If ALL is non-nil, `swiper-all' is run."
   :diminish
   :after lsp-mode
   :commands lsp-ui-mode
-  :bind (("C-." . lsp-ui-sideline-apply-code-actions))
   :hook (lsp-after-open . lsp-ui-mode)
   :hook (lsp-after-open . lsp-lens-mode)
+  :hook (lsp-after-open . lsp-ui-sideline-mode)
   :custom-face
   (lsp-ui-doc-background ((t (:background nil))))
   (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
   :bind
+  (("C-." . lsp-ui-sideline-apply-code-actions))
   (:map lsp-ui-mode-map
         ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
         ([remap xref-find-references] . lsp-ui-peek-find-references)
@@ -1114,11 +1295,11 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-ui-peek-fontify 'always
         lsp-ui-peek-peek-height 30
         lsp-ui-peek-list-width 60
-        lsp-ui-sideline-enable nil
+        lsp-ui-sideline-enable t
         lsp-ui-sideline-update-mode 'line
-        lsp-ui-sideline-show-symbol nil
+        lsp-ui-sideline-show-symbol t
         lsp-ui-sideline-show-diagnostics t
-        lsp-ui-sideline-show-hover nil
+        lsp-ui-sideline-show-hover t
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-ignore-duplicate t
         lsp-ui-sideline-delay 0.0
@@ -1342,6 +1523,9 @@ If ALL is non-nil, `swiper-all' is run."
   (defalias 'show-error-at-point-soon 'flycheck-show-error-at-point)
   (add-to-list 'flycheck-emacs-lisp-checkdoc-variables 'sentence-end-double-space))
 
+(use-package flycheck-inline
+  :after flycheck
+  :hook (flycheck-mode . flycheck-inline-mode))
 
 (use-package flycheck-package
   :after flycheck
@@ -1356,17 +1540,33 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package dotnet)
 
 (use-package csharp-mode
-  :after (:all lsp-mode company flycheck dotnet)
-  ;; :hook (csharp-mode . lsp)
+  :after (:all lsp-mode company flycheck dotnet omnisharp)
+  :hook (csharp-mode . lsp)
+  ;; :hook (csharp-mode . omnisharp-mode)
   :hook (csharp-mode . dotnet-mode)
   :hook (csharp-mode . company-mode)
   :hook (csharp-mode . flycheck-mode)
+  :hook (csharp-mode . (lambda ()
+                         (subword-mode)
+                         (setq-local fill-function-arguments-first-argument-same-line t)
+                         (setq-local fill-function-arguments-second-argument-same-line nil)
+                         (setq-local fill-function-arguments-last-argument-same-line t)
+                         (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
   :config
-  (electric-pair-local-mode 11))
+  (setq lsp-csharp-server-path "~/omnisharp/run")
+  (setq indent-tabs-mode nil
+        c-syntactic-indentation t
+        c-basic-offset 4
+        truncate-lines t
+        tab-width 4)
+  (electric-pair-local-mode 1))
+
+(use-package sharper
+  :straight (:host github :repo "sebasmonia/sharper" :branch "master"))
 
 (use-package omnisharp
-  :after (:all csharp-mode company flycheck)
-  :hook (csharp-mode . omnisharp-mode)
+  :disabled t
+  :after (:all company flycheck)
   :hook (omnisharp-mode . company-mode)
   :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
   :preface
@@ -1375,17 +1575,12 @@ If ALL is non-nil, `swiper-all' is run."
         omnisharp-imenu-support t
         omnisharp-company-ignore-case t)
   :config
-  (add-to-list 'company-backends #'company-omnisharp)
-  (setq indent-tabs-mode nil
-        c-syntactic-indentation t
-        c-basic-offset 4
-        truncate-lines t
-        tab-width 4))
+  (add-to-list 'company-backends #'company-omnisharp))
 
 (use-package fsharp-mode
-  ;; :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
+  ;;:straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
+  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
   :straight nil
-  :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
@@ -1402,7 +1597,7 @@ If ALL is non-nil, `swiper-all' is run."
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
         lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
-        ;; lsp-fsharp-server-args '("--verbose")
+        lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
@@ -1425,8 +1620,16 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package nxml-mode
   :straight nil
+  :magic "<\\?xml"
   :mode (("\\.\\(fs\\|cs\\|cc\\)proj$" . nxml-mode)
-         ("\\.xml$" . nxml-mode)))
+         ("\\.xml$" . nxml-mode)
+         ("\\.props" . nxml-mode)))
+
+(use-package json-mode
+  :mode "\\.json$")
+
+(use-package yaml-mode
+  :mode "\\.yml$")
 
 ;; Spelling and stuff
 (use-package bing-dict
