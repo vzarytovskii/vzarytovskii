@@ -21,6 +21,9 @@
       jit-lock-stealth-time 0.2
       jit-lock-stealth-verbose nil)
 
+;; Native compilation support via libgccjit (only available in feature/nativecom branch).
+(setq comp-deferred-compilation t)
+
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (add-hook 'emacs-startup-hook
           `(lambda ()

@@ -1213,8 +1213,9 @@ If ALL is non-nil, `swiper-all' is run."
   ;; :hook (lsp-mode       . lsp-enable-which-key-integration)
   :commands (lsp lsp-deferred)
   :config
-  (setq lsp-navigation 'both
-        lsp-auto-guess-root t
+  (setq lsp-session-file "~/.lsp-sessions"
+        lsp-navigation 'both
+        lsp-auto-guess-root nil
         lsp-enable-symbol-highlighting t
         lsp-enable-snippet nil
         lsp-enable-folding t
@@ -1233,7 +1234,7 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-signature-auto-activate nil
         lsp-signature-render-all nil
         lsp-headerlin-breadcrumbs-mode 1
-        lsp-headerline-breadcrumb-segments '(project file symbols))
+        lsp-headerline-breadcrumb-segments '(file symbols))
   :custom
   (lsp-file-watch-threshold 2000)
   (read-process-output-max (* 1024 1024))
