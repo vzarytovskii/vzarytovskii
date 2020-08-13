@@ -14,7 +14,9 @@
 (line-number-mode +1)
 (column-number-mode t)
 (size-indication-mode t)
-(show-paren-mode t)
+
+(customize-set-variable 'scroll-bar-mode nil)
+(customize-set-variable 'horizontal-scroll-bar-mode nil)
 
 (add-to-list 'default-frame-alist
              '(vertical-scroll-bars . nil))
@@ -56,6 +58,39 @@
                   `(plist-put ,plist prop value))))
 
 (defalias 'yes-or-no-p #'y-or-n-p)
+
+(defvar +project/lsp-project-root-cache (make-hash-table :test 'equal)
+  "Cached value of function `+project/lsp-project-root`.")
+
+(defun +project/lsp-project-root (&optional dir)
+  (let* ((dir (or dir default-directory))
+         (cache-key dir)
+         (cache-value (gethash cache-key +project/lsp-project-root-cache)))
+    (if (and cache-value (file-exists-p cache-value))
+        cache-value
+      (let* ((lsp-folders (lsp-session-folders (lsp-session)))
+             (value (cl-find-if
+                     (lambda (path)
+                       (and
+                        ;; fast filter to improve `ivy-rich-switch-buffer-root' performance, but not accurate
+                        (string-prefix-p path (expand-file-name dir))
+                        ;; double check if current dir in the lsp-project roots
+                        (file-in-directory-p dir path)))
+                     lsp-folders)))
+        (puthash cache-key value +project/lsp-project-root-cache)
+        value))))
+
+(defalias '+project/root 'projectile-project-root)
+
+(defun +project/ivy-switch-buffer ()
+  (interactive)
+  (ivy-read "Switch to buffer: "
+            (delete (buffer-name (current-buffer))
+                    (when (+project/root)
+                      (projectile-project-buffer-names)))
+            :initial-input nil
+            :action #'ivy--switch-buffer-action
+            :caller '+project/ivy-switch-buffer))
 
 (defun duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
@@ -162,6 +197,7 @@ region-end is used."
 
         load-prefer-newer t))
 
+(use-package delight)
 (use-package all-the-icons)
 
 (use-package hydra)
@@ -174,8 +210,7 @@ region-end is used."
   :hook (ediff-prepare-buffer . solaire-mode)
   :config
   (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
-  (setq solaire-mode-auto-swap-bg nil)
-  (solaire-global-mode +1))
+  (setq solaire-mode-auto-swap-bg nil))
 
 (use-package doom-themes
   :after solaire-mode
@@ -201,14 +236,22 @@ region-end is used."
   (async-bytecomp-package-mode 1)
   :custom (async-bytecomp-allowed-packages '(all)))
 
-(use-package delight)
-
 (use-package gcmh
   :delight
+  :hook (after-init . gcmh-mode)
   :init
   (setq gcmh-verbose nil)
   :config
-  (gcmh-mode 1))
+  (if (boundp 'after-focus-change-function)
+      (add-function :after after-focus-change-function
+                    (lambda ()
+                      (unless (frame-focus-state)
+                        (gcmh-idle-garbage-collect))))
+    (add-hook 'focus-out-hook 'gcmh-idle-garbage-collect))
+  ;;(with-eval-after-load 'org
+  ;;  (add-hook 'org-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))))
+  (with-eval-after-load 'lsp-mode
+    (add-hook 'lsp-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold))))))
 
 (use-package shackle
   :hook (after-init . shackle-mode)
@@ -235,6 +278,49 @@ region-end is used."
                    ("*Help*"                   :select t   :align t :size 0.3)
                    ("*Occur*"                  :select t   :align right)
                    ("\\*ivy-occur .*\\*"       :regexp t :select t :align right))))
+
+(use-package elisp-demos
+  :defer t
+  :init
+  (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1)
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+
+(use-package helpful
+  :defer t
+  :defines ivy-initial-inputs-alist
+  :bind (("C-c C-d" . helpful-at-point)
+         ("C-h f" . helpful-callable) ;; replace built-in `describe-function'
+         ("C-h k" . helpful-key)
+         ("C-h v" . helpful-variable))
+  :config
+  (with-eval-after-load 'ivy
+    (dolist (cmd '(helpful-callable
+                   helpful-variable
+                   helpful-function
+                   helpful-macro
+                   helpful-command))
+      (cl-pushnew `(,cmd . "^") ivy-initial-inputs-alist)))
+
+  (when (featurep 'elisp-demos)
+    (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)))
+
+(use-package recentf
+  :defer t
+  :config
+  (setq recentf-auto-cleanup "05:00am"
+        recentf-max-saved-items 200
+        recentf-exclude '((expand-file-name package-user-dir)
+                          ".cache"
+                          ".cask"
+                          ".elfeed"
+                          "bookmarks"
+                          "cache"
+                          "ido.*"
+                          "persp-confs"
+                          "recentf"
+                          "undo-tree-hist"
+                          "url"
+                          "COMMIT_EDITMSG\\'")))
 
 (use-package which-key
   :delight
@@ -274,6 +360,9 @@ region-end is used."
 
 (use-package delsel
   :hook (after-init . delete-selection-mode))
+
+(use-package minor-mode-hack
+  :commands show-minor-mode-map-priority)
 
 (use-package text-mode
   :straight nil
@@ -321,7 +410,17 @@ region-end is used."
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
   :config
-  (setq highlight-indent-guides-method 'character))
+  (defun my-highlighter (level responsive display)
+    (if (> 2 level)
+        nil
+      (highlight-indent-guides--highlighter-default level responsive display)))
+
+  (setq highlight-indent-guides-method 'character
+        highlight-indent-guides-character ?\|
+        highlight-indent-guides-auto-character-face-perc 30
+        highlight-indent-guides-auto-top-character-face-perc 60
+        highlight-indent-guides-responsive 'top
+        highlight-indent-guides-highlighter-function 'my-highlighter))
 
 (use-package ediff
   :hook (ediff-quit . winner-undo)
@@ -332,6 +431,10 @@ region-end is used."
   (ediff-split-window-function 'split-window-horizontally)
   (ediff-merge-split-window-function 'split-window-horizontally))
 
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2)
+  :config
+  (setq cd2/region-command 'cd2/comment-or-uncomment-region))
 
 (use-package mwim
   :bind (("C-a" . 'mwim-beginning-of-code-or-line)
@@ -339,10 +442,21 @@ region-end is used."
          ("<home>" . 'mwim-beginning-of-code-or-line)
          ("<end>" . 'mwim-end-of-code-or-line)))
 
+(use-package fast-scroll
+  ;; :hook (after-init . fast-scroll-mode)
+  :defer t
+  :config
+  ;; If you would like to turn on/off other modes, like flycheck, add
+  ;; your own hooks.
+  ;; (add-hook 'fast-scroll-start-hook (lambda () (flycheck-mode -1)))
+  ;; (add-hook 'fast-scroll-end-hook (lambda () (flycheck-mode 1)))
+  (fast-scroll-config))
+
 (use-package projectile
   :delight
-  ;; :bind ("C-c C-p" . 'projectile-command-map)
   :hook (after-init . projectile-global-mode)
+  :bind ("C-<tab>" . projectile-next-project-buffer)
+  ;; :bind ("C-c C-p" . 'projectile-command-map)
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
@@ -351,7 +465,45 @@ region-end is used."
         projectile-globally-ignored-file-suffixes '("#" "~" ".swp" ".o" ".so" ".exe" ".dll" ".elc" ".pyc" ".jar")
         projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
         projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
-        projectile-completion-system 'ivy))
+        projectile-completion-system 'ivy)
+  (with-eval-after-load 'projectile
+    (add-to-list 'projectile-project-root-files-functions #'+project/lsp-project-root)
+    (defun +project/projectile-buffer-filter (buffer)
+      (let ((name (buffer-name buffer)))
+        (or (and (string-prefix-p "*" name)
+                 (not (string-prefix-p "*eww*" name))
+                 (not (string-prefix-p "*ein: http" name))
+                 (not (string-prefix-p "*ein:notebooklist" name))
+                 (not (string-prefix-p "*vterm:" name))
+                 (not (string-prefix-p "*cider" name)))
+            (string-match-p "magit.*:" name)
+            (equal (buffer-name (current-buffer)) name))))
+
+    (defun +project/projectile-buffer-filter-function (buffers)
+      (cl-remove-if
+       (lambda (buffer) (+project/projectile-buffer-filter buffer))
+       buffers))
+    (setq projectile-buffers-filter-function #'+project/projectile-buffer-filter-function)))
+
+(use-package find-file-in-project
+  :commands (find-file-in-project
+             find-file-in-current-directory
+             find-file-in-project-not-ignore)
+  :config
+  (advice-add #'ffip-project-root :around (lambda (orig-fn)
+                                            (or (+project/lsp-project-root)
+                                                (funcall orig-fn))))
+  (add-to-list 'ffip-project-file "pom.xml")
+
+  ;; A simple, fast and user-friendly alternative to 'find'
+  ;; https://github.com/sharkdp/fd
+  (when (executable-find "fd")
+    (setq ffip-use-rust-fd t))
+
+  (defun find-file-in-project-not-ignore ()
+    (interactive)
+    (let ((ffip-rust-fd-respect-ignore-files nil))
+      (find-file-in-project))))
 
 (use-package counsel-projectile
   :after (:all counsel projectile)
@@ -497,7 +649,8 @@ region-end is used."
   :delight eldoc-mode)
 
 (use-package magit
-  :commands (magit-status magit-blame magit-mode)
+  :defer 10
+  :commands (magit magit-status magit-blame magit-mode magit-file-popup)
   :bind (("C-x g" . magit-status)
          ("C-c C-g l" . magit-file-log)
          ("C-c C-g c" . magit-commit)
@@ -527,7 +680,19 @@ region-end is used."
                  (flyspell-mode)
                  (set-fill-column 120)))))
 
-(use-package magit-todos)
+(use-package magit-todos
+  :after magit
+  :hook (magit-mode . magit-todos-mode)
+  :custom
+  (magit-todos-exclude-globs '("node_modules" "*.json"))
+  :config
+  (setq magit-todos-auto-group-items 'always))
+
+(use-package magit-delta
+  :after magit
+  :config
+  (setq magit-delta-hide-plus-minus-markers nil)
+  (magit-delta-mode))
 
 (use-package forge
   :after magit)
@@ -806,13 +971,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package fuz)
 
-(use-package snails
-  :if *sys/gui*
-  :straight (:host github :repo "manateelazycat/snails" :branch "master")
-  :bind ("C-c p" . snails)
-  :config
-  (setq snails-default-backends '(snails-backend-buffer	snails-backend-recentf snails-backend-imenu snails-backend-rg snails-backend-projectile)))
-
 (use-package posframe)
 
 (use-package popwin)
@@ -838,10 +996,18 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ivy-auto-select-single-candidate t
         ivy-rich-parse-remote-buffer nil
         +ivy-buffer-icons nil
-        ivy-use-virtual-buffers nil
+        ivy-use-virtual-buffers t
+        enable-recursive-minibuffers t
+        ivy-dynamic-exhibit-delay-ms 250
         ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-cd-selected
         ivy-height 25
         ivy-rich-switch-buffer-name-max-length 50))
+
+(use-package ivy-xref
+  :init
+  (setq xref-show-xrefs-function #'ivy-xref-show-xrefs)
+  (setq xref-show-definitions-function #'ivy-xref-show-defs)
+  :commands ivy-xref-show-xrefs)
 
 (use-package ivy-prescient
   :config
@@ -992,6 +1158,61 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package electric-operator
   :hook (python-mode . electric-operator-mode))
 
+(use-package symbol-overlay
+  :defer t
+  :config
+  (defun symbol-overlay-goto-first ()
+    (interactive)
+    (let* ((symbol (symbol-overlay-get-symbol))
+           (keyword (symbol-overlay-assoc symbol))
+           (a-symbol (car keyword))
+           (before (symbol-overlay-get-list a-symbol 'car))
+           (count (length before)))
+      (symbol-overlay-jump-call 'symbol-overlay-basic-jump (- count))))
+
+  (defun symbol-overlay-goto-last ()
+    (interactive)
+    (let* ((symbol (symbol-overlay-get-symbol))
+           (keyword (symbol-overlay-assoc symbol))
+           (a-symbol (car keyword))
+           (after (symbol-overlay-get-list a-symbol 'cdr))
+           (count (length after)))
+      (symbol-overlay-jump-call 'symbol-overlay-basic-jump (- count 1))))
+
+  (define-key symbol-overlay-map (kbd "<") 'symbol-overlay-goto-first)
+  (define-key symbol-overlay-map (kbd ">") 'symbol-overlay-goto-last)
+  (define-key symbol-overlay-map (kbd "h") 'nil)
+  (define-key symbol-overlay-map (kbd "?") 'symbol-overlay-map-help))
+
+(use-package paren
+  :hook ((after-init . (lambda () (show-paren-mode -1)))
+         (prog-mode . show-paren-local-mode))
+  :config
+  (setq show-paren-when-point-inside-paren t)
+  (setq show-paren-when-point-in-periphery t)
+
+  (defun show-paren-function-advice (fn)
+    "Highlight enclosing parens."
+    (cond ((looking-at-p "\\s(") (funcall fn))
+          ((derived-mode-p 'python-mode)
+           (save-excursion
+             (ignore-errors
+               (let* ((cur-pos (point))
+                      (paren-open-pos (search-backward-regexp "\\s(" (point-min) t))
+                      (paren-close-pos (and paren-open-pos (search-forward-regexp "\\s)" cur-pos t))))
+                 (when (and paren-open-pos (not paren-close-pos))
+                   (goto-char (1+ paren-open-pos))
+                   (funcall fn))))))
+          (t (save-excursion
+               (ignore-errors (backward-up-list))
+               (funcall fn)))))
+
+  (advice-add 'show-paren-function :around #'show-paren-function-advice)
+
+  (defun show-paren-local-mode ()
+    (interactive)
+    (setq-local show-paren-mode t)))
+
 (use-package smartparens
   :delight
   :config
@@ -999,6 +1220,114 @@ If ALL is non-nil, `swiper-all' is run."
     (require 'smartparens-config)
     (smartparens-global-mode 1)
     (show-paren-mode t)))
+
+(use-package elec-pair
+  :ensure nil
+  :hook ((prog-mode
+          web-mode
+          conf-mode
+          yaml-mode
+          editorconfig-mode
+          vue-mode
+          cider-repl-mode
+          minibuffer-setup
+          ) . electric-pair-local-mode)
+  :bind ("C-j" . newline-and-indent))
+
+(use-package awesome-pair
+  :straight (:host github :repo "manateelazycat/awesome-pair" :branch "master")
+  :bind ((:map awesome-pair-mode-map
+               ("(" . 'awesome-pair-open-round)
+               ("[" . 'awesome-pair-open-bracket)
+               ("{" . 'awesome-pair-open-curly)
+               (")" . 'awesome-pair-close-round)
+               ("]" . 'awesome-pair-close-bracket)
+               ("}" . 'awesome-pair-close-curly)
+               ("%" . 'awesome-pair-match-paren)
+               ("\"" . 'awesome-pair-double-quote)
+               ("DEL" . 'awesome-pair-backward-delete)
+               ("C-d" . 'awesome-pair-forward-delete)
+               ("C-k" . 'awesome-pair-kill)
+               ("M-\"" . 'awesome-pair-wrap-double-quote)
+               ("M-[" . 'awesome-pair-wrap-bracket)
+               ("M-{" . 'awesome-pair-wrap-curly)
+               ("M-(" . 'awesome-pair-wrap-round)
+               ("M-]" . 'awesome-pair-unwrap)
+               ("M-n" . 'awesome-pair-jump-right)
+               ("M-p" . 'awesome-pair-jump-left)
+               ("M-RET" . 'awesome-pair-jump-out-pair-and-newline)))
+  :hook (((prog-mode web-mode conf-mode yaml-mode editorconfig-mode vue-mode) . awesome-pair-mode)
+         ((c++-mode java-mode rust-mode) . (lambda () (local-set-key (kbd "<") '+prog/insert-angle)))
+         (rust-mode . (lambda () (local-set-key (kbd "|") '+prog/insert-rust-closure))))
+  :config
+  (defun awesome-pair-in-string-p-advice (&optional state)
+    (unless (or (bobp) (eobp))
+      (save-excursion
+        (or
+         (and
+          (nth 3 (or state (awesome-pair-current-parse-state)))
+          (not (equal (point) (line-end-position))))
+         (and
+          (eq (get-text-property (point) 'face) 'font-lock-string-face)
+          (eq (get-text-property (- (point) 1) 'face) 'font-lock-string-face))
+         (and
+          (eq (get-text-property (point) 'face) 'font-lock-doc-face)
+          (eq (get-text-property (- (point) 1) 'face) 'font-lock-doc-face))
+         ;; fix single quote pair delete for c/c++/java-mode
+         (and
+          (eq ?\" (char-syntax (char-before)))
+          (eq ?\" (char-syntax (char-after (point)))))))))
+
+  (advice-add 'awesome-pair-in-string-p :override 'awesome-pair-in-string-p-advice)
+
+  (defun +prog/insert-angle ()
+    "Insert angle brackets like intellij idea."
+    (interactive)
+    (save-excursion
+      (let ((pos (point))
+            (bounds (bounds-of-thing-at-point 'symbol)))
+        (if bounds
+            (let ((letter (char-after (car bounds))))
+              (if (and (eq (upcase letter) letter)
+                       (not (eq (downcase letter) letter)))
+                  (insert "<>")
+                (insert "<")))
+          (insert "<"))))
+    (forward-char))
+
+  (defun +prog/insert-rust-closure ()
+    (interactive)
+    (save-excursion
+      (if (and (equal major-mode 'rust-mode)
+               (eq ?\( (char-before)))
+          (insert "||")
+        (insert "|")))
+    (forward-char))
+
+  (defun +prog/in-empty-pair-p (awesome-in-empty-pair-fn &rest args)
+    (or (funcall awesome-in-empty-pair-fn)
+        (and (eq ?> (char-after))
+             (eq ?< (char-before)))
+        (and (equal major-mode 'rust-mode)
+             (eq ?| (char-after))
+             (eq ?| (char-before)))))
+
+  (advice-add 'awesome-pair-in-empty-pair-p :around '+prog/in-empty-pair-p)
+
+  (defun +prog/fix-unbalanced-parentheses-or-forward-char ()
+    "Fix missing close pair or just move forward one character."
+    (interactive)
+    (let ((close (awesome-pair-missing-close)))
+      (if close
+          (cond ((eq ?\) (matching-paren close))
+                 (insert ")"))
+                ((eq ?\} (matching-paren close))
+                 (insert "}"))
+                ((eq ?\] (matching-paren close))
+                 (insert "]")))
+        (forward-char))))
+
+  (advice-add 'awesome-pair-fix-unbalanced-parentheses :override '+prog/fix-unbalanced-parentheses-or-forward-char))
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -1213,28 +1542,46 @@ If ALL is non-nil, `swiper-all' is run."
   ;; :hook (lsp-mode       . lsp-enable-which-key-integration)
   :commands (lsp lsp-deferred)
   :config
-  (setq lsp-session-file "~/.lsp-sessions"
-        lsp-navigation 'both
-        lsp-auto-guess-root nil
-        lsp-enable-symbol-highlighting t
-        lsp-enable-snippet nil
+  (setq lsp-auto-guess-root nil
+        lsp-debounce-full-sync-notifications-interval 1.0
+        lsp-diagnostic-package :flycheck
+        lsp-diagnostics-attributes '((deprecated :strike-through t))
+        lsp-document-sync-method 'incremental
+        lsp-eldoc-enable-hover nil
+        lsp-eldoc-enable-signature-help nil
+        lsp-enable-file-watchers t
         lsp-enable-folding t
         lsp-enable-indentation t
         lsp-enable-on-type-formatting t
-        lsp-enable-file-watchers t
+        lsp-enable-snippet nil
+        lsp-enable-symbol-highlighting t
         lsp-enable-xref t
         lsp-flycheck-live-reporting t
+        lsp-headerlin-breadcrumbs-mode 1
+        lsp-idle-delay 1
+        lsp-keep-workspace-alive nil
+        lsp-navigation 'both
         lsp-prefer-capf t
-        lsp-semantic-highlighting t
-        lsp-eldoc-enable-hover nil
-        lsp-eldoc-enable-signature-help nil
-        lsp-document-sync-method 'incremental
         lsp-prefer-flymake nil
         lsp-response-timeout 10
+        lsp-semantic-highlighting t
+        lsp-session-file "~/.lsp-sessions"
         lsp-signature-auto-activate nil
         lsp-signature-render-all nil
-        lsp-headerlin-breadcrumbs-mode 1
         lsp-headerline-breadcrumb-segments '(file symbols))
+
+  (use-package lsp-lens
+    :straight nil
+    :config
+    (setq lsp-lens-debounce-interval 1.5))
+
+  (use-package lsp-completion
+    :straight nil
+    :config
+    (setq lsp-completion-provider :capf))
+
+  (advice-add 'lsp :before (lambda (&rest _args)
+                             (eval '(setf (lsp-session-server-id->folders (lsp-session)) (ht)))))
   :custom
   (lsp-file-watch-threshold 2000)
   (read-process-output-max (* 1024 1024))
@@ -1287,6 +1634,63 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-ui-imenu-enable t
         lsp-ui-imenu-kind-position 'top)
 
+  (setq-default lsp-ui-doc-frame-parameters
+                '((left . -1)
+                  (top . -1)
+                  (no-accept-focus . t)
+                  (min-width . 0)
+                  (width . 0)
+                  (min-height . 0)
+                  (height . 0)
+                  (internal-border-width . 0)
+                  (vertical-scroll-bars)
+                  (horizontal-scroll-bars)
+                  (left-fringe . 0)
+                  (right-fringe . 0)
+                  (menu-bar-lines . 0)
+                  (tool-bar-lines . 0)
+                  (line-spacing . 0.1)
+                  (unsplittable . t)
+                  (undecorated . t)
+                  (minibuffer . nil)
+                  (visibility . nil)
+                  (mouse-wheel-frame . nil)
+                  (no-other-frame . t)
+                  (cursor-type)
+                  (no-special-glyphs . t)))
+
+  (when (featurep 'doom-themes)
+    (set-face-background 'lsp-ui-doc-background (doom-color 'bg-alt)))
+
+  (defun +lsp/lsp-ui-doc--make-request-advice nil
+    "Request the documentation to the LS."
+    (when (and (not (bound-and-true-p lsp-ui-peek-mode))
+               (lsp--capability "hoverProvider"))
+      (-if-let (bounds (and (not (memq (char-after) '(?  ?\t ?\n ?\) ?\] ?\})))
+                            (or (and (symbol-at-point) (bounds-of-thing-at-point 'symbol))
+                                (and (looking-at "[[:graph:]]") (cons (point) (1+ (point)))))))
+          (unless (equal lsp-ui-doc--bounds bounds)
+            (lsp--send-request-async
+             (lsp--make-request "textDocument/hover" (lsp--text-document-position-params))
+             (lambda (hover) (lsp-ui-doc--callback hover bounds (current-buffer)))))
+        (lsp-ui-doc--hide-frame))))
+
+  (advice-add 'lsp-ui-doc--make-request :override '+lsp/lsp-ui-doc--make-request-advice)
+
+  (defun +lsp/toggle-doc-show ()
+    "Popup/Hide hover information"
+    (interactive)
+    (if lsp-ui-doc-mode
+        (progn
+          (message "lsp-ui-doc disabled")
+          (lsp-ui-doc-hide)
+          (lsp-ui-doc-mode -1))
+      (message "lsp-ui-doc enabled")
+      (lsp-ui-doc-mode 1)
+      (lsp-ui-doc-show)))
+
+  (set-face-foreground 'lsp-ui-sideline-code-action "#FF8C00")
+
   (if *sys/gui*
       (progn
         (setq lsp-ui-sideline-code-actions-prefix " ")
@@ -1314,7 +1718,17 @@ If ALL is non-nil, `swiper-all' is run."
                ("<f7>" . dap-breakpoint-toggle))))
 
 (use-package eglot
-  :commands eglot)
+  :commands eglot-ensure
+  :config
+  (add-hook 'eglot--managed-mode-hook (lambda ()
+                                        (when (bound-and-true-p read-process-output-max)
+                                          (setq-local read-process-output-max (* 1024 1024))))))
+
+(use-package eldoc-box
+  :defer t
+  ;; :hook (lsp-mode . eldoc-box-hover-at-point-mode)
+  :config
+  (setq lsp-signature-function 'eldoc-message))
 
 (use-package company
   :delight
@@ -1372,16 +1786,27 @@ If ALL is non-nil, `swiper-all' is run."
   :after company)
 
 (use-package company-quickhelp
+  :if (or (< emacs-major-version 26)
+          (not (display-graphic-p)))
   :after company
   :bind (:map company-active-map ("C-c h" . company-quickhelp-manual-begin))
   :preface
   (setq pos-tip-use-relative-coordinates t
         company-quickhelp-delay 0.1)
+  :hook (global-company-mode . company-quickhelp-mode)
+
   :config
-  (company-quickhelp-mode))
+  (setq company-quickhelp-delay 0.3))
+
+(use-package company-quickhelp-terminal
+  :if (not (display-graphic-p))
+  :after company
+  :hook (global-company-mode . company-quickhelp-terminal-mode))
 
 (use-package company-box
   :delight
+  :if (and (>= emacs-major-version 26)
+           (display-graphic-p))
   :after (:all all-the-icons company)
   :functions (my-company-box--make-line
               my-company-box-icons--elisp)
@@ -1477,6 +1902,13 @@ If ALL is non-nil, `swiper-all' is run."
   :hook (company-mode . company-posframe-mode)
   :after company)
 
+(use-package flymake-diagnostic-at-point
+  :after flymake
+  :hook (flymake-mode . flymake-diagnostic-at-point-mode))
+
+(use-package popwin
+  :defer t)
+
 (use-package flycheck
   :preface
   (defun save-buffer-maybe-show-errors ()
@@ -1492,17 +1924,110 @@ If ALL is non-nil, `swiper-all' is run."
   ;; :bind (("C-x C-s" . save-buffer-maybe-show-errors))
   :hook (prog-mode . flycheck-mode)
   :init (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list
-               flycheck-check-syntax-automatically '(save mode-enabled)
-               flycheck-display-errors-delay 0.0
-               flycheck-idle-change-delay 0.0)
+              flycheck-display-errors-delay 0.0)
   :bind (:map flycheck-error-list-mode-map
               ("C-n"    . flycheck-error-list-next-error)
               ("C-p"    . flycheck-error-list-previous-error)
               ("RET"    . flycheck-error-list-goto-error)
               ([return] . flycheck-error-list-goto-error))
   :config
-  (defalias 'show-error-at-point-soon 'flycheck-show-error-at-point)
-  (add-to-list 'flycheck-emacs-lisp-checkdoc-variables 'sentence-end-double-space))
+  (require 'popwin)
+  (setq flycheck-indication-mode 'right-fringe
+        flycheck-emacs-lisp-load-path 'inherit
+        flycheck-idle-change-delay 2
+        flycheck-check-syntax-automatically '(save mode-enabled))
+
+  (define-fringe-bitmap 'my-flycheck-fringe-indicator
+    (vector #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111
+            #b00111111))
+  (let ((bitmap 'my-flycheck-fringe-indicator))
+    (flycheck-define-error-level 'error
+      :severity 2
+      :overlay-category 'flycheck-error-overlay
+      :fringe-bitmap bitmap
+      :error-list-face 'flycheck-error-list-error
+      :fringe-face 'flycheck-fringe-error)
+    (flycheck-define-error-level 'warning
+      :severity 1
+      :overlay-category 'flycheck-warning-overlay
+      :fringe-bitmap bitmap
+      :error-list-face 'flycheck-error-list-warning
+      :fringe-face 'flycheck-fringe-warning)
+    (flycheck-define-error-level 'info
+      :severity 0
+      :overlay-category 'flycheck-info-overlay
+      :fringe-bitmap bitmap
+      :error-list-face 'flycheck-error-list-info
+      :fringe-face 'flycheck-fringe-info))
+
+  (push '("^\\*Flycheck.+\\*$"
+          :regexp t
+          :dedicated t
+          :position bottom
+          :stick t
+          :noselect t)
+        popwin:special-display-config)
+
+  (with-eval-after-load 'flycheck
+    ;; Display Flycheck errors in GUI tooltips
+    (if (display-graphic-p)
+        (use-package flycheck-posframe
+          :after flycheck
+          :hook (flycheck-mode . flycheck-posframe-mode))
+      (use-package flycheck-popup-tip
+        :after flycheck
+        :hook (flycheck-mode . flycheck-popup-tip-mode)))
+
+    ;; toggle flycheck window
+    (defun +flycheck/toggle-flycheck-error-list ()
+      "Toggle flycheck's error list window.
+If the error list is visible, hide it.  Otherwise, show it."
+      (interactive)
+      (-if-let (window (flycheck-get-error-list-window))
+          (quit-window nil window)
+        (flycheck-list-errors)))
+
+    (defun +flycheck/goto-flycheck-error-list ()
+      "Open and go to the error list buffer."
+      (interactive)
+      (unless (get-buffer-window (get-buffer flycheck-error-list-buffer))
+        (flycheck-list-errors)
+        (switch-to-buffer-other-window flycheck-error-list-buffer)))
+
+    (defun +flycheck/popup-errors ()
+      "Show the error list for the current buffer."
+      (interactive)
+      (unless flycheck-mode
+        (user-error "Flycheck mode not enabled"))
+      ;; Create and initialize the error list
+      (unless (get-buffer flycheck-error-list-buffer)
+        (with-current-buffer (get-buffer-create flycheck-error-list-buffer)
+          (flycheck-error-list-mode)))
+      (flycheck-error-list-set-source (current-buffer))
+      ;; Reset the error filter
+      (flycheck-error-list-reset-filter)
+      ;; Popup the error list in the bottom window
+      (popwin:popup-buffer flycheck-error-list-buffer)
+      ;; Finally, refresh the error list to show the most recent errors
+      (flycheck-error-list-refresh))
+
+    (defalias 'show-error-at-point-soon 'flycheck-show-error-at-point)
+    (add-to-list 'flycheck-emacs-lisp-checkdoc-variables 'sentence-end-double-space)))
 
 (use-package flycheck-inline
   :after flycheck
