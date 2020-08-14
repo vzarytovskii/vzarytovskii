@@ -202,6 +202,16 @@ region-end is used."
 
 (use-package hydra)
 
+(use-package dashboard
+  :config
+  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))
+        dashboard-items '((recents  . 5)
+                          (bookmarks . 5)
+                          (projects . 5)
+                          (agenda . 5)
+                          (registers . 5)))
+  (dashboard-setup-startup-hook))
+
 (use-package solaire-mode
   :hook (after-init . solaire-global-mode)
   :hook (after-revert . turn-on-solaire-mode)
@@ -280,13 +290,11 @@ region-end is used."
                    ("\\*ivy-occur .*\\*"       :regexp t :select t :align right))))
 
 (use-package elisp-demos
-  :defer t
   :init
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1)
   (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 
 (use-package helpful
-  :defer t
   :defines ivy-initial-inputs-alist
   :bind (("C-c C-d" . helpful-at-point)
          ("C-h f" . helpful-callable) ;; replace built-in `describe-function'
@@ -305,7 +313,6 @@ region-end is used."
     (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)))
 
 (use-package recentf
-  :defer t
   :config
   (setq recentf-auto-cleanup "05:00am"
         recentf-max-saved-items 200
@@ -332,7 +339,6 @@ region-end is used."
   :hook 'after-init-hook)
 
 (use-package hungry-delete
-  :defer 0.7
   :config (global-hungry-delete-mode))
 
 (use-package expand-region
@@ -410,17 +416,9 @@ region-end is used."
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
   :config
-  (defun my-highlighter (level responsive display)
-    (if (> 2 level)
-        nil
-      (highlight-indent-guides--highlighter-default level responsive display)))
-
   (setq highlight-indent-guides-method 'character
-        highlight-indent-guides-character ?\|
-        highlight-indent-guides-auto-character-face-perc 30
-        highlight-indent-guides-auto-top-character-face-perc 60
-        highlight-indent-guides-responsive 'top
-        highlight-indent-guides-highlighter-function 'my-highlighter))
+        highlight-indent-guides-character ?\┊
+        highlight-indent-guides-responsive 'top))
 
 (use-package ediff
   :hook (ediff-quit . winner-undo)
@@ -444,7 +442,6 @@ region-end is used."
 
 (use-package fast-scroll
   ;; :hook (after-init . fast-scroll-mode)
-  :defer t
   :config
   ;; If you would like to turn on/off other modes, like flycheck, add
   ;; your own hooks.
@@ -649,7 +646,6 @@ region-end is used."
   :delight eldoc-mode)
 
 (use-package magit
-  :defer 10
   :commands (magit magit-status magit-blame magit-mode magit-file-popup)
   :bind (("C-x g" . magit-status)
          ("C-c C-g l" . magit-file-log)
@@ -1159,7 +1155,6 @@ If ALL is non-nil, `swiper-all' is run."
   :hook (python-mode . electric-operator-mode))
 
 (use-package symbol-overlay
-  :defer t
   :config
   (defun symbol-overlay-goto-first ()
     (interactive)
@@ -1246,7 +1241,6 @@ If ALL is non-nil, `swiper-all' is run."
                ("%" . 'awesome-pair-match-paren)
                ("\"" . 'awesome-pair-double-quote)
                ("DEL" . 'awesome-pair-backward-delete)
-               ("C-d" . 'awesome-pair-forward-delete)
                ("C-k" . 'awesome-pair-kill)
                ("M-\"" . 'awesome-pair-wrap-double-quote)
                ("M-[" . 'awesome-pair-wrap-bracket)
@@ -1725,7 +1719,6 @@ If ALL is non-nil, `swiper-all' is run."
                                           (setq-local read-process-output-max (* 1024 1024))))))
 
 (use-package eldoc-box
-  :defer t
   ;; :hook (lsp-mode . eldoc-box-hover-at-point-mode)
   :config
   (setq lsp-signature-function 'eldoc-message))
@@ -1906,8 +1899,7 @@ If ALL is non-nil, `swiper-all' is run."
   :after flymake
   :hook (flymake-mode . flymake-diagnostic-at-point-mode))
 
-(use-package popwin
-  :defer t)
+(use-package popwin)
 
 (use-package flycheck
   :preface
