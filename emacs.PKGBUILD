@@ -1,4 +1,6 @@
 # Maintainer: Pedro A. López-Valencia <https://aur.archlinux.org/users/vorbote>
+branch="master"
+#branch="feature/native-comp"
 pkgname="emacs-git"
 pkgver=28.0.50.143382
 pkgrel=1
@@ -16,6 +18,7 @@ source=("emacs-git::git://git.savannah.gnu.org/emacs.git")
 options=(!strip)
 md5sums=('SKIP')
 
+
 CFLAGS+=" -flto -fuse-linker-plugin -O3 -mtune=native -march=native -fomit-frame-pointer"
 CXXFLAGS+=" -flto -fuse-linker-plugin -O3 -mtune=native -march=native -fomit-frame-pointer"
 
@@ -31,7 +34,8 @@ pkgver() {
 
 prepare() {
   cd "$srcdir/emacs-git"
-  git checkout -b native-comp origin/feature/native-comp
+  git fetch
+  git checkout -qfB origin/$branch
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
 }
 
