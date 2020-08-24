@@ -2040,7 +2040,7 @@ If the error list is visible, hide it.  Otherwise, show it."
 
 (use-package dotnet
   :config
-  (setenv "DOTNET_USE_POLLING_FILE_WATCHER" "1"))
+  (setenv "DOTNET_USE_POLLING_FILE_WATCHER" "true"))
 
 (use-package csharp-mode
   :after (:all lsp-mode company flycheck dotnet omnisharp)
