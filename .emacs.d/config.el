@@ -2038,7 +2038,9 @@ If the error list is visible, hide it.  Otherwise, show it."
 
 (use-package counsel-gtags)
 
-(use-package dotnet)
+(use-package dotnet
+  :config
+  (setenv "DOTNET_USE_POLLING_FILE_WATCHER" "1"))
 
 (use-package csharp-mode
   :after (:all lsp-mode company flycheck dotnet omnisharp)
@@ -2082,7 +2084,7 @@ If the error list is visible, hide it.  Otherwise, show it."
   ;;:straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
   :straight nil
   :load-path "~/code/elisp/emacs-fsharp-mode"
-  :after (:all lsp-mode projectile)
+  :after (:all dotnet lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
   :hook (fsharp-mode . dotnet-mode)

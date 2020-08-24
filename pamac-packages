@@ -943,6 +943,7 @@ mhwd-nvidia-418xx
 mhwd-nvidia-430xx
 mhwd-nvidia-435xx
 mhwd-nvidia-440xx
+mhwd-nvidia-450xx
 mhwd-tui
 min-browser-beta-bin
 minizip

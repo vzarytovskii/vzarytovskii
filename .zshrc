@@ -24,7 +24,7 @@ export LANG=en_US.UTF-8
 export ARCHFLAGS="-arch x86_64"
 
 export DOTNET_ROOT=~/.dotnet
-export DOTNET_USE_POLLING_FILE_WATCHER=true
+export DOTNET_USE_POLLING_FILE_WATCHER=1
 
 export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
