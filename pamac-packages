@@ -328,6 +328,7 @@ gst-plugins-base
 gst-plugins-base-libs
 gst-plugins-good
 gst-plugins-ugly
+gst-python
 gstreamer
 gthumb
 gtk2
@@ -821,6 +822,7 @@ libxau
 libxaw
 libxcb
 libxcomposite
+libxcrypt
 libxcursor
 libxdamage
 libxdg-basedir
