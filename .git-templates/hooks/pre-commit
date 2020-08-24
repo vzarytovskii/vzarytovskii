@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ `git symbolic-ref HEAD` == "refs/heads/master" ]]
+then
+  if [[ ! -f /tmp/master_commit ]]
+  then
+    echo "*************************"
+    echo "CANNOT COMMIT TO MASTER!"
+    echo "To override this behavior"
+    echo "touch /tmp/master_commit"
+    echo "*************************"
+    exit 1
+  else
+    echo "Removing /tmp/master_commit"
+    rm /tmp/master_commit
+  fi
+fi
