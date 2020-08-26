@@ -12,20 +12,20 @@
 	psr = !git push origin $(git rev-parse --abbrev-ref HEAD)
 	pl = pull
 	s = status
-	st = status
 	d = diff
 	ci = commit
 	c = clone
-	cl = clone
 	f = fetch
+	l = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate
+	ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
+	lll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat -p
+	lg = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+	lh = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
 	fr = "!git fetch --all && git rebase origin/master"
-	ca = "!git add -A && git commit -m "
 	amend = "!git add -A && git commit --amend --no-edit"
 	unstage = reset HEAD --
-	hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
 	type = cat-file -t
 	dump = cat-file -p
-    graph = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
 [color]
 	ui = true
 [core]
@@ -35,6 +35,7 @@
 	excludesfile = ~/.gitignore
 	editor = emacs
 	whitespace = -trailing-space
+	hooksPath = /home/v/.git-templates/hooks
 [branch]
 	autosetuprebase = always
 [diff]
@@ -47,6 +48,14 @@
 	abbrevCommit = true
 	follow = true
 	decorate = false
+
+[status]
+	short = false
+	long = true
+	renames = true
+	relativePaths = false
+	showStash = true
+	showUntrackedFiles = normal
 [fetch]
 	recurseSubmodules = on-demand
 [push]

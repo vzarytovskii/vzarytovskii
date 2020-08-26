@@ -858,6 +858,10 @@ linux58
 linux58-acpi_call
 linux58-headers
 linux58-tp_smapi
+linux59
+linux59-acpi_call
+linux59-headers
+linux59-tp_smapi
 linux-api-headers
 linux-firmware
 lirc
@@ -1034,7 +1038,6 @@ openexr
 openjpeg2
 openmpi
 openresolv
-opensnitch-git
 openssh
 openssl
 openvpn
