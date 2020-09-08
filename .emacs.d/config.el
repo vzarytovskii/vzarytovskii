@@ -2081,8 +2081,8 @@ If the error list is visible, hide it.  Otherwise, show it."
 
 (use-package fsharp-mode
   ;;:straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
-  :straight nil
-  :load-path "~/code/elisp/emacs-fsharp-mode"
+  ;;:straight nil
+  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all dotnet lsp-mode projectile)
   :commands fsharp-mode
   :hook (fsharp-mode . lsp)
