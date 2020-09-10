@@ -694,6 +694,9 @@ region-end is used."
 (use-package forge
   :after magit)
 
+(use-package github-review
+  :recipe (:host github :repo "charignon/github-review" :files ("github-review.el")))
+
 (use-package git-blamed)
 
 (use-package git-timemachine)
@@ -2046,6 +2049,13 @@ If the error list is visible, hide it.  Otherwise, show it."
   :init
   (after! elisp-mode
     (flycheck-package-setup)))
+
+(use-package flyspell-correct
+  :after flyspell
+  :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+
+(use-package flyspell-correct-ivy
+  :after lyspell-correct)
 
 (use-package editorconfig
   :config (editorconfig-mode 1))
