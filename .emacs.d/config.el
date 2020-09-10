@@ -128,6 +128,7 @@ region-end is used."
 (global-set-key (kbd "C-x x") '+sidebar-toggle)
 
 (use-package emacs
+  :bind ("C-k" . kill-whole-line)
   :config
   (add-to-list 'default-frame-alist '(font . "JetBrains Mono 12"))
   (if *sys/gui*
@@ -440,12 +441,13 @@ region-end is used."
          ("<end>" . 'mwim-end-of-code-or-line)))
 
 (use-package fast-scroll
-  ;; :hook (after-init . fast-scroll-mode)
+  :hook (after-init . fast-scroll-mode)
   :config
   ;; If you would like to turn on/off other modes, like flycheck, add
   ;; your own hooks.
-  ;; (add-hook 'fast-scroll-start-hook (lambda () (flycheck-mode -1)))
-  ;; (add-hook 'fast-scroll-end-hook (lambda () (flycheck-mode 1)))
+  (add-hook 'fast-scroll-start-hook (lambda () (flycheck-mode -1)))
+  (add-hook 'fast-scroll-end-hook (lambda () (flycheck-mode 1)))
+  (fast-scroll-mode 1)
   (fast-scroll-config))
 
 (use-package projectile
@@ -1214,6 +1216,21 @@ If ALL is non-nil, `swiper-all' is run."
     (require 'smartparens-config)
     (smartparens-global-mode 1)
     (show-paren-mode t)))
+
+(use-package parinfer
+  :init
+  (progn
+    (setq parinfer-extensions
+          '(defaults       ; should be included.
+             pretty-parens  ; different paren styles for different modes.
+             lispy          ; If you use Lispy. With this extension, you should install Lispy and do not enable lispy-mode directly.
+             paredit        ; Introduce some paredit commands.
+             smart-tab      ; C-b & C-f jump positions and smart shift with tab & S-tab.
+             smart-yank))   ; Yank behavior depend on mode.
+    (add-hook 'clojure-mode-hook #'parinfer-mode)
+    (add-hook 'emacs-lisp-mode-hook #'parinfer-mode)
+    (add-hook 'common-lisp-mode-hook #'parinfer-mode)
+    (add-hook 'lisp-mode-hook #'parinfer-mode)))
 
 (use-package elec-pair
   :ensure nil
