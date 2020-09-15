@@ -695,7 +695,7 @@ region-end is used."
   :after magit)
 
 (use-package github-review
-  :recipe (:host github :repo "charignon/github-review" :files ("github-review.el")))
+  :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
 
 (use-package git-blamed)
 
