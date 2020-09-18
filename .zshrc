@@ -1,6 +1,6 @@
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export EDITOR="emacsclient -nw -c"
-export ZSH="/home/v/.oh-my-zsh"
+export ZSH="/home/u/.oh-my-zsh"
 ZSH_THEME="simple"
 CASE_SENSITIVE="false"
 HYPHEN_INSENSITIVE="true"
@@ -18,7 +18,7 @@ COMPLETION_WAITING_DOTS="true"
 plugins=(git archlinux autojump colorize fd fasd fzf man z)
 
 source $ZSH/oh-my-zsh.sh
-source /home/v/.config/broot/launcher/bash/br
+source /home/u/.config/broot/launcher/bash/br
 
 export LANG=en_US.UTF-8
 export ARCHFLAGS="-arch x86_64"
