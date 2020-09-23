@@ -130,13 +130,30 @@ region-end is used."
 (use-package emacs
   :bind ("C-k" . kill-whole-line)
   :config
-  (add-to-list 'default-frame-alist '(font . "JetBrains Mono 12"))
+
+  (setq default-font "JetBrains Mono 12")
+  (setq locale-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+  (set-language-environment "UTF-8")
+  (set-default-coding-systems 'utf-8-unix)
+  (set-terminal-coding-system 'utf-8-unix)
+  (set-keyboard-coding-system 'utf-8-unix)
+  (set-selection-coding-system 'utf-8-unix)
+
+  (setenv "PATH" (concat (getenv "PATH") ":~/.dotnet/"))
+  (setq exec-path (append exec-path '("~/.dotnet/")))
+
+  (set-face-attribute 'default nil :family "JetBrains Mono" :height 100 :weight 'semi-bold)
+  (set-face-attribute 'fixed-pitch nil :family "JetBrains Mono" :height 110 :weight 'semi-bold)
+  (set-face-attribute 'variable-pitch nil :family "JetBrains Mono" :height 110 :weight 'normal)
+
+  (add-to-list 'default-frame-alist '(font . default-font))
   (if *sys/gui*
       (progn
         (setq initial-frame-alist
               '(
                 (tool-bar-lines . 0)
-                (font . "JetBrains Mono 12")
+                (font . default-font)
                 (width . 140) ; chars
                 (height . 30) ; lines
                 (left . 0)
@@ -144,7 +161,7 @@ region-end is used."
         (setq default-frame-alist
               '(
                 (tool-bar-lines . 0)
-                (font . "JetBrains Mono 12")
+                (font . default-font)
                 (width . 140)
                 (height . 30)
                 (left . 0)
@@ -297,9 +314,9 @@ region-end is used."
 (use-package helpful
   :defines ivy-initial-inputs-alist
   :bind (("C-c C-d" . helpful-at-point)
-         ("C-h f" . helpful-callable) ;; replace built-in `describe-function'
-         ("C-h k" . helpful-key)
-         ("C-h v" . helpful-variable))
+         ("C-h f"   . helpful-callable) ;; replace built-in `describe-function'
+         ("C-h k"   . helpful-key)
+         ("C-h v"   . helpful-variable))
   :config
   (with-eval-after-load 'ivy
     (dolist (cmd '(helpful-callable
@@ -314,7 +331,7 @@ region-end is used."
 
 (use-package recentf
   :config
-  (setq recentf-auto-cleanup "05:00am"
+  (setq recentf-auto-cleanup nil
         recentf-max-saved-items 200
         recentf-exclude '((expand-file-name package-user-dir)
                           ".cache"
@@ -351,6 +368,7 @@ region-end is used."
   (setq mc/always-run-for-all t)
   :bind (("C-S-c C-S-c" . 'mc/edit-lines)
          ("C-d" . 'mc/mark-next-like-this)
+         ("C-S-d" . 'mc/mark-previous-like-this)
          ("C->" . 'mc/mark-next-like-this)
          ("C-<" . 'mc/mark-previous-like-this)
          ("C-c C-<" . 'mc/mark-all-like-this)))

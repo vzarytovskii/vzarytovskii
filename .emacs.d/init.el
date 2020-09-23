@@ -36,7 +36,7 @@
   (setq gc-cons-threshold most-positive-fixnum))
 
 (defun restore-garbage-collection-h ()
-  (run-at-time 1 nil (lambda () (setq gc-cons-threshold doom-gc-cons-threshold))))
+  (run-at-time 1 nil (lambda () (setq gc-cons-threshold 16777216))))
 
 (add-hook 'minibuffer-setup-hook #'defer-garbage-collection-h)
 (add-hook 'minibuffer-exit-hook #'restore-garbage-collection-h)
@@ -76,20 +76,6 @@
 
 (eval-when-compile
   (require 'use-package))
-
-;; Encoding
-(setq locale-coding-system 'utf-8)
-(prefer-coding-system 'utf-8)
-(set-language-environment "UTF-8")
-(set-default-coding-systems 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(set-selection-coding-system 'utf-8)
-
-;; PATH Setup
-;; TODO: Properly get it either from list, or user's shell
-(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet/"))
-(setq exec-path (append exec-path '("~/.dotnet/")))
 
 ;; Load actual config
 (load "~/.emacs.d/config.el")
