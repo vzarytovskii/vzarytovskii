@@ -132,6 +132,8 @@ region-end is used."
   :config
 
   (setq default-font "JetBrains Mono 12")
+  (setq posframe-gtk-resize-child-frames 'resize-mode)
+
   (setq locale-coding-system 'utf-8)
   (prefer-coding-system 'utf-8)
   (set-language-environment "UTF-8")
@@ -653,6 +655,7 @@ region-end is used."
          ("M-g z" . dumb-jump-go-prefer-external-other-window))
   :config
   (setq dumb-jump-aggressive nil
+        dumb-jump-force-searcher 'rg
         dumb-jump-selector 'ivy)
   (add-to-list 'xref-backend-functions 'dumb-jump-xref-activate t)
   (add-hook 'dumb-jump-after-jump-hook #'better-jumper-set-jump))
@@ -1000,6 +1003,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (point-history-mode t))
 
 (use-package prescient
+  :disabled t
   :config
   (prescient-persist-mode 1))
 
@@ -1008,9 +1012,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after flx
   :config
   (setq ivy-re-builders-alist
-        '((swiper . regexp-quote)
-          (t . ivy--regex-fuzzy)))
-  (setq ivy-use-selectable-prompt t
+        '((t . ivy--regex-fuzzy)))
+  (setq ivy-initial-inputs-alist nil
+        ivy-use-selectable-prompt t
         ivy-auto-select-single-candidate t
         ivy-rich-parse-remote-buffer nil
         +ivy-buffer-icons nil
@@ -1028,7 +1032,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :commands ivy-xref-show-xrefs)
 
 (use-package ivy-prescient
+  :disabled t
   :config
+  :after (:all ivy prescient)
   (ivy-prescient-mode 1)
   (setq ivy-prescient-enable-sorting t
         ivy-prescient-enable-filtering t))
@@ -1764,7 +1770,7 @@ If ALL is non-nil, `swiper-all' is run."
   :delight
   :hook (after-init . global-company-mode)
   :commands (company-mode global-company-mode company-complete
-             company-complete-common company-manual-begin company-grab-line)
+                          company-complete-common company-manual-begin company-grab-line)
   :init
   (with-eval-after-load 'company
     (add-to-list 'company-transformers 'delete-consecutive-dups t))
@@ -1796,18 +1802,6 @@ If ALL is non-nil, `swiper-all' is run."
    '(company-tooltip-common-selection
      ((((type x)) (:inherit company-tooltip-selection :weight bold))
       (t (:inherit company-tooltip-selection))))))
-
-(use-package company-lsp
-  :after (:all company lsp)
-  :commands company-lsp
-  :config
-  (push 'company-lsp company-backends)
-  (setq company-transformers nil
-        company-lsp-async t
-        company-lsp-cache-candidates nil))
-
-(use-package company-prescient
-  :after (:all company prescient))
 
 (use-package company-flx
   :after company)
