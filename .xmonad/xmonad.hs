@@ -13,7 +13,7 @@ import XMonad.Util.WorkspaceCompare
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
-myTerminal = "st -f'JetBrains Mono:pixelsize=14:antialias=true:autohint=true'"
+myTerminal = "alacritty"
 
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = False
