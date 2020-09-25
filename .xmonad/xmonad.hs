@@ -1,6 +1,9 @@
 import XMonad
+
+import Control.Monad
+
 import Data.Monoid
-import System.Exit
+import System.Exits
 import Graphics.X11.ExtraTypes.XF86
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
@@ -44,7 +47,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm,               xK_d     ), spawn "rofi -show run")
 
     -- close focused window
-    , ((modm .|. shiftMask, xK_q     ), kill)
+    , ((modm .|. shiftMask, xK_x     ), kill)
 
      -- Rotate through the available layout algorithms
     , ((modm,               xK_space ), sendMessage NextLayout)
@@ -148,11 +151,15 @@ myLayout = avoidStruts $
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
 
-myManageHook = composeAll
-    [ className =? "MPlayer"        --> doFloat
+myManageHook = composeAll 
+    [ className =? "Emacs"          --> doShiftAndGo "0_2"
+    , className =? "qutebrowser"    --> doShiftAndGo "0_3"
+    , className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
     , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore ]
+    where
+      doShiftAndGo = doF . liftM2 (.) W.greedyView W.shift
 
 
 myEventHook = mempty
