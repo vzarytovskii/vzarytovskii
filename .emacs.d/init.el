@@ -77,8 +77,42 @@
 (eval-when-compile
   (require 'use-package))
 
+
+(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.cabal/bin:~/.ghcup/bin"))
+(setq exec-path (append exec-path '("~/.dotnet" "~/.cabal/bin" "~/.ghcup/bin")))
+
 ;; Load actual config
 (load "~/.emacs.d/config.el")
 
 (provide 'init)
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(horizontal-scroll-bar-mode nil)
+ '(scroll-bar-mode nil)
+ '(zoom-ignore-predicates
+   '((lambda nil
+       (>
+        (count-lines
+         (point-min)
+         (point-max))
+        20))))
+ '(zoom-ignored-buffer-name-regexps '("^*calc"))
+ '(zoom-ignored-buffer-names '("zoom.el" "init.el"))
+ '(zoom-ignored-major-modes '(dired-mode markdown-mode))
+ '(zoom-size '(0.5 . 0.5)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(flyspell-duplicate ((t (:underline (:color "#50fa7b" :style wave)))))
+ '(flyspell-incorrect ((t (:underline (:color "#f1fa8c" :style wave)))))
+ '(lsp-ui-doc-background ((t (:background nil))))
+ '(lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
+ '(pulse-highlight-face ((t (:inherit highlight))))
+ '(pulse-highlight-start-face ((t (:inherit highlight))))
+ '(whitespace-space ((t (:background "black" :foreground "gray14")))))

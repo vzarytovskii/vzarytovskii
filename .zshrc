@@ -55,6 +55,10 @@ alias spotify="spt"
 alias cheat="cht.sh"
 alias how="howdoi"
 alias rg="rg --no-heading"
+alias ff="/usr/bin/fd -t f"
+alias fd="/usr/bin/fd -t d"
+alias fa="/usr/bin/fd"
+
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
 [ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"

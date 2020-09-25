@@ -131,7 +131,6 @@ region-end is used."
   :bind ("C-k" . kill-whole-line)
   :config
 
-  (setq default-font "JetBrains Mono 12")
   (setq posframe-gtk-resize-child-frames 'resize-mode)
 
   (setq locale-coding-system 'utf-8)
@@ -142,20 +141,17 @@ region-end is used."
   (set-keyboard-coding-system 'utf-8-unix)
   (set-selection-coding-system 'utf-8-unix)
 
-  (setenv "PATH" (concat (getenv "PATH") ":~/.dotnet/"))
-  (setq exec-path (append exec-path '("~/.dotnet/")))
-
   (set-face-attribute 'default nil :family "JetBrains Mono" :height 100 :weight 'semi-bold)
   (set-face-attribute 'fixed-pitch nil :family "JetBrains Mono" :height 110 :weight 'semi-bold)
   (set-face-attribute 'variable-pitch nil :family "JetBrains Mono" :height 110 :weight 'normal)
 
-  (add-to-list 'default-frame-alist '(font . default-font))
+  (add-to-list 'default-frame-alist '(font . "JetBrains Mono 9"))
   (if *sys/gui*
       (progn
         (setq initial-frame-alist
               '(
                 (tool-bar-lines . 0)
-                (font . default-font)
+                (font . "JetBrains Mono 9")
                 (width . 140) ; chars
                 (height . 30) ; lines
                 (left . 0)
@@ -163,7 +159,7 @@ region-end is used."
         (setq default-frame-alist
               '(
                 (tool-bar-lines . 0)
-                (font . default-font)
+                (font . "JetBrains Mono 9")
                 (width . 140)
                 (height . 30)
                 (left . 0)
@@ -241,10 +237,9 @@ region-end is used."
   (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
   (setq solaire-mode-auto-swap-bg nil))
 
-(use-package doom-themes
-  :after solaire-mode
+(use-package color-theme-sanityinc-tomorrow
   :config
-  (load-theme 'doom-one t))
+  (load-theme 'sanityinc-tomorrow-bright t))
 
 (use-package doom-modeline
   :after doom-themes
@@ -1012,7 +1007,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after flx
   :config
   (setq ivy-re-builders-alist
-        '((t . ivy--regex-fuzzy)))
+        '((swiper . regexp-quote)
+          (t . ivy--regex-fuzzy)))
   (setq ivy-initial-inputs-alist nil
         ivy-use-selectable-prompt t
         ivy-auto-select-single-candidate t
@@ -1040,7 +1036,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         ivy-prescient-enable-filtering t))
 
 (use-package ivy-posframe
-  :disabled t
   :delight
   :after ivy
   :config
@@ -1369,14 +1364,29 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
- (use-package whitespace
-   :delight
-   :hook (prog-mode . whitespace-mode)
-   :init
-   (setq-default whitespace-style
-                 '(tabs trailing space-before-tab
-                        newline space-after-tab
-                        newline-mark)))
+(use-package whitespace
+  :delight
+  :hook (prog-mode . whitespace-mode)
+  :init
+  (defface my-whitespace-face
+    '((((class color) (background dark))
+       :background "black" :foreground "gray14")
+      (((class color) (background light))
+       :background "LightYellow" :foreground "lightgray")
+      (t :inverse-video t))
+    "Face used to visualize SPACE."
+    :group 'whitespace)
+  
+  (setq whitespace-space 'my-whitespace-face)
+  
+  (setq-default whitespace-style
+                '(face spaces space-mark tabs newline
+                       trailing-space-before
+                       tab space-after-tab
+                       newline-mark))
+  (setq whitespace-display-mappings
+        '(
+          (space-mark 32 [183] [46]))))
 
 (use-package whitespace-cleanup-mode
   :delight
@@ -1932,6 +1942,8 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package popwin)
 
+(use-package quick-peek)
+
 (use-package flycheck
   :preface
   (defun save-buffer-maybe-show-errors ()
@@ -1955,7 +1967,7 @@ If ALL is non-nil, `swiper-all' is run."
               ([return] . flycheck-error-list-goto-error))
   :config
   (require 'popwin)
-  (setq flycheck-indication-mode 'right-fringe
+  (setq flycheck-indication-mode 'left-fringe
         flycheck-emacs-lisp-load-path 'inherit
         flycheck-idle-change-delay 2
         flycheck-check-syntax-automatically '(save mode-enabled))
@@ -2053,8 +2065,18 @@ If the error list is visible, hide it.  Otherwise, show it."
     (add-to-list 'flycheck-emacs-lisp-checkdoc-variables 'sentence-end-double-space)))
 
 (use-package flycheck-inline
+  :disabled t
   :after flycheck
-  :hook (flycheck-mode . flycheck-inline-mode))
+  :hook (flycheck-mode . flycheck-inline-mode)
+  :config
+  (setq flycheck-inline-display-function
+        (lambda (msg pos)
+          (let* ((ov (quick-peek-overlay-ensure-at pos))
+                 (contents (quick-peek-overlay-contents ov)))
+            (setf (quick-peek-overlay-contents ov)
+                  (concat contents (when contents "\n") msg))
+            (quick-peek-update ov)))
+        flycheck-inline-clear-function #'quick-peek-hide))
 
 (use-package flycheck-package
   :after flycheck
@@ -2158,6 +2180,23 @@ If the error list is visible, hide it.  Otherwise, show it."
         lsp-log-io t)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
+
+(use-package haskell-mode
+  :commands haskell-mode
+  :hook (haskell-mode . flymake-mode)
+  :hook (haskell-mode . flycheck-mode))
+
+(use-package dante
+  :after haskell-mode
+  :commands dante-mode
+  :hook (haskell-mode . dante-mode))
+
+(use-package lsp-haskell
+  :after haskell-mode
+  :hook (haskell-mode . lsp)
+  :hook (haskell-literate-mode . lsp)
+  :config
+  (setq lsp-haskell-server-path "haskell-language-server-wrapper"))
 
 (use-package nxml-mode
   :straight nil

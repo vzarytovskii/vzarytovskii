@@ -13,7 +13,7 @@ import XMonad.Util.WorkspaceCompare
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
-myTerminal = "st -f'monospace:pixelsize=15:antialias=true:autohint=true'"
+myTerminal = "st -f'JetBrains Mono:pixelsize=14:antialias=true:autohint=true'"
 
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = False
@@ -59,10 +59,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm,               xK_Tab   ), windows W.focusDown)
 
     -- Move focus to the next window
-    , ((modm,               xK_j     ), windows W.focusDown)
+    , ((modm,               xK_k     ), windows W.focusDown)
 
     -- Move focus to the previous window
-    , ((modm,               xK_k     ), windows W.focusUp  )
+    , ((modm,               xK_j     ), windows W.focusUp  )
 
     -- Move focus to the master window
     , ((modm,               xK_m     ), windows W.focusMaster  )
@@ -118,8 +118,8 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
 
 myTabConfig = def {
-        activeColor = "#000000",
-        inactiveColor = "#222222",
+        activeColor = "#111111",
+        inactiveColor = "#000000",
         urgentColor = "#FDF6E3",
         activeBorderWidth = 0,
         inactiveBorderWidth = 0,
@@ -127,11 +127,11 @@ myTabConfig = def {
         activeTextColor = "#FFFFFF",
         inactiveTextColor = "#999999",
         urgentTextColor = "#1ABC9C",
-        fontName = "xft:Noto Sans:size=7:antialias=true:autohint=true"
+        fontName = "xft:JetBrains Mono:size=7:antialias=true:autohint=true"
 }
 
 myLayout = avoidStruts $
-           noBorders $ tabbed shrinkText myTabConfig
+           noBorders (tabbed shrinkText myTabConfig)
            ||| tiled
            ||| Mirror tiled
            ||| Full
@@ -171,8 +171,8 @@ myPP = xmobarPP {
      -- ppHiddenNoWindows  = xmobarColor "#999999" "" . wrap "" "",
      ppUrgent           = xmobarColor "#ff0000" "" . wrap "<" ">",
      ppSep              = " ",
-     ppTitle            = xmobarColor "#FFFFFF" "",
-     ppLayout           = (\l -> case l of
+     ppTitle            = xmobarColor "#429942" "",
+     ppLayout           = xmobarColor "#666666" "" . (\l -> case l of
           "Tabbed Simplest" -> "[_]"
           "Tabbed"          -> "[_]"
           "Full"            -> "[O]"
