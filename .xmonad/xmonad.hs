@@ -6,6 +6,9 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Layout.Tabbed
 import XMonad.Layout.NoBorders
+import XMonad.Layout.IndependentScreens
+
+import XMonad.Util.WorkspaceCompare
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -13,7 +16,7 @@ import qualified Data.Map        as M
 myTerminal = "st -f'monospace:pixelsize=15:antialias=true:autohint=true'"
 
 myFocusFollowsMouse :: Bool
-myFocusFollowsMouse = True
+myFocusFollowsMouse = False
 
 myClickJustFocuses :: Bool
 myClickJustFocuses = False
@@ -22,7 +25,7 @@ myBorderWidth = 1
 
 myModMask = mod4Mask
 
-myWorkspaces = map show [1..9]
+myWorkspaces = withScreens 2 $ map show [1..9]
 
 myNormalBorderColor  = "#aaaaaa"
 myFocusedBorderColor = "#ff0000"
@@ -100,22 +103,35 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- mod-[1..9], Switch to workspace N
     -- mod-shift-[1..9], Move client to workspace N
     --
-    [((m .|. modm, k), windows $ f i)
-        | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
+    [((m .|. modm, k), windows $ onCurrentScreen f i)
+        | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
         , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
     ++
 
     --
-    -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
+    -- mod-{q,w}, Switch to physical/Xinerama screens 1 or 2
+    -- mod-shift-{q,w}, Move client to screen 1 or 2
     --
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
+        | (key, sc) <- zip [xK_q, xK_w] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 
+myTabConfig = def {
+        activeColor = "#000000",
+        inactiveColor = "#222222",
+        urgentColor = "#FDF6E3",
+        activeBorderWidth = 0,
+        inactiveBorderWidth = 0,
+        urgentBorderWidth = 0,
+        activeTextColor = "#FFFFFF",
+        inactiveTextColor = "#999999",
+        urgentTextColor = "#1ABC9C",
+        fontName = "xft:Noto Sans:size=7:antialias=true:autohint=true"
+}
+
 myLayout = avoidStruts $
-           noBorders (tabbed shrinkText myTabConfig)
+           noBorders $ tabbed shrinkText myTabConfig
            ||| tiled
            ||| Mirror tiled
            ||| Full
@@ -147,20 +163,24 @@ myStartupHook = return ()
 
 myBar = "xmobar"
 
-myPP = xmobarPP { ppCurrent = xmobarColor "#429942" "" . wrap "<" ">" }
-
-myTabConfig = def {
-        activeColor = "#556064",
-        inactiveColor = "#2F3D44",
-        urgentColor = "#FDF6E3",
-        activeBorderColor = "#454948",
-        inactiveBorderColor = "#454948",
-        urgentBorderColor = "#268BD2",
-        activeTextColor = "#80FFF9",
-        inactiveTextColor = "#1ABC9C",
-        urgentTextColor = "#1ABC9C",
-        fontName = "xft:Noto Sans:size=10:antialias=true"
-}
+myPP = xmobarPP {
+     ppCurrent          = xmobarColor "#429942" "" . wrap ">" "<",
+     ppVisible          = xmobarColor "#555555" "" . wrap "<" ">",
+     ppVisibleNoWindows = Just $ mempty . wrap "<" ">",
+     ppHidden           = xmobarColor "#999999" "" . wrap "<" ">",
+     -- ppHiddenNoWindows  = xmobarColor "#999999" "" . wrap "" "",
+     ppUrgent           = xmobarColor "#ff0000" "" . wrap "<" ">",
+     ppSep              = " ",
+     ppTitle            = xmobarColor "#FFFFFF" "",
+     ppLayout           = (\l -> case l of
+          "Tabbed Simplest" -> "[_]"
+          "Tabbed"          -> "[_]"
+          "Full"            -> "[O]"
+          "Tall"            -> "[|]"
+          "Mirror Tall"     -> "[-]"
+          l -> l ),
+     ppSort             = getSortByTag,
+     ppExtras           = [] }
 
 toggleStrutsKey XConfig {XMonad.modMask = modMask} = (modMask, xK_b)
 
