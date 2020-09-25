@@ -1,12 +1,15 @@
 configuration {
-	modi: "run,drun,window";
-	lines: 5;
-	columns: 1;
+	modi: "run";
+	location: 1;
+	separator-style: none;
+	bw: 0;
+	font: "JetBrains Mono 7";
+	lines: 1;
+	columns: 9;
+	hide-scrollbar: true;
 	width: 100;
-	drun-icon-theme: "Pop";
-	show-icons: true;
-	sidebar-mode: true;
-	m: -4;
+	show-icons: false;
+	sidebar-mode: false;
 	matching: "fuzzy";
-	theme: "andrea";
+	theme: "oneliner";
 }
