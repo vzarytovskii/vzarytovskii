@@ -32,7 +32,7 @@ draw_bold_text_with_bright_colors: false
 colors:
   # Default colors
   primary:
-    background: '0x111111'
+    background: '0x121212'
     foreground: '0xcccccc'
 
   indexed_colors: []

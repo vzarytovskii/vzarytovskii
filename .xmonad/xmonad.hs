@@ -118,7 +118,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
 
 myTabConfig = def {
-        activeColor = "#111111",
+        activeColor = "#121212",
         inactiveColor = "#000000",
         urgentColor = "#FDF6E3",
         activeBorderWidth = 0,
