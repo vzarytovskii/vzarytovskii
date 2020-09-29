@@ -3,7 +3,7 @@ import XMonad
 import Control.Monad
 
 import Data.Monoid
-import System.Exits
+import System.Exit
 import Graphics.X11.ExtraTypes.XF86
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
@@ -171,15 +171,15 @@ myStartupHook = return ()
 myBar = "xmobar"
 
 myPP = xmobarPP {
-     ppCurrent          = xmobarColor "#429942" "" . wrap ">" "<",
-     ppVisible          = xmobarColor "#555555" "" . wrap "<" ">",
+     ppCurrent          = xmobarColor "#FFFFFF" "" . wrap ">" "<",
+     ppVisible          = xmobarColor "#888888" "" . wrap "<" ">",
      ppVisibleNoWindows = Just $ mempty . wrap "<" ">",
-     ppHidden           = xmobarColor "#999999" "" . wrap "<" ">",
+     ppHidden           = xmobarColor "#888888" "" . wrap "<" ">",
      -- ppHiddenNoWindows  = xmobarColor "#999999" "" . wrap "" "",
      ppUrgent           = xmobarColor "#ff0000" "" . wrap "<" ">",
      ppSep              = " ",
-     ppTitle            = xmobarColor "#429942" "",
-     ppLayout           = xmobarColor "#666666" "" . (\l -> case l of
+     ppTitle            = xmobarColor "#999999" "",
+     ppLayout           = xmobarColor "#555555" "" . (\l -> case l of
           "Tabbed Simplest" -> "[_]"
           "Tabbed"          -> "[_]"
           "Full"            -> "[O]"
