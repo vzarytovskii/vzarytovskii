@@ -1037,6 +1037,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package ivy-posframe
   :delight
+  :disabled t
   :after ivy
   :config
   (setq ivy-posframe-parameters
