@@ -59,6 +59,9 @@ alias ff="/usr/bin/fd -t f"
 alias fd="/usr/bin/fd -t d"
 alias fa="/usr/bin/fd"
 
+emv() {
+    for file in *.$1; do mv "$file" "$(basename "$file" .$1).$2"; done
+}
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
 [ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"

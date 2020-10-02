@@ -1,6 +1,5 @@
-# Maintainer: Pedro A. López-Valencia <https://aur.archlinux.org/users/vorbote>
-branch="master"
-#branch="feature/native-comp"
+#branch="master"
+branch="feature/native-comp"
 pkgname="emacs-git"
 pkgver=28.0.50.143382
 pkgrel=1
@@ -61,21 +60,24 @@ build() {
     --with-nativecomp
     --with-gnutls
     --with-cairo
+    --with-json
+    --with-harfbuzz
     --with-xwidgets
     --with-x
     --with-x-toolkit=gtk3
     --with-rsvg
+    --with-zlib
     --without-toolkit-scroll-bars
     --without-xaw3d
     --without-compress-install
     --without-gconf
     --without-gsettings
-    --without-mailutils
+    --with-mailutils
     --enable-link-time-optimization
   )
 
   ./configure "${_conf[@]}"
-  make
+  make NATIVE_FAST_BOOT=1
 }
 
 package() {

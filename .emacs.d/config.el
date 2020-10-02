@@ -92,6 +92,11 @@
             :action #'ivy--switch-buffer-action
             :caller '+project/ivy-switch-buffer))
 
+(defun end-of-line-and-indented-new-line ()
+  (interactive)
+  (end-of-line)
+  (newline-and-indent))
+
 (defun duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
 If there's no region, the current line will be duplicated."
@@ -126,6 +131,8 @@ region-end is used."
 (global-set-key (kbd "C-w") 'backward-kill-word)
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
 (global-set-key (kbd "C-x x") '+sidebar-toggle)
+(global-set-key (kbd "<S-return>") 'end-of-line-and-indented-new-line)
+
 
 (use-package emacs
   :bind ("C-k" . kill-whole-line)
@@ -180,6 +187,10 @@ region-end is used."
                 right-fringe-width 8
                 indicate-buffer-boundaries 'left
                 bidi-display-reordering nil)
+
+  (setq split-height-threshold nil)
+  (setq split-width-threshold 0)
+
   (setq compilation-ask-about-save nil
         compilation-window-height 100
         inhibit-startup-screen t
@@ -219,6 +230,7 @@ region-end is used."
 (use-package hydra)
 
 (use-package dashboard
+  :delight
   :config
   (setq dashboard-items '((recents  . 5)
                           (bookmarks . 5)
@@ -326,6 +338,13 @@ region-end is used."
   (when (featurep 'elisp-demos)
     (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)))
 
+(use-package subword
+  :straight nil
+  :delight)
+
+(use-package page-break-lines
+  :delight)
+
 (use-package recentf
   :config
   (setq recentf-auto-cleanup nil
@@ -353,6 +372,7 @@ region-end is used."
   :hook 'after-init-hook)
 
 (use-package hungry-delete
+  :delight
   :config (global-hungry-delete-mode))
 
 (use-package expand-region
@@ -371,6 +391,7 @@ region-end is used."
          ("C-c C-<" . 'mc/mark-all-like-this)))
 
 (use-package drag-stuff
+  :delight
   :config
   (drag-stuff-define-keys)
   (drag-stuff-global-mode 1))
@@ -429,6 +450,7 @@ region-end is used."
   (setq hl-block-delay 0.3))
 
 (use-package highlight-indent-guides
+  :delight
   :hook (prog-mode . highlight-indent-guides-mode)
   :config
   (setq highlight-indent-guides-method 'character
@@ -456,6 +478,7 @@ region-end is used."
          ("<end>" . 'mwim-end-of-code-or-line)))
 
 (use-package fast-scroll
+  :delight
   :hook (after-init . fast-scroll-mode)
   :config
   ;; If you would like to turn on/off other modes, like flycheck, add
@@ -702,6 +725,7 @@ region-end is used."
   (setq magit-todos-auto-group-items 'always))
 
 (use-package magit-delta
+  :delight
   :after magit
   :config
   (setq magit-delta-hide-plus-minus-markers nil)
@@ -840,20 +864,21 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (wgrep-change-readonly-file t))
 
 (use-package dimmer
+  :disabled t
   :hook (after-init . dimmer-mode)
   :init
   (setq dimmer-fraction 0.50
         dimmer-exclusion-regexp-list
-       '(".*Minibuf.*"
-         ".*which-key.*"
-         ".*NeoTree.*"
-         ".*Messages.*"
-         ".*Async.*"
-         ".*Warnings.*"
-         ".*company.*"
-         ".*Company.*"
-         ".*LV.*"
-         ".*Ilist.*"))
+        '(".*Minibuf.*"
+          ".*which-key.*"
+          ".*NeoTree.*"
+          ".*Messages.*"
+          ".*Async.*"
+          ".*Warnings.*"
+          ".*company.*"
+          ".*Company.*"
+          ".*LV.*"
+          ".*Ilist.*"))
   :config
   (dimmer-configure-magit)
   (dimmer-configure-posframe)
@@ -959,8 +984,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package ace-jump-mode
   :bind
-  ("C-c j" . ace-jump-word-mode)
-  ("C-c l" .  ace-jump-line-mode))
+  ("C-c w" . ace-jump-word-mode)
+  ("C-c i" .  ace-jump-line-mode))
 
 (use-package anzu
   :delight
@@ -972,11 +997,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :delight
   :config
   (custom-set-variables
-   '(zoom-size '(0.5 . 0.5))
-   '(zoom-ignored-major-modes '(dired-mode markdown-mode))
-   '(zoom-ignored-buffer-names '("zoom.el" "init.el"))
-   '(zoom-ignored-buffer-name-regexps '("^*calc"))
-   '(zoom-ignore-predicates '((lambda () (> (count-lines (point-min) (point-max)) 20)))))
+   '(zoom-size '(0.618 . 1))
+   '(zoom-ignored-major-modes '(dired-mode markdown-mode)))
   (zoom-mode 1))
 
 (use-package smex
@@ -1241,6 +1263,7 @@ If ALL is non-nil, `swiper-all' is run."
     (show-paren-mode t)))
 
 (use-package parinfer
+  :delight
   :init
   (progn
     (setq parinfer-extensions
@@ -2093,6 +2116,7 @@ If the error list is visible, hide it.  Otherwise, show it."
   :after lyspell-correct)
 
 (use-package editorconfig
+  :delight
   :config (editorconfig-mode 1))
 
 (use-package ggtags)
