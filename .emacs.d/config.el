@@ -186,7 +186,8 @@ region-end is used."
                 left-fringe-width 8
                 right-fringe-width 8
                 indicate-buffer-boundaries 'left
-                bidi-display-reordering nil)
+                bidi-display-reordering nil
+                display-line-numbers-width 3)
 
   (setq split-height-threshold nil)
   (setq split-width-threshold 0)
@@ -229,6 +230,8 @@ region-end is used."
 
 (use-package hydra)
 
+(use-package vterm)
+
 (use-package dashboard
   :delight
   :config
@@ -249,9 +252,20 @@ region-end is used."
   (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
   (setq solaire-mode-auto-swap-bg nil))
 
-(use-package color-theme-sanityinc-tomorrow
+;; (use-package color-theme-sanityinc-tomorrow
+;;   :config
+;;   (load-theme 'sanityinc-tomorrow-bright t))
+
+(use-package doom-themes
   :config
-  (load-theme 'sanityinc-tomorrow-bright t))
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-Iosvkem t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-neotree-config)
+  (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
+  (doom-themes-treemacs-config)
+  (doom-themes-org-config))
 
 (use-package doom-modeline
   :after doom-themes
@@ -364,7 +378,6 @@ region-end is used."
 
 (use-package which-key
   :delight
-  :disabled t
   :config
   (which-key-mode +1))
 
@@ -688,21 +701,22 @@ region-end is used."
 (use-package magit
   :commands (magit magit-status magit-blame magit-mode magit-file-popup)
   :bind (("C-x g" . magit-status)
-         ("C-c C-g l" . magit-file-log)
-         ("C-c C-g c" . magit-commit)
-         ("C-c C-g f" . magit-grep))
+         ("C-x C-g r" . magit-run)
+         ("C-x C-g l" . magit-file-log)
+         ("C-x C-g c" . magit-commit)
+         ("C-x C-g g" . magit-grep))
   :config
   (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))
   (setq magit-diff-refine-hunk t)
   (setq magit-commit-arguments '("--verbose"))
   (setq magit-section-initial-visibility-alist
-               '((unpulled . show)
-                 (unpushed . show)
-                 (untracked . show)
-                 (unstaged . show)
-                 (stashes . show)
-                 (todos . show)
-                 (recent . show)))
+        '((unpulled . show)
+          (unpushed . show)
+          (untracked . show)
+          (unstaged . show)
+          (stashes . show)
+          (todos . show)
+          (recent . show)))
   (progn
     (setq magit-post-display-buffer-hook
           #'(lambda ()
@@ -1394,9 +1408,9 @@ If ALL is non-nil, `swiper-all' is run."
   :init
   (defface my-whitespace-face
     '((((class color) (background dark))
-       :background "black" :foreground "gray14")
+       :background nil :foreground "gray24")
       (((class color) (background light))
-       :background "LightYellow" :foreground "lightgray")
+       :background nil :foreground "lightgray")
       (t :inverse-video t))
     "Face used to visualize SPACE."
     :group 'whitespace)

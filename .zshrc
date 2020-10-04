@@ -1,3 +1,4 @@
+setopt HIST_FCNTL_LOCK
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export EDITOR="emacsclient -nw -c"
 export ZSH="/home/u/.oh-my-zsh"
@@ -15,7 +16,7 @@ COMPLETION_WAITING_DOTS="true"
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
 # HIST_STAMPS="mm/dd/yyyy"
 # ZSH_CUSTOM=/path/to/new-custom-folder
-plugins=(git archlinux autojump colorize fd fasd fzf man z)
+plugins=(zsh-autosuggestions git archlinux autojump colorize fd fasd fzf man z)
 
 source $ZSH/oh-my-zsh.sh
 source /home/u/.config/broot/launcher/bash/br
@@ -58,6 +59,7 @@ alias rg="rg --no-heading"
 alias ff="/usr/bin/fd -t f"
 alias fd="/usr/bin/fd -t d"
 alias fa="/usr/bin/fd"
+alias nohist="HISTFILE=/dev/null zsh"
 
 emv() {
     for file in *.$1; do mv "$file" "$(basename "$file" .$1).$2"; done
