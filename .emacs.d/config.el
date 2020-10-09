@@ -148,12 +148,12 @@ region-end is used."
   (set-keyboard-coding-system 'utf-8-unix)
   (set-selection-coding-system 'utf-8-unix)
 
-  (set-face-attribute 'default nil :family "JetBrains Mono" :height 100 :weight 'semi-bold)
-  (set-face-attribute 'fixed-pitch nil :family "JetBrains Mono" :height 110 :weight 'semi-bold)
-  (set-face-attribute 'variable-pitch nil :family "JetBrains Mono" :height 110 :weight 'normal)
+  (set-face-attribute 'default nil :family "JetBrains Mono" :height 95 :weight 'semi-bold)
+  (set-face-attribute 'fixed-pitch nil :family "JetBrains Mono" :height 105 :weight 'semi-bold)
+  (set-face-attribute 'variable-pitch nil :family "JetBrains Mono" :height 105 :weight 'normal)
 
   (add-to-list 'default-frame-alist '(font . "JetBrains Mono 9"))
-  (if *sys/gui*
+  (if nil ;;*sys/gui*
       (progn
         (setq initial-frame-alist
               '(
@@ -224,6 +224,13 @@ region-end is used."
         show-paren-style 'parenthesis
 
         load-prefer-newer t))
+
+(use-package auto-package-update
+  :config
+  (setq auto-package-update-delete-old-verions t
+        auto-package-update-interval 5)
+  
+  (auto-package-update-maybe))
 
 (use-package delight)
 (use-package all-the-icons)

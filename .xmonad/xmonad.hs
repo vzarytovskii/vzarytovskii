@@ -80,10 +80,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_k     ), windows W.swapUp    )
 
     -- Shrink the master area
-    , ((modm,               xK_h     ), sendMessage Shrink)
+    , ((modm .|. shiftMask, xK_h     ), sendMessage Shrink)
 
     -- Expand the master area
-    , ((modm,               xK_l     ), sendMessage Expand)
+    , ((modm .|. shiftMask, xK_l     ), sendMessage Expand)
 
     -- Push window back into tiling
     , ((modm,               xK_t     ), withFocused $ windows . W.sink)
@@ -98,7 +98,13 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_0     ), io (exitWith ExitSuccess))
 
     -- Restart xmonad
-    , ((modm .|. shiftMask, xK_p     ), spawn "xmonad --recompile && xmonad --restart")
+    , ((modm .|. shiftMask, xK_r     ), spawn "xmonad --recompile && xmonad --restart")
+    
+    -- Power menu, lock screen, etc.
+    , ((modm .|. shiftMask, xK_p     ), spawn "~/.local/bin/rofi-power")
+    
+    -- Lock screen
+    , ((modm, xK_l                   ), spawn "i3lock-fancy")
     ]
     ++
 
