@@ -127,12 +127,18 @@ region-end is used."
     (forward-char -1))
   (duplicate-region num (point-at-bol) (1+ (point-at-eol))))
 
+(defun copy-region-or-line (beg end)
+  (interactive "r")
+  (if mark-active
+      (kill-ring-save beg end)
+    (kill-ring-save (line-beginning-position) (line-end-position))))
+
 (global-set-key (kbd "C-c 2") 'duplicate-current-line-or-region)
 (global-set-key (kbd "C-w") 'backward-kill-word)
+(global-set-key (kbd "M-w") 'copy-region-or-line)
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
 (global-set-key (kbd "C-x x") '+sidebar-toggle)
 (global-set-key (kbd "<S-return>") 'end-of-line-and-indented-new-line)
-
 
 (use-package emacs
   :bind ("C-k" . kill-whole-line)
@@ -497,6 +503,12 @@ region-end is used."
          ("<home>" . 'mwim-beginning-of-code-or-line)
          ("<end>" . 'mwim-end-of-code-or-line)))
 
+(use-package smooth-scrolling
+  :custom
+  (smooth-scroll-margin 5)
+  :config
+  (smooth-scrolling-mode 1))
+
 (use-package fast-scroll
   :delight
   :hook (after-init . fast-scroll-mode)
@@ -590,8 +602,9 @@ region-end is used."
         uniquify-ignore-buffers-re   "^\\*"))
 
 (use-package diff-hl
-  :after dired
+  :after (:all dired magit)
   :hook ((dired-mode . diff-hl-dired-mode)
+         (magit-pre-refresh . diff-hl-magit-pre-refresh)
          (magit-post-refresh . diff-hl-magit-post-refresh)))
 
 (use-package dired-hacks-utils)
@@ -721,7 +734,7 @@ region-end is used."
           (unpushed . show)
           (untracked . show)
           (unstaged . show)
-          (stashes . show)
+          (stashes . hide)
           (todos . show)
           (recent . show)))
   (progn
@@ -879,32 +892,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               ("RET" . deadgrep-visit-result-other-window)
               ("o" . deadgrep-visit-result)))
 
-(use-package wgrep
-  :custom
-  (wgrep-auto-save-buffer t)
-  (wgrep-change-readonly-file t))
-
-(use-package dimmer
-  :disabled t
-  :hook (after-init . dimmer-mode)
-  :init
-  (setq dimmer-fraction 0.50
-        dimmer-exclusion-regexp-list
-        '(".*Minibuf.*"
-          ".*which-key.*"
-          ".*NeoTree.*"
-          ".*Messages.*"
-          ".*Async.*"
-          ".*Warnings.*"
-          ".*company.*"
-          ".*Company.*"
-          ".*LV.*"
-          ".*Ilist.*"))
+(use-package auto-dim-other-buffers
   :config
-  (dimmer-configure-magit)
-  (dimmer-configure-posframe)
-  (dimmer-configure-company-box)
-  (dimmer-mode t))
+  (auto-dim-other-buffers-mode t))
+
+(use-package golden-ratio
+  :config
+  (setq golden-ratio-adjust-factor 1
+        golden-ratio-wide-adjust-factor 1)
+  (golden-ratio-mode 1))
 
 (use-package emacs ;; Only window configurations
   :straight nil
@@ -941,30 +937,30 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     (split-window-horizontally)
     (other-window 1 nil))
   (defun toggle-window-split ()
-  (interactive)
-  (if (= (count-windows) 2)
-      (let* ((this-win-buffer (window-buffer))
-             (next-win-buffer (window-buffer (next-window)))
-             (this-win-edges (window-edges (selected-window)))
-             (next-win-edges (window-edges (next-window)))
-             (this-win-2nd (not (and (<= (car this-win-edges)
-                                         (car next-win-edges))
-                                     (<= (cadr this-win-edges)
-                                         (cadr next-win-edges)))))
-             (splitter
-              (if (= (car this-win-edges)
-                     (car (window-edges (next-window))))
-                  'split-window-horizontally
-                'split-window-vertically)))
-        (delete-other-windows)
-        (let ((first-win (selected-window)))
-          (funcall splitter)
-          (if this-win-2nd (other-window 1))
-          (set-window-buffer (selected-window) this-win-buffer)
-          (set-window-buffer (next-window) next-win-buffer)
-          (select-window first-win)
-          (if this-win-2nd (other-window 1))))))
-)
+    (interactive)
+    (if (= (count-windows) 2)
+        (let* ((this-win-buffer (window-buffer))
+               (next-win-buffer (window-buffer (next-window)))
+               (this-win-edges (window-edges (selected-window)))
+               (next-win-edges (window-edges (next-window)))
+               (this-win-2nd (not (and (<= (car this-win-edges)
+                                           (car next-win-edges))
+                                       (<= (cadr this-win-edges)
+                                           (cadr next-win-edges)))))
+               (splitter
+                (if (= (car this-win-edges)
+                       (car (window-edges (next-window))))
+                    'split-window-horizontally
+                  'split-window-vertically)))
+          (delete-other-windows)
+          (let ((first-win (selected-window)))
+            (funcall splitter)
+            (if this-win-2nd (other-window 1))
+            (set-window-buffer (selected-window) this-win-buffer)
+            (set-window-buffer (next-window) next-win-buffer)
+            (select-window first-win)
+            (if this-win-2nd (other-window 1))))))
+  )
 
 (use-package ace-window
   :bind (("C-x o" . 'ace-window)
@@ -1014,13 +1010,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :bind (([remap query-replace] . anzu-query-replace)
          ([remap query-replace-regexp] . anzu-query-replace-regexp)))
 
-(use-package zoom
-  :delight
-  :config
-  (custom-set-variables
-   '(zoom-size '(0.618 . 1))
-   '(zoom-ignored-major-modes '(dired-mode markdown-mode)))
-  (zoom-mode 1))
 
 (use-package smex
   :init
@@ -1167,6 +1156,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         counsel-describe-variable-function 'helpful-variable
         counsel-rg-base-command "rg -zS --no-heading --line-number --max-columns 1000 %s ."
         counsel-grep-base-command counsel-rg-base-command))
+
+(use-package counsel-gtags
+  :after counsel
+  :bind ("M-g t d" . 'counsel-gtags-find-definition)
+  :bind ("M-g t r" . 'counsel-gtags-find-reference)
+  :bind ("M-g t s" . 'counsel-gtags-find-symbol)
+  :bind ("M-g t t" . 'counsel-gtags-command-dwim)
+  :config
+  (counsel-gtags-mode 1))
 
 (use-package swiper
   :after ivy
@@ -1649,7 +1647,7 @@ If ALL is non-nil, `swiper-all' is run."
         lsp-enable-symbol-highlighting t
         lsp-enable-xref t
         lsp-flycheck-live-reporting t
-        lsp-headerlin-breadcrumbs-mode 1
+        lsp-headerline-breadcrumbs-mode nil
         lsp-idle-delay 1
         lsp-keep-workspace-alive nil
         lsp-navigation 'both
@@ -2148,10 +2146,15 @@ If the error list is visible, hide it.  Otherwise, show it."
   :config
   (setenv "DOTNET_USE_POLLING_FILE_WATCHER" "true"))
 
+(use-package sharper
+  :straight (:host github :repo "sebasmonia/sharper" :branch "master")
+  :bind
+  ("C-c n" . sharper-main-transient))
+
 (use-package csharp-mode
   :after (:all lsp-mode company flycheck dotnet omnisharp)
   :hook (csharp-mode . lsp)
-  ;; :hook (csharp-mode . omnisharp-mode)
+  :hook (csharp-mode . omnisharp-mode)
   :hook (csharp-mode . dotnet-mode)
   :hook (csharp-mode . company-mode)
   :hook (csharp-mode . flycheck-mode)
@@ -2170,11 +2173,8 @@ If the error list is visible, hide it.  Otherwise, show it."
         tab-width 4)
   (electric-pair-local-mode 1))
 
-(use-package sharper
-  :straight (:host github :repo "sebasmonia/sharper" :branch "master"))
 
 (use-package omnisharp
-  :disabled t
   :after (:all company flycheck)
   :hook (omnisharp-mode . company-mode)
   :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
@@ -2192,7 +2192,7 @@ If the error list is visible, hide it.  Otherwise, show it."
   ;;:load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all dotnet lsp-mode projectile)
   :commands fsharp-mode
-  :hook (fsharp-mode . lsp)
+  ;;:hook (fsharp-mode . lsp)
   :hook (fsharp-mode . dotnet-mode)
   :config
   (setq indent-tabs-mode nil
