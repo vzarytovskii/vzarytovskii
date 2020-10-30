@@ -16,13 +16,17 @@ COMPLETION_WAITING_DOTS="true"
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
 # HIST_STAMPS="mm/dd/yyyy"
 # ZSH_CUSTOM=/path/to/new-custom-folder
-plugins=(zsh-autosuggestions git archlinux autojump colorize fd fasd fzf man z)
+plugins=(zsh-autosuggestions git archlinux colorize fd fasd fzf man z)
 
 source $ZSH/oh-my-zsh.sh
 source /home/u/.config/broot/launcher/bash/br
 
 export LANG=en_US.UTF-8
 export ARCHFLAGS="-arch x86_64"
+
+export _JAVA_AWT_WM_NONREPARENTING=1
+
+export DISABLEARCADE=1
 
 export DOTNET_ROOT=~/.dotnet
 export DOTNET_USE_POLLING_FILE_WATCHER=true

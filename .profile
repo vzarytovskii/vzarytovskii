@@ -1,3 +1,4 @@
+export _JAVA_AWT_WM_NONREPARENTING=1
 xrandr \
   --dpi 108 \
   --output DP-0 --mode 2560x1440 --rate 144 --pos 0x0 --left-of DP-2 --primary \

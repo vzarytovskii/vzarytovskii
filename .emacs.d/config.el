@@ -209,7 +209,7 @@ region-end is used."
 
         scroll-step 1
         scroll-margin 0
-        scroll-conservatively 100000
+        scroll-conservatively 101
         scroll-preserve-screen-position 1
 
         visible-bell 1
@@ -248,11 +248,9 @@ region-end is used."
 (use-package dashboard
   :delight
   :config
-  (setq dashboard-items '((recents  . 5)
-                          (bookmarks . 5)
+  (setq dashboard-items '((recents  . 15)
                           (projects . 5)
-                          (agenda . 5)
-                          (registers . 5)))
+                          (agenda . 5)))
   (dashboard-setup-startup-hook))
 
 (use-package solaire-mode
@@ -264,10 +262,6 @@ region-end is used."
   :config
   (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
   (setq solaire-mode-auto-swap-bg nil))
-
-;; (use-package color-theme-sanityinc-tomorrow
-;;   :config
-;;   (load-theme 'sanityinc-tomorrow-bright t))
 
 (use-package doom-themes
   :config
@@ -513,8 +507,7 @@ region-end is used."
   :delight
   :hook (after-init . fast-scroll-mode)
   :config
-  ;; If you would like to turn on/off other modes, like flycheck, add
-  ;; your own hooks.
+  ;; TODO: Disable indent, etc.
   (add-hook 'fast-scroll-start-hook (lambda () (flycheck-mode -1)))
   (add-hook 'fast-scroll-end-hook (lambda () (flycheck-mode 1)))
   (fast-scroll-mode 1)
@@ -524,7 +517,7 @@ region-end is used."
   :delight
   :hook (after-init . projectile-global-mode)
   :bind ("C-<tab>" . projectile-next-project-buffer)
-  ;; :bind ("C-c C-p" . 'projectile-command-map)
+  :bind ("C-c C-p" . 'projectile-command-map)
   :config
   (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
@@ -896,12 +889,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (auto-dim-other-buffers-mode t))
 
-(use-package golden-ratio
-  :config
-  (setq golden-ratio-adjust-factor 1
-        golden-ratio-wide-adjust-factor 1)
-  (golden-ratio-mode 1))
-
 (use-package emacs ;; Only window configurations
   :straight nil
   :ensure nil
@@ -959,8 +946,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             (set-window-buffer (selected-window) this-win-buffer)
             (set-window-buffer (next-window) next-win-buffer)
             (select-window first-win)
-            (if this-win-2nd (other-window 1))))))
-  )
+            (if this-win-2nd (other-window 1)))))))
+
+(use-package buffer-expose
+  :bind (("M-<tab>" . 'buffer-expose))
+  :config
+  (setq buffer-expose-auto-init-aw t))
 
 (use-package ace-window
   :bind (("C-x o" . 'ace-window)
@@ -1608,7 +1599,6 @@ If ALL is non-nil, `swiper-all' is run."
 ;; Programming stuff:
 
 (use-package yasnippet
-  :disabled t
   :delight
   :after company
   :commands (yas-minor-mode)
@@ -1622,14 +1612,15 @@ If ALL is non-nil, `swiper-all' is run."
   (yas-reload-all))
 
 (use-package yasnippet-snippets
-  :disabled t
   :after yasnippet)
 
 (use-package lsp-mode
+  :straight nil
+  :load-path "~/code/elisp/lsp-mode"
   :hook (lsp-after-open . lsp-enable-imenu)
   :hook (lsp-after-open . lsp-lens-mode)
   :hook (lsp-after-open . lsp-headerline-breadcrumb-mode)
-  ;; :hook (lsp-mode       . lsp-enable-which-key-integration)
+  :hook (lsp-mode       . lsp-enable-which-key-integration)
   :commands (lsp lsp-deferred)
   :config
   (setq lsp-auto-guess-root nil
@@ -1810,9 +1801,10 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package eglot
   :commands eglot-ensure
   :config
-  (add-hook 'eglot--managed-mode-hook (lambda ()
-                                        (when (bound-and-true-p read-process-output-max)
-                                          (setq-local read-process-output-max (* 1024 1024))))))
+  (add-hook 'eglot--managed-mode-hook
+            (lambda ()
+              (when (bound-and-true-p read-process-output-max)
+                (setq-local read-process-output-max (* 1024 1024))))))
 
 (use-package eldoc-box
   ;; :hook (lsp-mode . eldoc-box-hover-at-point-mode)
@@ -1822,58 +1814,32 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package company
   :delight
   :hook (after-init . global-company-mode)
-  :commands (company-mode global-company-mode company-complete
-                          company-complete-common company-manual-begin company-grab-line)
   :init
-  (with-eval-after-load 'company
-    (add-to-list 'company-transformers 'delete-consecutive-dups t))
-  (setq company-tooltip-limit 20
-        company-tooltip-idle-delay 0.3
+  (setq company-frontends '(company-pseudo-tooltip-frontend
+                            company-echo-metadata-frontend)
+        company-tooltip-limit 20
+        company-tooltip-idle-delay 0.5
         company-tooltip-flip-when-above t
         company-tooltip-align-annotations t
         company-dabbrev-downcase nil
         company-dabbrev-ignore-case t
         company-dabbrev-other-buffers 'all
-        company-minimum-prefix-length 1
-        company-idle-delay 0.3
+        company-minimum-prefix-length 3
+        company-idle-delay 0.5
         company-require-match 'never)
   :config
-  (global-company-mode +1)
-  :custom
-  (custom-set-faces
-   '(company-preview
-     ((t (:foreground "darkgray" :underline t))))
-   '(company-preview-common
-     ((t (:inherit company-preview))))
-   '(company-tooltip
-     ((t (:background "lightgray" :foreground "black"))))
-   '(company-tooltip-selection
-     ((t (:background "steelblue" :foreground "white"))))
-   '(company-tooltip-common
-     ((((type x)) (:inherit company-tooltip :weight bold))
-      (t (:inherit company-tooltip))))
-   '(company-tooltip-common-selection
-     ((((type x)) (:inherit company-tooltip-selection :weight bold))
-      (t (:inherit company-tooltip-selection))))))
+  (global-company-mode +1))
 
-(use-package company-flx
-  :after company)
-
-(use-package company-dict
-  :after company)
 
 (use-package company-quickhelp
   :if (or (< emacs-major-version 26)
           (not (display-graphic-p)))
   :after company
   :bind (:map company-active-map ("C-c h" . company-quickhelp-manual-begin))
+  :hook (global-company-mode . company-quickhelp-mode)
   :preface
   (setq pos-tip-use-relative-coordinates t
-        company-quickhelp-delay 0.1)
-  :hook (global-company-mode . company-quickhelp-mode)
-
-  :config
-  (setq company-quickhelp-delay 0.3))
+        company-quickhelp-delay 0.3))
 
 (use-package company-quickhelp-terminal
   :if (not (display-graphic-p))
@@ -2165,7 +2131,7 @@ If the error list is visible, hide it.  Otherwise, show it."
                          (setq-local fill-function-arguments-last-argument-same-line t)
                          (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
   :config
-  (setq lsp-csharp-server-path "~/omnisharp/run")
+  (setq lsp-csharp-server-path "~/code/csharp/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio")
   (setq indent-tabs-mode nil
         c-syntactic-indentation t
         c-basic-offset 4
@@ -2188,11 +2154,11 @@ If the error list is visible, hide it.  Otherwise, show it."
 
 (use-package fsharp-mode
   ;;:straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
-  ;;:straight nil
-  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
+  :straight nil
+  :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all dotnet lsp-mode projectile)
   :commands fsharp-mode
-  ;;:hook (fsharp-mode . lsp)
+  :hook (fsharp-mode . lsp)
   :hook (fsharp-mode . dotnet-mode)
   :config
   (setq indent-tabs-mode nil
@@ -2222,7 +2188,8 @@ If the error list is visible, hide it.  Otherwise, show it."
         lsp-fsharp-simplify-name-analyzer t
         lsp-fsharp-resolve-namespaces t
         lsp-fsharp-enable-reference-code-lens t
-        lsp-fsharp-auto-workspace-init nil
+        lsp-fsharp-auto-workspace-init t
+        lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules" "tests/projects"]
         lsp-log-io t)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
@@ -2257,12 +2224,17 @@ If the error list is visible, hide it.  Otherwise, show it."
 (use-package yaml-mode
   :mode "\\.yml$")
 
+(use-package sh-mode
+  :straight nil
+  :after lsp
+  :hook (sh-mode . lsp))
+
 ;; Spelling and stuff
 (use-package bing-dict
   :bind (("C-c d" . bing-dict-brief))
   :init (setq bing-dict-show-thesaurus  'both
-               bing-dict-vocabulary-save t
-               bing-dict-cache-auto-save t))
+              bing-dict-vocabulary-save t
+              bing-dict-cache-auto-save t))
 
 (use-package ispell
   :init

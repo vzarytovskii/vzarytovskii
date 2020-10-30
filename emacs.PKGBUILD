@@ -1,25 +1,26 @@
-#branch="master"
-branch="feature/native-comp"
 pkgname="emacs-git"
-pkgver=28.0.50.143382
+pkgver=28.0.50.144748
 pkgrel=1
 pkgdesc="GNU Emacs. Development master branch."
 arch=('x86_64' )
 url="http://www.gnu.org/software/emacs/"
 license=('GPL3' )
-depends=('alsa-lib' 'gnutls' 'libxml2' 'jansson' 'm17n-lib' 'libotf' 'harfbuzz' 'gpm' 'gtk3' 'libjpeg-turbo' 'giflib' 'cairo' 'webkit2gtk' )
+depends=('alsa-lib' 'gnutls' 'libxml2' 'jansson' 'm17n-lib' 'libotf' 'harfbuzz' 'gpm' 'gtk3' 'libjpeg-turbo' 'giflib' 'cairo' 'webkit2gtk' 'libgccjit' 'gcc' )
 makedepends=('git' 'xorgproto')
 provides=('emacs' 'emacs-seq')
 conflicts=('emacs' 'emacs26-git' 'emacs-27-git' 'emacs-seq')
 replaces=('emacs26-git' 'emacs27-git' 'emacs-seq')
-source=("emacs-git::git://git.savannah.gnu.org/emacs.git")
-#source=("emacs-git::git://github.com/emacs-mirror/emacs.git")
+#source=("emacs-git::git://git.savannah.gnu.org/emacs.git")
+#source=("emacs-git::git://github.com/emacs-mirror/emacs.git#branch=feature/nativecomp")
+source=("emacs-git::git://github.com/flatwhatson/emacs.git#branch=pgtk-nativecomp")
 options=(!strip)
 md5sums=('SKIP')
 
-
-CFLAGS+=" -flto -fuse-linker-plugin -O3 -mtune=native -march=native -fomit-frame-pointer"
-CXXFLAGS+=" -flto -fuse-linker-plugin -O3 -mtune=native -march=native -fomit-frame-pointer"
+export CC='gcc'
+export CXX='g++'
+export LD="ld.gold"
+export CFLAGS=" -fuse-ld=gold -flto -fuse-linker-plugin -O3 -mtune=native -march=native -fomit-frame-pointer"
+export CXXFLAGS=" -fuse-ld=gold -flto -fuse-linker-plugin -O3 -mtune=native -march=native -fomit-frame-pointer"
 
 ################################################################################
 pkgver() {
@@ -33,17 +34,8 @@ pkgver() {
 
 prepare() {
   cd "$srcdir/emacs-git"
-  git fetch
-  git checkout -qfB origin/$branch
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
 }
-
-if [[ $CHECK == "YES" ]]; then
-check() {
-  cd "$srcdir/emacs-git"
-  make check
-}
-fi
 
 build() {
   cd "$srcdir/emacs-git"
@@ -54,30 +46,35 @@ build() {
     --libexecdir=/usr/lib
     --localstatedir=/var
     --mandir=/usr/share/man
+    --with-cairo
     --with-gameuser=:games
-    --with-sound=alsa
+    --with-gnutls
+    --with-harfbuzz
+    --with-json
     --with-modules
     --with-nativecomp
-    --with-gnutls
-    --with-cairo
-    --with-json
-    --with-harfbuzz
-    --with-xwidgets
+    --with-pgtk
+    --with-rsvg
+    --with-threads
     --with-x
     --with-x-toolkit=gtk3
-    --with-rsvg
+    --with-xwidgets
     --with-zlib
-    --without-toolkit-scroll-bars
-    --without-xaw3d
     --without-compress-install
+    --without-dbus
     --without-gconf
     --without-gsettings
-    --with-mailutils
+    --without-makeinfo
+    --without-mailutils
+    --without-pop
+    --without-sound
+    --without-toolkit-scroll-bars
+    --without-xaw3d
     --enable-link-time-optimization
   )
 
   ./configure "${_conf[@]}"
-  make NATIVE_FAST_BOOT=1
+  make NATIVE_FULL_AOT=1 -j $(nproc)
 }
 
 package() {

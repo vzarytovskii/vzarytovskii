@@ -2,16 +2,28 @@ import XMonad
 
 import Control.Monad
 
-import Data.Monoid
 import System.Exit
 import Graphics.X11.ExtraTypes.XF86
+
+import XMonad.Actions.SinkAll
+import XMonad.Actions.WindowBringer
+
+
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
+import XMonad.Layout.Accordion  
 import XMonad.Layout.Tabbed
+import XMonad.Layout.TwoPane (TwoPane(..))
+import XMonad.Layout.Grid (Grid(..))
 import XMonad.Layout.NoBorders
 import XMonad.Layout.IndependentScreens
-
+import XMonad.Layout.MultiToggle
+import XMonad.Layout.MultiToggle.Instances
 import XMonad.Util.WorkspaceCompare
+
+import XMonad.Prompt
+import XMonad.Prompt.Window
+import XMonad.Prompt.Layout
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -48,8 +60,11 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
     -- close focused window
     , ((modm .|. shiftMask, xK_x     ), kill)
+    , ((modm, xK_x     ), sinkAll)
 
-     -- Rotate through the available layout algorithms
+    , ((modm, xK_f ), sendMessage $ Toggle FULL)
+    
+      -- Rotate through the available layout algorithms
     , ((modm,               xK_space ), sendMessage NextLayout)
 
     --  Reset the layouts on the current workspace to default
@@ -58,6 +73,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Resize viewed windows to the correct size
     , ((modm,               xK_n     ), refresh)
 
+    , ((modm,               xK_g     ), gotoMenu)
+    
+    , ((modm,               xK_p     ), layoutPrompt def)
+    
     -- Move focus to the next window
     , ((modm,               xK_Tab   ), windows W.focusDown)
 
@@ -70,14 +89,15 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- Move focus to the master window
     , ((modm,               xK_m     ), windows W.focusMaster  )
 
+    
     -- Swap the focused window and the master window
     , ((modm .|. shiftMask,               xK_Return), windows W.swapMaster)
 
     -- Swap the focused window with the next window
-    , ((modm .|. shiftMask, xK_j     ), windows W.swapDown  )
+    , ((modm .|. shiftMask, xK_k     ), windows W.swapDown  )
 
     -- Swap the focused window with the previous window
-    , ((modm .|. shiftMask, xK_k     ), windows W.swapUp    )
+    , ((modm .|. shiftMask, xK_j     ), windows W.swapUp    )
 
     -- Shrink the master area
     , ((modm .|. shiftMask, xK_h     ), sendMessage Shrink)
@@ -139,11 +159,14 @@ myTabConfig = def {
         fontName = "xft:JetBrains Mono:size=7:antialias=true:autohint=true"
 }
 
-myLayout = avoidStruts $
-           noBorders (tabbed shrinkText myTabConfig)
+myLayout = avoidStruts
+           $ noBorders (tabbed shrinkText myTabConfig)
+           ||| Accordion
+	   ||| Grid
+           ||| TwoPane (15/100) (55/100)
+           ||| noBorders Full
            ||| tiled
            ||| Mirror tiled
-           ||| Full
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -188,8 +211,11 @@ myPP = xmobarPP {
      ppLayout           = xmobarColor "#555555" "" . (\l -> case l of
           "Tabbed Simplest" -> "[_]"
           "Tabbed"          -> "[_]"
+          "Accordion"       -> "[A]"
+	  "Grid"            -> "[+]"
+          "TwoPane"         -> "[|]"
           "Full"            -> "[O]"
-          "Tall"            -> "[|]"
+          "Tall"            -> "[T]"
           "Mirror Tall"     -> "[-]"
           l -> l ),
      ppSort             = getSortByTag,
