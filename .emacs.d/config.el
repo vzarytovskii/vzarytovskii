@@ -123,6 +123,7 @@ region-end is used."
 (global-set-key (kbd "M-w") 'copy-region-or-line)
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
 (global-set-key (kbd "<S-return>") 'end-of-line-and-indented-new-line)
+(global-set-key [delete] 'delete-forward-char)
 
 (use-package async
   :init
@@ -148,6 +149,7 @@ region-end is used."
     (add-hook 'lsp-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold))))))
 
 (use-package emacs
+  :bind ("C-k" . kill-whole-line)
   :bind ("C-k" . kill-whole-line)
   :config
 
@@ -1542,8 +1544,8 @@ If ALL is non-nil, `swiper-all' is run."
   :after yasnippet)
 
 (use-package lsp-mode
-  :straight nil
-  :load-path "~/code/elisp/lsp-mode"
+  ;; :straight nil
+  ;; :load-path "~/code/elisp/lsp-mode"
   :hook (lsp-after-open . lsp-enable-imenu)
   :hook (lsp-after-open . lsp-lens-mode)
   :hook (lsp-after-open . lsp-headerline-breadcrumb-mode)
@@ -2046,7 +2048,7 @@ If the error list is visible, hide it.  Otherwise, show it."
 
 (use-package csharp-mode
   :after (:all lsp-mode company flycheck dotnet omnisharp)
-  :hook (csharp-mode . lsp)
+  :hook (csharp-mode . lsp-deferred)
   :hook (csharp-mode . omnisharp-mode)
   :hook (csharp-mode . dotnet-mode)
   :hook (csharp-mode . company-mode)
@@ -2085,7 +2087,7 @@ If the error list is visible, hide it.  Otherwise, show it."
   :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all dotnet lsp-mode projectile)
   :commands fsharp-mode
-  :hook (fsharp-mode . lsp)
+  :hook (fsharp-mode . lsp-deferred)
   :hook (fsharp-mode . dotnet-mode)
   :config
   (setq indent-tabs-mode nil
@@ -2133,8 +2135,8 @@ If the error list is visible, hide it.  Otherwise, show it."
 
 (use-package lsp-haskell
   :after haskell-mode
-  :hook (haskell-mode . lsp)
-  :hook (haskell-literate-mode . lsp)
+  :hook (haskell-mode . lsp-deferred)
+  :hook (haskell-literate-mode . lsp-deferred)
   :config
   (setq lsp-haskell-server-path "haskell-language-server-wrapper"))
 
@@ -2154,7 +2156,7 @@ If the error list is visible, hide it.  Otherwise, show it."
 (use-package sh-mode
   :straight nil
   :after lsp
-  :hook (sh-mode . lsp))
+  :hook (sh-mode . lsp-deferred))
 
 ;; Spelling and stuff
 (use-package bing-dict
