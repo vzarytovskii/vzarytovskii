@@ -5,21 +5,6 @@
 ;;; -*- lexical-binding: t -*-
 
 ;;; Code:
-(menu-bar-mode -1)
-(toggle-scroll-bar -1)
-(tool-bar-mode -1)
-(blink-cursor-mode -1)
-(global-display-line-numbers-mode 1)
-(global-subword-mode t)
-(line-number-mode +1)
-(column-number-mode t)
-(size-indication-mode t)
-
-(customize-set-variable 'scroll-bar-mode nil)
-(customize-set-variable 'horizontal-scroll-bar-mode nil)
-
-(add-to-list 'default-frame-alist
-             '(vertical-scroll-bars . nil))
 
 (defconst *sys/gui*
   (display-graphic-p)
@@ -137,7 +122,6 @@ region-end is used."
 (global-set-key (kbd "C-w") 'backward-kill-word)
 (global-set-key (kbd "M-w") 'copy-region-or-line)
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
-(global-set-key (kbd "C-x x") '+sidebar-toggle)
 (global-set-key (kbd "<S-return>") 'end-of-line-and-indented-new-line)
 
 (use-package emacs
@@ -196,10 +180,12 @@ region-end is used."
                 display-line-numbers-width 3)
 
   (setq split-height-threshold nil)
-  (setq split-width-threshold 0)
-
+  (setq split-width-threshold nil)
+  (setq warning-minimum-level ':error)
+  
   (setq compilation-ask-about-save nil
         compilation-window-height 100
+        inhibit-default-init t
         inhibit-startup-screen t
         inhibit-startup-message t
         inhibit-startup-echo-area-message t
@@ -234,8 +220,7 @@ region-end is used."
 (use-package auto-package-update
   :config
   (setq auto-package-update-delete-old-verions t
-        auto-package-update-interval 5)
-  
+        auto-package-update-interval 5)  
   (auto-package-update-maybe))
 
 (use-package delight)
