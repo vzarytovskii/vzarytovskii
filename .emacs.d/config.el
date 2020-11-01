@@ -124,6 +124,29 @@ region-end is used."
 (global-set-key (kbd "C-x k") 'kill-this-buffer)
 (global-set-key (kbd "<S-return>") 'end-of-line-and-indented-new-line)
 
+(use-package async
+  :init
+  (dired-async-mode 1)
+  (async-bytecomp-package-mode 1)
+  :custom (async-bytecomp-allowed-packages '(all)))
+
+(use-package gcmh
+  :delight
+  :hook (after-init . gcmh-mode)
+  :init
+  (setq gcmh-verbose nil)
+  :config
+  (if (boundp 'after-focus-change-function)
+      (add-function :after after-focus-change-function
+                    (lambda ()
+                      (unless (frame-focus-state)
+                        (gcmh-idle-garbage-collect))))
+    (add-hook 'focus-out-hook 'gcmh-idle-garbage-collect))
+  ;;(with-eval-after-load 'org
+  ;;  (add-hook 'org-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))))
+  (with-eval-after-load 'lsp-mode
+    (add-hook 'lsp-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold))))))
+
 (use-package emacs
   :bind ("C-k" . kill-whole-line)
   :config
@@ -143,27 +166,6 @@ region-end is used."
   (set-face-attribute 'variable-pitch nil :family "JetBrains Mono" :height 105 :weight 'normal)
 
   (add-to-list 'default-frame-alist '(font . "JetBrains Mono 9"))
-  (if nil ;;*sys/gui*
-      (progn
-        (setq initial-frame-alist
-              '(
-                (tool-bar-lines . 0)
-                (font . "JetBrains Mono 9")
-                (width . 140) ; chars
-                (height . 30) ; lines
-                (left . 0)
-                (top . 0)))
-        (setq default-frame-alist
-              '(
-                (tool-bar-lines . 0)
-                (font . "JetBrains Mono 9")
-                (width . 140)
-                (height . 30)
-                (left . 0)
-                (top . 0))))
-    (progn
-      (setq initial-frame-alist '( (tool-bar-lines . 0)))
-      (setq default-frame-alist '( (tool-bar-lines . 0)))))
   (setq-default major-mode 'text-mode
                 cursor-type 'box
                 x-stretch-cursor t
@@ -238,16 +240,6 @@ region-end is used."
                           (agenda . 5)))
   (dashboard-setup-startup-hook))
 
-(use-package solaire-mode
-  :hook (after-init . solaire-global-mode)
-  :hook (after-revert . turn-on-solaire-mode)
-  :hook (minibuffer-setup . solaire-mode-in-minibuffer)
-  :hook (change-major-mode . turn-on-solaire-mode)
-  :hook (ediff-prepare-buffer . solaire-mode)
-  :config
-  (advice-add #'persp-load-state-from-file :after #'solaire-mode-restore-persp-mode-buffers)
-  (setq solaire-mode-auto-swap-bg nil))
-
 (use-package doom-themes
   :config
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
@@ -271,29 +263,6 @@ region-end is used."
         doom-modeline-checker-simple-format nil)
   (set-face-attribute 'mode-line nil :family "JetBrains Mono" :height 100)
   (set-face-attribute 'mode-line-inactive nil :family "JetBrains Mono" :height 100))
-
-(use-package async
-  :init
-  (dired-async-mode 1)
-  (async-bytecomp-package-mode 1)
-  :custom (async-bytecomp-allowed-packages '(all)))
-
-(use-package gcmh
-  :delight
-  :hook (after-init . gcmh-mode)
-  :init
-  (setq gcmh-verbose nil)
-  :config
-  (if (boundp 'after-focus-change-function)
-      (add-function :after after-focus-change-function
-                    (lambda ()
-                      (unless (frame-focus-state)
-                        (gcmh-idle-garbage-collect))))
-    (add-hook 'focus-out-hook 'gcmh-idle-garbage-collect))
-  ;;(with-eval-after-load 'org
-  ;;  (add-hook 'org-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))))
-  (with-eval-after-load 'lsp-mode
-    (add-hook 'lsp-mode-hook (lambda () (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold))))))
 
 (use-package shackle
   :hook (after-init . shackle-mode)
@@ -482,17 +451,11 @@ region-end is used."
          ("<home>" . 'mwim-beginning-of-code-or-line)
          ("<end>" . 'mwim-end-of-code-or-line)))
 
-(use-package smooth-scrolling
-  :custom
-  (smooth-scroll-margin 5)
-  :config
-  (smooth-scrolling-mode 1))
-
 (use-package fast-scroll
   :delight
   :hook (after-init . fast-scroll-mode)
   :config
-  ;; TODO: Disable indent, etc.
+  ;; TODO: Disable highlights, etc.
   (add-hook 'fast-scroll-start-hook (lambda () (flycheck-mode -1)))
   (add-hook 'fast-scroll-end-hook (lambda () (flycheck-mode 1)))
   (fast-scroll-mode 1)
@@ -500,7 +463,7 @@ region-end is used."
 
 (use-package projectile
   :delight
-  :hook (after-init . projectile-global-mode)
+  :hook (after-init . projectile-mode)
   :bind ("C-<tab>" . projectile-next-project-buffer)
   :bind ("C-c C-p" . 'projectile-command-map)
   :config
@@ -530,26 +493,6 @@ region-end is used."
        (lambda (buffer) (+project/projectile-buffer-filter buffer))
        buffers))
     (setq projectile-buffers-filter-function #'+project/projectile-buffer-filter-function)))
-
-(use-package find-file-in-project
-  :commands (find-file-in-project
-             find-file-in-current-directory
-             find-file-in-project-not-ignore)
-  :config
-  (advice-add #'ffip-project-root :around (lambda (orig-fn)
-                                            (or (+project/lsp-project-root)
-                                                (funcall orig-fn))))
-  (add-to-list 'ffip-project-file "pom.xml")
-
-  ;; A simple, fast and user-friendly alternative to 'find'
-  ;; https://github.com/sharkdp/fd
-  (when (executable-find "fd")
-    (setq ffip-use-rust-fd t))
-
-  (defun find-file-in-project-not-ignore ()
-    (interactive)
-    (let ((ffip-rust-fd-respect-ignore-files nil))
-      (find-file-in-project))))
 
 (use-package counsel-projectile
   :after (:all counsel projectile)
@@ -672,7 +615,7 @@ region-end is used."
     (let ((file (ffap-file-at-point)))
       (unless (file-exists-p file)
         (error "File does not exist: %s" file))
-      ((vector )lf file))))
+      (vlf file))))
 
 (use-package dumb-jump
   :commands dumb-jump-result-follow
@@ -826,8 +769,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package transient
   :config
   (setq transient-default-level 5))
-
-(use-package gist)
 
 (use-package imenu-list
   :config
@@ -988,6 +929,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 
 (use-package smex
+  :bind ("M-x" . smex)
   :init
   (smex-initialize))
 
@@ -1117,7 +1059,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                 (lambda (cand) (get-buffer cand)))))
 
 (use-package counsel
-  :bind ("M-x" . 'counsel-M-x)
+  ;; :bind ("M-x" . 'counsel-M-x)
   :bind ("C-x C-f" . 'counsel-find-file)
   :bind ("M-g s" . counsel-imenu)
   :delight
