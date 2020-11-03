@@ -75,7 +75,8 @@
               use-package-always-ensure nil
               use-package-expand-minimally nil
               use-package-enable-imenu-support t
-              use-package-compute-statistics nil)
+              use-package-compute-statistics nil
+	      use-package-hook-name-suffix nil)
 
 (eval-when-compile
   (require 'use-package))

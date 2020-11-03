@@ -21,6 +21,17 @@
       package-quickstart t
       frame-inhibit-implied-resize t)
 
+(when (display-graphic-p)
+  (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
+
+(setq locale-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+(set-language-environment "UTF-8")
+(set-default-coding-systems 'utf-8-unix)
+(set-terminal-coding-system 'utf-8-unix)
+(set-keyboard-coding-system 'utf-8-unix)
+(set-selection-coding-system 'utf-8-unix)
+
 (blink-cursor-mode -1)
 (column-number-mode t)
 (global-display-line-numbers-mode 1)
@@ -35,6 +46,8 @@
 (add-to-list 'default-frame-alist
              '(vertical-scroll-bars . nil))
 
+(fset 'yes-or-no-p 'y-or-n-p)
+
 ;; GC, JIT and native compilation setup.
 (defvar file-name-handler-alist-old file-name-handler-alist)
 (setq gc-cons-threshold most-positive-fixnum
@@ -48,7 +61,13 @@
       jit-lock-defer-time 0
       jit-lock-stealth-time 0.2
       jit-lock-stealth-verbose nil
-      comp-deferred-compilation t)
+      fast-but-imprecise-scrolling t
+      comp-speed 3
+      comp-deferred-compilation t
+      comp-async-jobs-number 12
+      comp-native-driver-options
+      '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
+      comp-always-compile t)
 
 (add-hook 'emacs-startup-hook
           `(lambda ()
@@ -65,7 +84,6 @@
 
 (add-hook 'minibuffer-setup-hook #'defer-garbage-collection-h)
 (add-hook 'minibuffer-exit-hook #'restore-garbage-collection-h)
-
 
 (provide 'early-init)
 ;;; early-init.el ends here

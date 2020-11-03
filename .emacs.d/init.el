@@ -14,14 +14,18 @@
   (message "Early init: Emacs Version < 27.0")
   (load (expand-file-name "early-init.el" user-emacs-directory)))
 
+(defun load-user (path)
+  (message "Loading %s" path) 
+  (load (expand-file-name path user-emacs-directory)))
+
 ;; Load packaging related config
-(load (expand-file-name "packaging.el" user-emacs-directory))
+(load-user "packaging.el")
 
 (setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.cabal/bin:~/.ghcup/bin"))
 (setq exec-path (append exec-path '("~/.dotnet" "~/.cabal/bin" "~/.ghcup/bin")))
 
 ;; Load actual config
-(load (expand-file-name "config.el" user-emacs-directory))
+(load-user "config.el")
 
 (provide 'init)
 ;;; init.el ends here
