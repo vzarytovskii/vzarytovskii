@@ -37,16 +37,19 @@
 
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
-  :bind (("C-z"     . nil)
-         ("C-x C-z" . nil)
-         ("C-h h"   . nil)
-         ([delete]  . 'delete-forward-char)
-         ("C-x C-2" . 'vsplit-last-buffer)
-         ("C-x 2"   . 'vsplit-current-buffer)
-         ("C-x C-3" . 'hsplit-last-buffer)
-         ("C-x 3"   . 'hsplit-current-buffer)
-         ("C-x |"   . 'toggle-window-split)
-         ("M-w"     . 'copy-region-or-line))
+  :bind (("C-z"             . nil)
+         ("C-x C-z"         . nil)
+         ("C-h h"           . nil)
+         ("<C-backspace>"   . nil)
+         ([delete]          . 'delete-forward-char)
+         ("C-x C-2"         . 'vsplit-last-buffer)
+         ("C-x 2"           . 'vsplit-current-buffer)
+         ("C-x C-3"         . 'hsplit-last-buffer)
+         ("C-x 3"           . 'hsplit-current-buffer)
+         ("C-x |"           . 'toggle-window-split)
+         ("C-w"             . 'backward-kill-word)
+         ("M-w"             . 'copy-region-or-line))
+  :hook (after-init-hook . window-divider-mode)
   :preface
   (defun flash-mode-line ()
     (invert-face 'mode-line)
@@ -136,6 +139,10 @@
         tab-width 4
         frame-resize-pixelwise t
 
+        window-divider-default-right-width 1
+        window-divider-default-bottom-width 1
+        window-divider-default-places 'right-only
+        
         show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
@@ -149,6 +156,15 @@
         show-paren-style 'parenthesis
         frame-resize-pixelwise t))
 
+(use-package fringe
+  :straight nil
+  :config
+  (fringe-mode nil)
+  (setq-default fringes-outside-margins nil
+                indicate-buffer-boundaries nil
+                indicate-empty-lines nil
+                overflow-newline-into-fringe t))
+
 (use-package exec-path-from-shell
   :custom
   (exec-path-from-shell-check-startup-files nil)
@@ -160,6 +176,28 @@
 (use-package hydra)
 
 ;; Editing and navigation (including windows navigation, dwim/mwin, mc, etc):
+
+(use-package recentf
+  :ensure nil
+  :hook (after-init-hook . recentf-mode)
+  :custom
+  (recentf-auto-cleanup "05:00am")
+  (recentf-max-saved-items 200)
+  (recentf-exclude '((expand-file-name package-user-dir)
+                     ".cache"
+                     ".cask"
+                     ".elfeed"
+                     "bookmarks"
+                     "cache"
+                     "ido.*"
+                     "persp-confs"
+                     "recentf"
+                     "undo-tree-hist"
+                     "url"
+                     "COMMIT_EDITMSG\\'"))
+  :config
+  (save-place-mode 1)
+  (setq-default history-length 500))
 
 (use-package subword
   :straight nil

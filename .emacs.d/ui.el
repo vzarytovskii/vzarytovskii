@@ -6,8 +6,7 @@
 
 ;;; Code:
 
-(use-package modus-vivendi-theme
-  :after emacs
+(use-package doom-themes
   :preface
   (defvar --default-font
     (font-spec :family "JetBrains Mono" :height 95 :weight 'normal))
@@ -17,28 +16,25 @@
     (font-spec :family "JetBrains Mono" :height 100 :weight 'normal))
   :config
   (setq-default display-line-numbers-width 3)
-  
+
   (setq default-frame-alist
-	`((left-fringe . 15)
-	  (right-fringe . 15)
-	  (internal-border-width . 0)
-	  (font . ,(font-xlfd-name --default-font))))
+       `((left-fringe . 15)
+         (right-fringe . 15)
+         (internal-border-width . 0)
+         (font . ,(font-xlfd-name --default-font))))
 
   (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
-  
-  (load-theme 'modus-vivendi t)
-  :init
-  (setq modus-vivendi-theme-distinct-org-blocks t
-	modus-vivendi-theme-rainbow-headings t
-	modus-vivendi-theme-slanted-constructs t
-	modus-vivendi-theme-bold-constructs t
-	modus-vivendi-theme-scale-headings t
-	modus-vivendi-theme-scale-1 1.05
-	modus-vivendi-theme-scale-2 1.1
-	modus-vivendi-theme-scale-3 1.15
-	modus-vivendi-theme-scale-4 1.2))
+
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-tomorrow-night t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-neotree-config)
+  (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
+  (doom-themes-treemacs-config)
+  (doom-themes-org-config))
 
 (use-package all-the-icons :if (display-graphic-p))
 
@@ -81,6 +77,10 @@
   (highlight-symbol-idle-delay 0)
   (highlight-symbol-on-navigation-p t))
 
+(use-package hl-todo
+  :ensure
+  :hook (prog-mode-hook . hl-todo-mode))
+
 (use-package whitespace
   :delight
   :hook (prog-mode-hook . whitespace-mode)
@@ -111,6 +111,13 @@
   (setq whitespace-cleanup-mode-only-if-initially-clean nil)
   :hook ((after-init . global-whitespace-cleanup-mode))
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
+
+(use-package paren
+  :config
+  (setq show-paren-style 'parenthesis)
+  (setq show-paren-when-point-in-periphery nil)
+  (setq show-paren-when-point-inside-paren nil)
+  :hook (after-init-hook . show-paren-mode))
 
 (provide 'ui)
 ;;; ui.el ends here
