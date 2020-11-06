@@ -38,6 +38,10 @@ If ALL is non-nil, `swiper-all' is run."
               (swiper (buffer-substring-no-properties
                        (region-beginning) (region-end))))
           (swiper))))
+  (defun counsel-goto-local-home ()
+    "Go to the $HOME of the local machine."
+    (interactive)
+    (ivy--cd "~/"))
   :init
   (use-package amx :defer t)
   (use-package counsel :delight :config (counsel-mode 1))
@@ -54,22 +58,33 @@ If ALL is non-nil, `swiper-all' is run."
                ("M-RET" . ivy-immediate-done))
          (:map counsel-find-file-map
                ("C-~" . counsel-goto-local-home)))
-  :custom
-  (ivy-use-virtual-buffers t)
+  :custom  
   (ivy-height 10)
   (ivy-on-del-error-function nil)
   (ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-create)
-  (ivy-count-format "【%d/%d】")
-  (ivy-wrap t)
   :config
-  (defun counsel-goto-local-home ()
-      "Go to the $HOME of the local machine."
-      (interactive)
-    (ivy--cd "~/")))
+  (setq ivy-use-virtual-buffers t
+        ivy-wrap t
+        ivy-count-format "(%d/%d) "
+        enable-recursive-minibuffers t)
+  (push '(completion-at-point . ivy--regex-fuzzy) ivy-re-builders-alist) ;; This doesn't seem to work...
+  (push '(swiper . ivy--regex-ignore-order) ivy-re-builders-alist)
+  (push '(counsel-M-x . ivy--regex-ignore-order) ivy-re-builders-alist)
+
+  ;; Set minibuffer height for different commands
+  (setf (alist-get 'counsel-projectile-ag ivy-height-alist) 15)
+  (setf (alist-get 'counsel-projectile-rg ivy-height-alist) 15)
+  (setf (alist-get 'swiper ivy-height-alist) 15)
+  (setf (alist-get 'counsel-switch-buffer ivy-height-alist) 7))
 
 (use-package ivy-prescient
   :after (:all ivy prescient)
   :config (ivy-prescient-mode +1))
+
+(use-package ivy-rich
+  :after ivy
+  :init
+  (ivy-rich-mode 1))
 
 (provide 'tools)
 ;;; tools.el ends here
