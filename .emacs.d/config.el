@@ -18,5 +18,8 @@
 ;; UI config
 (load-user "ui.el")
 
+;; Git config
+(load-user "git.el")
+
 (provide 'config)
 ;;; config.el ends here

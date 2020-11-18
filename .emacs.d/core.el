@@ -25,6 +25,20 @@
         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
   (setq custom-file (no-littering-expand-etc-file-name "custom.el")))
 
+(use-package saveplace
+  :config
+  (setq save-place-file (no-littering-expand-etc-file-name "saveplace"))
+  (setq save-place-forget-unreadable-files t)
+  (save-place-mode 1))
+
+(use-package savehist
+  :config
+  (setq savehist-file (no-littering-expand-etc-file-name "savehist"))
+  (setq history-length 1000)
+  (setq history-delete-duplicates t)
+  (setq savehist-save-minibuffer-history t)
+  :hook (after-init-hook . savehist-mode))
+
 (use-package delight
   :after use-package)
 
@@ -231,6 +245,9 @@
 (use-package delsel
   :hook (after-init-hook . delete-selection-mode))
 
+(use-package comment-dwim-2
+  :bind (("M-;" . 'comment-dwim-2)))
+
 (use-package mwim
   :bind (("C-a" . 'mwim-beginning-of-code-or-line)
          ("C-e" . 'mwim-end-of-code-or-line)
@@ -295,6 +312,11 @@
       (setq undo-tree-visualizer-diff t))
     (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default)))
 
+(use-package smartparens)
+
+(use-package editorconfig
+  :config
+  (editorconfig-mode 1))
 
 (use-package text-mode
   :straight nil

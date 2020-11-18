@@ -38,13 +38,20 @@
 
 (use-package all-the-icons :if (display-graphic-p))
 
+(use-package display-line-numbers
+  :ensure nil
+  :hook (prog-mode . display-line-numbers-mode))
+
+(use-package mixed-pitch
+  :diminish)
+
 (use-package beacon
   :config
   (beacon-mode 1)
   (setq beacon-lighter ""
-        beacon-blink-delay 0.1
-        bracon-blink-duration 0.50
-        beacon-size 35
+        beacon-blink-delay 0.5
+        bracon-blink-duration 1.00
+        beacon-size 75
         beacon-blink-when-point-moves-vertically nil
         beacon-blink-when-point-moves-horizontally nil
         beacon-blink-when-window-scrolls nil
@@ -68,7 +75,6 @@
         highlight-indent-guides-responsive 'top))
 
 (use-package highlight-symbol
-  :delight
   :delight highlight-symbol-mode
   :hook (highlight-symbol-mode-hook . highlight-symbol-nav-mode)
   :hook (prog-mode-hook . highlight-symbol-mode)
@@ -109,15 +115,59 @@
   :delight
   :init
   (setq whitespace-cleanup-mode-only-if-initially-clean nil)
-  :hook ((after-init . global-whitespace-cleanup-mode))
+  :hook (after-init-hook . global-whitespace-cleanup-mode)
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
 
 (use-package paren
   :config
-  (setq show-paren-style 'parenthesis)
-  (setq show-paren-when-point-in-periphery nil)
-  (setq show-paren-when-point-inside-paren nil)
+  (setq show-paren-style 'parenthesis
+        show-paren-when-point-in-periphery t
+        show-paren-when-point-inside-paren t)
+  ;; Display matching line for off-screen paren.
+  (defun display-line-overlay (pos str &optional face)
+    "Display line at POS as STR with FACE.
+FACE defaults to inheriting from default and highlight."
+    (let ((ol (save-excursion
+                (goto-char pos)
+                (make-overlay (line-beginning-position)
+                              (line-end-position)))))
+      (overlay-put ol 'display str)
+      (overlay-put ol 'face
+                   (or face '(:inherit highlight))) ol))
+
+  (defvar-local show-paren--off-screen-overlay nil)
+  (defun show-paren-off-screen (&rest _args)
+    "Display matching line for off-screen paren."
+    (when (overlayp show-paren--off-screen-overlay)
+      (delete-overlay show-paren--off-screen-overlay))
+    ;; Check if it's appropriate to show match info,
+    (when (and (overlay-buffer show-paren--overlay)
+               (not (or cursor-in-echo-area
+                        executing-kbd-macro
+                        noninteractive
+                        (minibufferp)
+                        this-command))
+               (and (not (bobp))
+                    (memq (char-syntax (char-before)) '(?\) ?\$)))
+               (= 1 (logand 1 (- (point)
+                                 (save-excursion
+                                   (forward-char -1)
+                                   (skip-syntax-backward "/\\")
+                                   (point))))))
+      ;; Rebind `minibuffer-message' called by `blink-matching-open'
+      ;; to handle the overlay display.
+      (cl-letf (((symbol-function #'minibuffer-message)
+                 (lambda (msg &rest args)
+                   (let ((msg (apply #'format-message msg args)))
+                     (setq show-paren--off-screen-overlay
+                           (display-line-overlay
+                            (window-start) msg ))))))
+        (blink-matching-open))))
+  (advice-add #'show-paren-function :after #'show-paren-off-screen)
   :hook (after-init-hook . show-paren-mode))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode-hook . rainbow-delimiters-mode))
 
 (provide 'ui)
 ;;; ui.el ends here
