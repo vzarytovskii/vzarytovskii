@@ -96,6 +96,10 @@
 
 (use-package gitignore-mode)
 
+(use-package diff-hl
+  :config
+  (global-diff-hl-mode))
+
 (use-package smerge-mode
   :delight
   :preface

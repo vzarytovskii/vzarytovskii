@@ -21,5 +21,8 @@
 ;; Git config
 (load-user "git.el")
 
+;; Programming confg
+(load-user "programming.el")
+
 (provide 'config)
 ;;; config.el ends here

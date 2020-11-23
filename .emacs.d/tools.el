@@ -48,8 +48,9 @@ If ALL is non-nil, `swiper-all' is run."
   (use-package swiper :defer t)
   (ivy-mode 1)
   :bind (("C-s" . my/swiper)
-         ("C-x b" . counsel-buffer-or-recentf)
+         ("C-x b" . counsel-switch-buffer)
          ("C-x C-b" . counsel-ibuffer)
+         ("C-x f" . counsel-recentf)
          ("C-x C-f" . counsel-find-file)
          (:map swiper-map
                ("M-a" . 'swiper-avy))

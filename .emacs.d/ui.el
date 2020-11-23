@@ -83,9 +83,25 @@
   (highlight-symbol-idle-delay 0)
   (highlight-symbol-on-navigation-p t))
 
+(use-package region-occurrences-highlighter
+  :bind (:map region-occurrences-highlighter-nav-mode-map
+              ("M-n" . 'region-occurrences-highlighter-next)
+              ("M-p" . 'region-occurrences-highlighter-prev))
+  :hook (prog-mode-hook . region-occurrences-highlighter-mode)
+  :hook (org-mode-hook . region-occurrences-highlighter-mode)
+  :hook (text-mode-hook . region-occurrences-highlighter-mode))
+
+(use-package highlight-parentheses
+  :delight
+  :hook (prog-mode-hook . highlight-parentheses-mode))
+
 (use-package hl-todo
   :ensure
   :hook (prog-mode-hook . hl-todo-mode))
+
+(use-package digit-groups
+  :config
+  (digit-groups-global-mode t))
 
 (use-package whitespace
   :delight
@@ -108,15 +124,18 @@
                        tab space-after-tab
                        newline-mark))
   (setq whitespace-display-mappings
-        '(
-          (space-mark 32 [183] [46]))))
+        '((space-mark 32 [183] [46])
+          (tab-mark 9 [9655 9] [92 9])
+          (newline-mark 10 [36 10]))))
 
 (use-package whitespace-cleanup-mode
   :delight
-  :init
-  (setq whitespace-cleanup-mode-only-if-initially-clean nil)
-  :hook (after-init-hook . global-whitespace-cleanup-mode)
+  :hook (prog-mode-hook . global-whitespace-cleanup-mode)
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
+
+(use-package unicode-troll-stopper
+  :delight
+  :hook (prog-mode-hook . unicode-troll-stopper-mode))
 
 (use-package paren
   :config

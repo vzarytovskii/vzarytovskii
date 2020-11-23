@@ -189,6 +189,8 @@
 
 (use-package hydra)
 
+(use-package popwin)
+
 ;; Editing and navigation (including windows navigation, dwim/mwin, mc, etc):
 
 (use-package recentf
@@ -312,11 +314,44 @@
       (setq undo-tree-visualizer-diff t))
     (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default)))
 
-(use-package smartparens)
+;; (use-package point-history
+;;   :straight nil
+;;   :load-path "~/code/elisp/point-history"
+;;   :bind (("M-g s" . 'point-history-show))
+;;   :config
+;;   (setq point-history-ignore-buffer "^ \\*Minibuf\\|^ \\*point-history-show*\\|\\*scratch\\|\\*"
+;;         point-history-ignore-major-mode '(emacs-lisp-mode ruby-mode))
+;;   (point-history-mode t))
 
-(use-package editorconfig
+(use-package point-stack
+  :straight (:host github :repo "dgutov/point-stack" :branch "master")
+  :bind (("M-[" . 'point-stack-pop)
+         ("M-]" . 'point-stack-forward-stack-pop))
   :config
-  (editorconfig-mode 1))
+  (setq point-stack-advised-functions
+        '(isearch-mode
+          find-function-do-it
+          find-library
+          imenu
+          my/swiper
+          counsel-switch-buffer
+          counsel-ibuffer
+          counsel-recentf
+          counsel-find-file
+          ;; switch-to-buffer
+          ;; change-buffer
+          ;; previous-buffer
+          ;; next-buffer
+          beginning-of-buffer
+          end-of-buffer
+          xref-find-definitions
+          magit-diff-visit-file))
+  (point-stack-setup-advices))
+
+(use-package smartparens
+  :delight
+  :config
+  (smartparens-global-mode 1))
 
 (use-package text-mode
   :straight nil
