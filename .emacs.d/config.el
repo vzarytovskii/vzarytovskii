@@ -6,8 +6,8 @@
 
 ;;; Code:
 
-;; Helper functions
-(load-user "functions.el")
+;; Common functions and libs
+(load-user "common.el")
 
 ;; Core packages
 (load-user "core.el")
