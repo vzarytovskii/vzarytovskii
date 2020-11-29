@@ -9,7 +9,7 @@
 (use-package auto-package-update
   :if (not (daemonp))
   :custom
-  (auto-package-update-interval 1) ;; in days
+  (auto-package-update-interval 7) ;; in days
   (auto-package-update-prompt-before-update t)
   (auto-package-update-delete-old-versions t)
   (auto-package-update-hide-results t)
@@ -64,10 +64,12 @@
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line))
   :hook (after-init-hook . window-divider-mode)
+  :delight lisp-interaction-mode
   :preface
   (defun flash-mode-line ()
     (invert-face 'mode-line)
     (run-with-timer 0.1 nil #'invert-face 'mode-line))
+  
   (defun vsplit-last-buffer ()
     "Split the window vertically and display the previous buffer."
     (interactive)
@@ -267,6 +269,68 @@
   (crux-with-region-or-buffer untabify)
   (crux-with-region-or-point-to-eol kill-ring-save)
   (defalias 'rename-file-and-buffer #'crux-rename-file-and-buffer))
+
+(use-package window
+  :straight nil
+  :init
+  (setq window-combination-resize t
+        even-window-sizes 'height-only
+        window-sides-slots '(0 1 1 1)
+        window-sides-vertical nil
+        switch-to-buffer-in-dedicated-window 'pop
+        display-buffer-alist
+        '(;; top side window
+          ("\\*\\(Flymake\\|Package-Lint\\|vc-git :\\).*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-height . 0.16)
+           (side . top)
+           (slot . 0)
+           (window-parameters . ((no-other-window . t))))
+          ("\\*Messages.*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-height . 0.16)
+           (side . top)
+           (slot . 1)
+           (window-parameters . ((no-other-window . t))))
+          ("\\*\\(Backtrace\\|Warnings\\|Compile-Log\\)\\*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-height . 0.16)
+           (side . top)
+           (slot . 2)
+           (window-parameters . ((no-other-window . t))))
+          ;; bottom side window
+          ("\\*\\(Output\\|Register Preview\\).*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.16)       ; See the :hook
+           (side . bottom)
+           (slot . -1)
+           (window-parameters . ((no-other-window . t))))
+           ;; left side window
+          ("\\*Help.*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.20)       ; See the :hook
+           (side . left)
+           (slot . 0)
+           (window-parameters . ((no-other-window . t))))
+          ;; right side window
+          ("\\*Faces\\*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.25)
+           (side . right)
+           (slot . 0)
+           (window-parameters
+            . ((no-other-window . t)
+               (mode-line-format
+                . (" "
+                   mode-line-buffer-identification)))))
+          ("\\*Custom.*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.25)
+           (side . right)
+           (slot . 1))
+          ;; bottom buffer (NOT side window)
+          ("\\*\\vc-\\(incoming\\|outgoing\\).*"
+           (display-buffer-at-bottom)))))
 
 (use-package ace-window
   :bind (("C-x o" . 'ace-window))

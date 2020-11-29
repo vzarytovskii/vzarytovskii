@@ -47,9 +47,9 @@ If ALL is non-nil, `swiper-all' is run."
   (use-package counsel :delight :config (counsel-mode 1))
   (use-package swiper :defer t)
   (ivy-mode 1)
-  :bind (("C-s" . my/swiper)
+  :bind (("M-x" . counsel-M-x)
+         ("C-s" . my/swiper)
          ("C-x b" . counsel-switch-buffer)
-         ("C-x C-b" . counsel-ibuffer)
          ("C-x f" . counsel-recentf)
          ("C-x C-f" . counsel-find-file)
          (:map swiper-map
@@ -85,7 +85,13 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package ivy-rich
   :after ivy
   :init
-  (ivy-rich-mode 1))
+  (ivy-rich-mode 1)
+  :config
+  (setq ivy-rich-display-transformers-list
+        '(counsel-M-x
+          (:columns
+           ((counsel-M-x-transformer (:width 40))
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face)))))))
 
 (provide 'tools)
 ;;; tools.el ends here
