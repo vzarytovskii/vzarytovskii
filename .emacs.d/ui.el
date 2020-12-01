@@ -182,6 +182,8 @@ FACE defaults to inheriting from default and highlight."
                            (display-line-overlay
                             (window-start) msg ))))))
         (blink-matching-open))))
+  
+  ;; TODO: Use ob to show off-screen parens
   (advice-add #'show-paren-function :after #'show-paren-off-screen)
   :hook (after-init-hook . show-paren-mode))
 

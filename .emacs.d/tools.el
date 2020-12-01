@@ -50,6 +50,7 @@ If ALL is non-nil, `swiper-all' is run."
   :bind (("M-x" . counsel-M-x)
          ("C-s" . my/swiper)
          ("C-x b" . counsel-switch-buffer)
+         ("C-x C-b" . counsel-switch-buffer)
          ("C-x f" . counsel-recentf)
          ("C-x C-f" . counsel-find-file)
          (:map swiper-map
@@ -59,7 +60,7 @@ If ALL is non-nil, `swiper-all' is run."
                ("M-RET" . ivy-immediate-done))
          (:map counsel-find-file-map
                ("C-~" . counsel-goto-local-home)))
-  :custom  
+  :custom
   (ivy-height 10)
   (ivy-on-del-error-function nil)
   (ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-create)

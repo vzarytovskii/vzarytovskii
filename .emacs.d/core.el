@@ -145,7 +145,7 @@
         scroll-margin 10
         scroll-step 1
         next-line-add-newlines nil
-        scroll-conservatively 10000
+        scroll-conservatively 101
         scroll-preserve-screen-position 1
         
         byte-compile-warnings '(cl-functions)
@@ -171,6 +171,19 @@
         truncate-lines t
         show-paren-style 'parenthesis
         frame-resize-pixelwise t))
+
+(use-package fast-scroll
+  :delight
+  ;; TODO: Turn off all highlighter modes, restore them afterwards (turn off font-lock-mode?).
+  :hook (fast-scroll-start-hook . (lambda ()
+                                    (flycheck-mode -1)
+                                    (highlight-indent-guides-mode -1)))
+  :hook (fast-scroll-end-hook . (lambda ()
+                                  (flycheck-mode 1)
+                                  (highlight-indent-guides-mode 1)))
+  :config
+  (fast-scroll-config)
+  (fast-scroll-mode 1))
 
 (use-package fringe
   :straight nil
