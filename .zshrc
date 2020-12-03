@@ -71,3 +71,6 @@ emv() {
 
 if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
 [ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"
+
+# opam configuration
+test -r /home/u/.opam/opam-init/init.zsh && . /home/u/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
