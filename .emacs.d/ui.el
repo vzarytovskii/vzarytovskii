@@ -6,7 +6,32 @@
 
 ;;; Code:
 
+(use-package nimbus-theme
+    :preface
+  (defvar --default-font
+    (font-spec :family "JetBrains Mono" :height 95 :weight 'normal))
+  (defvar --fixed-pitch-font
+    (font-spec :family "JetBrains Mono" :height 100 :weight 'semi-bold))
+  (defvar --variable-pitch-font
+    (font-spec :family "JetBrains Mono" :height 100 :weight 'normal))
+  :config
+  (setq-default display-line-numbers-width 3)
+
+  (setq default-frame-alist
+       `((left-fringe . 15)
+         (right-fringe . 15)
+         (internal-border-width . 0)
+         (font . ,(font-xlfd-name --default-font))))
+
+  (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
+  (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
+  (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
+
+  (load-theme 'nimbus t))
+
+
 (use-package doom-themes
+  :disabled t
   :preface
   (defvar --default-font
     (font-spec :family "JetBrains Mono" :height 95 :weight 'normal))
@@ -27,13 +52,8 @@
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-tomorrow-night t)
+  (load-theme 'doom-dark+ t)
   (doom-themes-visual-bell-config)
-  (doom-themes-neotree-config)
-  (setq doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
-  (doom-themes-treemacs-config)
   (doom-themes-org-config))
 
 (use-package all-the-icons :if (display-graphic-p))
@@ -106,18 +126,15 @@
 (use-package whitespace
   :delight
   :hook (prog-mode-hook . whitespace-mode)
-  :init
-  (defface my-whitespace-face
-    '((((class color) (background dark))
-       :background nil :foreground "gray24")
-      (((class color) (background light))
-       :background nil :foreground "lightgray")
-      (t :inverse-video t))
-    "Face used to visualize SPACE."
-    :group 'whitespace)
-  
-  (setq whitespace-space 'my-whitespace-face)
-  
+  :config
+
+  (set-face-background 'whitespace-space nil)
+  (set-face-foreground 'whitespace-space "grey24")
+
+  (set-face-background 'whitespace-newline nil)
+  (set-face-foreground 'whitespace-newline "grey24")
+
+
   (setq-default whitespace-style
                 '(face spaces space-mark tabs newline
                        trailing-space-before
@@ -130,7 +147,8 @@
 
 (use-package whitespace-cleanup-mode
   :delight
-  :hook (prog-mode-hook . global-whitespace-cleanup-mode)
+  :hook (before-save-hook . delete-trailing-whitespace)
+  :hook (prog-mode-hook . whitespace-cleanup-mode)
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
 
 (use-package unicode-troll-stopper
@@ -182,7 +200,7 @@ FACE defaults to inheriting from default and highlight."
                            (display-line-overlay
                             (window-start) msg ))))))
         (blink-matching-open))))
-  
+
   ;; TODO: Use ob to show off-screen parens
   (advice-add #'show-paren-function :after #'show-paren-off-screen)
   :hook (after-init-hook . show-paren-mode))

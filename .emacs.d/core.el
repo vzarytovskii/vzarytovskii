@@ -177,10 +177,12 @@
   ;; TODO: Turn off all highlighter modes, restore them afterwards (turn off font-lock-mode?).
   :hook (fast-scroll-start-hook . (lambda ()
                                     (flycheck-mode -1)
-                                    (highlight-indent-guides-mode -1)))
+                                    (highlight-indent-guides-mode -1)
+                                    (highlight-symbol-mode -1)))
   :hook (fast-scroll-end-hook . (lambda ()
                                   (flycheck-mode 1)
-                                  (highlight-indent-guides-mode 1)))
+                                  (highlight-indent-guides-mode 1)
+                                  (highlight-symbol-mode 1)))
   :config
   (fast-scroll-config)
   (fast-scroll-mode 1))

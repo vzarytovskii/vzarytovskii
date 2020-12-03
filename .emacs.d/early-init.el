@@ -58,7 +58,7 @@
       read-process-output-max (* 1024 1024 3)
       message-log-max 16384
       idle-update-delay 2
-      jit-lock-defer-time 0
+      jit-lock-defer-time 0.05
       jit-lock-stealth-time 0.2
       jit-lock-stealth-verbose nil
       fast-but-imprecise-scrolling t

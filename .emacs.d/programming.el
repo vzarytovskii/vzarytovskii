@@ -17,6 +17,7 @@
   (editorconfig-mode 1))
 
 (use-package origami
+  :straight (:host github :repo "jcs-elpa/origami.el" :branch "master")
   :hook (prog-mode-hook . origami-mode)
   :preface
   (defun my/origami-elisp-parser (create)
