@@ -6,32 +6,10 @@
 
 ;;; Code:
 
-(use-package nimbus-theme
-    :preface
-  (defvar --default-font
-    (font-spec :family "JetBrains Mono" :height 95 :weight 'normal))
-  (defvar --fixed-pitch-font
-    (font-spec :family "JetBrains Mono" :height 100 :weight 'semi-bold))
-  (defvar --variable-pitch-font
-    (font-spec :family "JetBrains Mono" :height 100 :weight 'normal))
-  :config
-  (setq-default display-line-numbers-width 3)
+(use-package all-the-icons)
 
-  (setq default-frame-alist
-       `((left-fringe . 15)
-         (right-fringe . 15)
-         (internal-border-width . 0)
-         (font . ,(font-xlfd-name --default-font))))
-
-  (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
-  (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
-  (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
-
-  (load-theme 'nimbus t))
-
-
-(use-package doom-themes
-  :disabled t
+(use-package kaolin-themes
+  :after all-the-icons
   :preface
   (defvar --default-font
     (font-spec :family "JetBrains Mono" :height 95 :weight 'normal))
@@ -43,20 +21,19 @@
   (setq-default display-line-numbers-width 3)
 
   (setq default-frame-alist
-       `((left-fringe . 15)
-         (right-fringe . 15)
-         (internal-border-width . 0)
-         (font . ,(font-xlfd-name --default-font))))
+        `((left-fringe . 15)
+          (right-fringe . 15)
+          (internal-border-width . 0)
+          (font . ,(font-xlfd-name --default-font))))
 
   (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (load-theme 'doom-dark+ t)
-  (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
+  (add-to-list 'default-frame-alist '(font . ,(font-xlfd-name --default-font)))
 
-(use-package all-the-icons :if (display-graphic-p))
+  (load-theme 'kaolin-valley-dark t)
+  (kaolin-treemacs-theme))
 
 (use-package display-line-numbers
   :ensure nil
