@@ -48,8 +48,10 @@
               straight-cache-autoloads t
               straight-vc-git-default-branch "master"
               straight-vc-git-default-remote-name "origin"
+              straight-vc-git-default-clone-depth 1
               straight-fix-flycheck t)
 
+;;; package manager bootstrap
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -61,7 +63,16 @@
          'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+  ;; catch emacs updates that have native compiled leftovers
+  ;; Credits: https://github.com/raxod502/straight.el/643/issues
+  (unless (catch 'emacs-version-changed
+            (load bootstrap-file nil 'nomessage))
+    (when (boundp 'comp-eln-load-path)
+      ;; remove leftovers, with confirmation just to be safe
+      (when (yes-or-no-p (format "Delete '%s'?" (car comp-eln-load-path)))
+        (delete-directory (expand-file-name (car comp-eln-load-path)) t))
+      ;; and try again
+      (load bootstrap-file nil 'nomessage))))
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
