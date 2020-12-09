@@ -62,6 +62,7 @@ build() {
     --with-zlib
     --without-compress-install
     --without-dbus
+    --without-dconf
     --without-gconf
     --without-gsettings
     --without-makeinfo
