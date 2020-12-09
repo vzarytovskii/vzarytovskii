@@ -8,7 +8,7 @@
 
 (use-package all-the-icons)
 
-(use-package kaolin-themes
+(use-package doom-themes
   :after all-the-icons
   :preface
   (defvar --default-font
@@ -30,11 +30,13 @@
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (load-theme 'kaolin-valley-dark t)
-  (kaolin-treemacs-theme))
+  (load-theme 'doom-Iosvkem t))
 
 (use-package smart-mode-line
   :config
+  (setq sml/no-confirm-load-theme t
+        sml/shorten-directory t
+        sml/shorten-modes t)
   (sml/setup))
 
 (use-package mini-modeline
@@ -66,6 +68,7 @@
         beacon-blink-when-window-changes t))
 
 (use-package goggles
+  :delight
   :straight (:host github :repo "minad/goggles" :branch "master")
   :config
   (goggles-mode)

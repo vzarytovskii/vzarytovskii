@@ -43,6 +43,7 @@
   :bind ("C-." . imenu-anywhere))
 
 (use-package smart-jump
+  ;; TODO: Use quickpeek for smart-jump-keep.
   :config
   (smart-jump-setup-default-registers)
   (smart-jump-register :modes 'csharp-mode
@@ -62,6 +63,7 @@
 ;; Flymake and flymake configs:
 
 (use-package flycheck
+  :delight
   :hook (after-init-hook . global-flycheck-mode)
   :config
   (setq flycheck-highlighting-mode 'sexps))
@@ -316,7 +318,7 @@
 (use-package counsel-projectile
   :after (:all counsel projectile)
   :bind ("C-x C-p" . counsel-projectile)
-  :bind ("C-x f" . counsel-projectile-find-file)
+  ;; :bind ("C-x f" . counsel-projectile-find-file)
   :bind ("C-x s". counsel-projectile-rg))
 
 

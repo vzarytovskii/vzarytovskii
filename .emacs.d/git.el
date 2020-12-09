@@ -82,9 +82,10 @@
   :hook (after-init-hook . global-git-gutter-mode)
   :init (setq git-gutter:visual-line t
               git-gutter:disabled-modes '(asm-mode image-mode)
-              git-gutter:modified-sign "❚"
-              git-gutter:added-sign "✚"
-              git-gutter:deleted-sign "✖")
+              git-gutter:modified-sign "|" ;;"❚"
+              git-gutter:added-sign "+" ;;"✚"
+              git-gutter:deleted-sign "-" ;;"✖"
+              )
 
   :bind (("C-c v =" . git-gutter:popup-hunk)
          ("C-c p" . git-gutter:previous-hunk)
@@ -152,4 +153,3 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (provide 'git)
 ;;; git.el ends here
-

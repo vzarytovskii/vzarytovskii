@@ -142,11 +142,11 @@
         inhibit-startup-echo-area-message t
         initial-scratch-message nil
 
-        scroll-margin 10
+        scroll-margin 0
         scroll-step 1
-        next-line-add-newlines nil
-        scroll-conservatively 101
+        scroll-conservatively 100000
         scroll-preserve-screen-position 1
+        next-line-add-newlines nil
 
         byte-compile-warnings '(cl-functions)
         visible-bell nil
