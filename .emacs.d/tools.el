@@ -94,5 +94,12 @@ If ALL is non-nil, `swiper-all' is run."
            ((counsel-M-x-transformer (:width 40))
             (ivy-rich-counsel-function-docstring (:face font-lock-doc-face)))))))
 
+(use-package ivy-xref
+  :after ivy
+  :init
+  (when (>= emacs-major-version 27)
+    (setq xref-show-definitions-function #'ivy-xref-show-defs))
+  (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+
 (provide 'tools)
 ;;; tools.el ends here

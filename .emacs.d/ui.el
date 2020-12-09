@@ -30,10 +30,19 @@
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (add-to-list 'default-frame-alist '(font . ,(font-xlfd-name --default-font)))
-
   (load-theme 'kaolin-valley-dark t)
   (kaolin-treemacs-theme))
+
+(use-package smart-mode-line
+  :config
+  (sml/setup))
+
+(use-package mini-modeline
+  :delight
+  :straight (:host github :repo "kiennq/emacs-mini-modeline" :branch "master")
+  :after smart-mode-line
+  :config
+  (mini-modeline-mode t))
 
 (use-package display-line-numbers
   :ensure nil
@@ -55,6 +64,12 @@
         beacon-blink-when-buffer-changes nil
         beacon-blink-when-focused nil
         beacon-blink-when-window-changes t))
+
+(use-package goggles
+  :straight (:host github :repo "minad/goggles" :branch "master")
+  :config
+  (goggles-mode)
+  (setq-default goggles-pulse t))
 
 (use-package hl-line
   :hook (after-init-hook . global-hl-line-mode))

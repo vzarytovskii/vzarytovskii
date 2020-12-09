@@ -69,7 +69,7 @@
   (defun flash-mode-line ()
     (invert-face 'mode-line)
     (run-with-timer 0.1 nil #'invert-face 'mode-line))
-  
+
   (defun vsplit-last-buffer ()
     "Split the window vertically and display the previous buffer."
     (interactive)
@@ -95,7 +95,7 @@
     (interactive)
     (split-window-horizontally)
     (other-window 1 nil))
-  
+
   (defun toggle-window-split ()
     (interactive)
     (if (= (count-windows) 2)
@@ -126,7 +126,7 @@
     (if mark-active
         (kill-ring-save beg end)
       (kill-ring-save (line-beginning-position) (line-end-position))))
-  
+
   :config
   ;; Defaults
   (setq-default major-mode 'text-mode
@@ -147,7 +147,7 @@
         next-line-add-newlines nil
         scroll-conservatively 101
         scroll-preserve-screen-position 1
-        
+
         byte-compile-warnings '(cl-functions)
         visible-bell nil
         ring-bell-function 'flash-mode-line
@@ -158,7 +158,7 @@
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
         window-divider-default-places 'right-only
-        
+
         show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
@@ -415,8 +415,13 @@
           my/swiper
           counsel-switch-buffer
           counsel-ibuffer
+          counsel-imenu
           counsel-recentf
           counsel-find-file
+          dumb-jump-go
+          dumb-jump-back
+          smart-jump-go
+          smart-jump-back
           ;; switch-to-buffer
           ;; change-buffer
           ;; previous-buffer
@@ -424,6 +429,9 @@
           beginning-of-buffer
           end-of-buffer
           xref-find-definitions
+          xref-find-references
+          xref-pop-marker-stack
+          xref-push-marker-stack
           magit-diff-visit-file))
   (point-stack-setup-advices))
 
