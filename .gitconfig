@@ -53,7 +53,7 @@
 	short = false
 	long = true
 	renames = true
-	relativePaths = false
+	relativePaths = true
 	showStash = true
 	showUntrackedFiles = normal
 [fetch]
