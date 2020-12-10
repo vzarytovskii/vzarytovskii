@@ -78,8 +78,10 @@
   :hook (after-init-hook . global-hl-line-mode))
 
 (use-package hl-block-mode
+  :hook (prog-mode-hook . hl-block-mode)
   :config
-  (setq hl-block-delay 0.3))
+  (setq hl-block-bracket nil
+        hl-block-delay 0.3))
 
 (use-package highlight-indent-guides
   :delight

@@ -42,8 +42,17 @@
 (use-package imenu-anywhere
   :bind ("C-." . imenu-anywhere))
 
+(use-package dumb-jump
+  :preface
+  (defun override-dumb-jump-prompt-user-for-choice (proj results)
+    (let ((choices (--map (dumb-jump--format-result proj it) results)))
+      (funcall dumb-jump-ivy-jump-to-selected-function results choices proj)))
+  :config
+  (advice-add 'dumb-jump-prompt-user-for-choice :override #'override-dumb-jump-prompt-user-for-choice))
+
 (use-package smart-jump
   ;; TODO: Use quickpeek for smart-jump-keep.
+  :after dumb-jump
   :config
   (smart-jump-setup-default-registers)
   (smart-jump-register :modes 'csharp-mode
@@ -101,6 +110,26 @@
   :after company
   :config
   (company-posframe-mode 1))
+
+;; Tree-sitter config
+(use-package tsc
+  :straight (tsc :host github :repo "ubolonton/emacs-tree-sitter" :files ("core/*.el")))
+
+(use-package tree-sitter
+  :if (executable-find "tree-sitter")
+  :straight (tree-sitter :type git :host github :repo "ubolonton/emacs-tree-sitter" :files ("lisp/*.el"))
+  :hook (((python-mode
+           typescript-mode) . tree-sitter-mode)
+         ((python-mode
+           typescript-mode) . tree-sitter-hl-mode))
+  :config
+  (add-to-list 'tree-sitter-major-mode-language-alist
+               '(rustic-mode . rust)))
+
+(use-package tree-sitter-langs
+  :if (executable-find "tree-sitter")
+  :straight (tree-sitter-langs :type git :host github :repo "ubolonton/emacs-tree-sitter" :files ("langs/*.el" "langs/queries"))
+  :after tree-sitter)
 
 ;; LSP Configuration:
 (use-package lsp-mode
