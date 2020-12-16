@@ -65,7 +65,7 @@ If ALL is non-nil, `swiper-all' is run."
   (ivy-on-del-error-function nil)
   (ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-create)
   :config
-  (setq ivy-use-virtual-buffers t
+  (setq ivy-use-virtual-buffers nil
         ivy-wrap t
         ivy-count-format "(%d/%d) "
         enable-recursive-minibuffers t)
@@ -100,6 +100,30 @@ If ALL is non-nil, `swiper-all' is run."
   (when (>= emacs-major-version 27)
     (setq xref-show-definitions-function #'ivy-xref-show-defs))
   (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
+
+(use-package ivy-posframe
+  :disabled t
+  :delight
+  :straight (:host github :repo "tumashu/ivy-posframe" :branch "master")
+  :after ivy
+  :config
+  (setq ivy-posframe-parameters
+        `((min-width . 100)
+          (min-height . ,ivy-height)
+          (left-fringe . 1)
+          (right-fringe . 1)
+          (internal-border-width . 10))
+        ivy-display-functions-alist
+        '((counsel-git-grep)
+          (counsel-rg)
+          (swiper)
+          (counsel-irony . ivy-display-function-overlay)
+          (ivy-completion-in-region . ivy-display-function-overlay)
+          (t . ivy-posframe-display-at-frame-top-center)))
+  (setq ivy-posframe-display-functions-alist
+        '((complete-symbol . ivy-posframe-display-at-point)
+          (t               . ivy-posframe-display-at-frame-top-center)))
+  (ivy-posframe-mode 1))
 
 (provide 'tools)
 ;;; tools.el ends here

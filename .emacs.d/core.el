@@ -135,7 +135,8 @@
                 cursor-type 'box
                 x-stretch-cursor t
                 cursor-in-non-selected-window nil
-                indent-tabs-mode nil)
+                indent-tabs-mode nil
+                fill-column 0)
   (setq inhibit-default-init t
         inhibit-startup-screen t
         inhibit-startup-message t

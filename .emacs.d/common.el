@@ -9,8 +9,12 @@
 (use-package ov) ;; For manipulating overlays
 
 (defun reload-init-file ()
-    (interactive)	
+    (interactive)
     (load-file user-init-file))
+
+(defconst *sys/gui*
+  (display-graphic-p)
+  "Are we running on a GUI Emacs?")
 
 (provide 'common)
 ;;; common.el ends here

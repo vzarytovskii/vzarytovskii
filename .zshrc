@@ -64,6 +64,7 @@ alias ff="/usr/bin/fd -t f"
 alias fd="/usr/bin/fd -t d"
 alias fa="/usr/bin/fd"
 alias nohist="HISTFILE=/dev/null zsh"
+alias yay="yay --mflags --skipinteg"
 
 emv() {
     for file in *.$1; do mv "$file" "$(basename "$file" .$1).$2"; done

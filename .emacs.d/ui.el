@@ -8,7 +8,7 @@
 
 (use-package all-the-icons)
 
-(use-package doom-themes
+(use-package modus-themes
   :after all-the-icons
   :preface
   (defvar --default-font
@@ -17,20 +17,30 @@
     (font-spec :family "JetBrains Mono" :height 100 :weight 'semi-bold))
   (defvar --variable-pitch-font
     (font-spec :family "JetBrains Mono" :height 100 :weight 'normal))
+  :init
+  (setq modus-themes-slanted-constructs t
+        modus-themes-bold-constructs t
+        modus-themes-syntax 'alt-syntax
+        modus-themes-mode-line nil
+        modus-themes-completions 'opinionated
+        modus-themes-fringes 'subtle
+        modus-themes-intense-hl-line t
+        modus-themes-paren-match 'intense-bold
+        modus-themes-region 'bg-only)
   :config
-  (setq-default display-line-numbers-width 3)
+  (setq-default display-line-numbers-width 5)
 
   (setq default-frame-alist
         `((left-fringe . 15)
           (right-fringe . 15)
-          (internal-border-width . 0)
+          (internal-border-width . 1)
           (font . ,(font-xlfd-name --default-font))))
 
   (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (load-theme 'doom-Iosvkem t))
+  (modus-themes-load-vivendi))
 
 (use-package smart-mode-line
   :config
@@ -48,7 +58,7 @@
 
 (use-package display-line-numbers
   :ensure nil
-  :hook (prog-mode . display-line-numbers-mode))
+  :hook (prog-mode-hook . display-line-numbers-mode))
 
 (use-package mixed-pitch
   :diminish)
@@ -76,12 +86,6 @@
 
 (use-package hl-line
   :hook (after-init-hook . global-hl-line-mode))
-
-(use-package hl-block-mode
-  :hook (prog-mode-hook . hl-block-mode)
-  :config
-  (setq hl-block-bracket nil
-        hl-block-delay 0.3))
 
 (use-package highlight-indent-guides
   :delight

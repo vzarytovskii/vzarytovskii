@@ -79,6 +79,20 @@
 
 (use-package flycheck-inline
   :after flycheck
+  :preface
+  (defun fc-inline-overlay (msg &optional pos err)
+    ;; MSG - message from flycheck
+    ;; POS - position marker
+    ;; ERR - flycheck-error object, other (including level, id, message, filename) can be extracted.
+
+    ;; TODO define face here dependung on level/severity.
+    ;; TODO Maybe use https://www.gnu.org/software/emacs/manual/html_node/elisp/Managing-Overlays.html#Managing-Overlays instead of ov.
+    (ov-set (ov-line) 'after-string (propertize (format "    %s" msg) 'face '(:foreground "gray50")) 'ovfc t))
+  (defun fc-inline-overlay-clear ()
+    (ov-clear 'ovfc))
+  :config
+  (setq flycheck-inline-display-function 'fc-inline-overlay
+        flycheck-inline-clear-function 'fc-inline-overlay-clear)
   :hook (flycheck-mode-hook . flycheck-inline-mode))
 
 ;; Company mode config:
@@ -95,19 +109,37 @@
 
 (use-package company-quickhelp
   :after company
-  (company-quickhelp-mode))
+  :hook (global-company-mode . company-quickhelp-mode)
+  :config
+  (setq pos-tip-use-relative-coordinates t
+        company-quickhelp-delay 0.3))
 
 (use-package company-box
   :delight
-  :after company
-  :hook (company-mode-hook . company-box-mode))
+  :after (:all all-the-icons company)
+  :functions (my-company-box--make-line
+              my-company-box-icons--elisp)
+  :commands (company-box--get-color
+             company-box--resolve-colors
+             company-box--add-icon
+             company-box--apply-color
+             company-box--make-line
+             company-box-icons--elisp)
+  :hook (company-mode-hook . company-box-mode)
+  :custom
+  (company-box-backends-colors nil)
+  (company-box-show-single-candidate t)
+  (company-box-max-candidates 50)
+  (company-box-doc-delay 0.3))
 
 (use-package company-prescient
   :after (:all company prescient))
 
 (use-package company-posframe
   :delight
-  :after company
+  :if (and (>= emacs-major-version 26)
+           (display-graphic-p))
+  :after (:all all-the-icons company)
   :config
   (company-posframe-mode 1))
 
@@ -118,10 +150,10 @@
 (use-package tree-sitter
   :if (executable-find "tree-sitter")
   :straight (tree-sitter :type git :host github :repo "ubolonton/emacs-tree-sitter" :files ("lisp/*.el"))
-  :hook (((python-mode
-           typescript-mode) . tree-sitter-mode)
-         ((python-mode
-           typescript-mode) . tree-sitter-hl-mode))
+  :hook (((python-mode-hook
+           typescript-mode-hook) . tree-sitter-mode)
+         ((python-mode-hook
+           typescript-mode-hook) . tree-sitter-hl-mode))
   :config
   (add-to-list 'tree-sitter-major-mode-language-alist
                '(rustic-mode . rust)))
@@ -212,39 +244,41 @@
   :bind
   ("C-c n" . sharper-main-transient))
 
-;; (use-package csharp-mode
-;;   :after (:all lsp-mode company flycheck dotnet omnisharp)
-;;   :hook (csharp-mode-hook . lsp-deferred)
-;;   :hook (csharp-mode-hook . omnisharp-mode)
-;;   :hook (csharp-mode-hook . dotnet-mode)
-;;   :hook (csharp-mode-hook . company-mode)
-;;   :hook (csharp-mode-hook . flycheck-mode)
-;;   :hook (csharp-mode-hook . (lambda ()
-;;                          (subword-mode)
-;;                          (setq-local fill-function-arguments-first-argument-same-line t)
-;;                          (setq-local fill-function-arguments-second-argument-same-line nil)
-;;                          (setq-local fill-function-arguments-last-argument-same-line t)
-;;                          (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
-;;   :config
-;;   (setq lsp-csharp-server-path "~/code/csharp/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio")
-;;   (setq indent-tabs-mode nil
-;;         c-syntactic-indentation t
-;;         c-basic-offset 4
-;;         truncate-lines t
-;;         tab-width 4)
-;;   (electric-pair-local-mode 1))
+(use-package csharp-mode
+  :disabled t
+  :after (:all lsp-mode company flycheck dotnet omnisharp)
+  :hook (csharp-mode-hook . lsp-deferred)
+  :hook (csharp-mode-hook . omnisharp-mode)
+  :hook (csharp-mode-hook . dotnet-mode)
+  :hook (csharp-mode-hook . company-mode)
+  :hook (csharp-mode-hook . flycheck-mode)
+  :hook (csharp-mode-hook . (lambda ()
+                         (subword-mode)
+                         (setq-local fill-function-arguments-first-argument-same-line t)
+                         (setq-local fill-function-arguments-second-argument-same-line nil)
+                         (setq-local fill-function-arguments-last-argument-same-line t)
+                         (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
+  :config
+  (setq lsp-csharp-server-path "~/code/csharp/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio")
+  (setq indent-tabs-mode nil
+        c-syntactic-indentation t
+        c-basic-offset 4
+        truncate-lines t
+        tab-width 4)
+  (electric-pair-local-mode 1))
 
-;; (use-package omnisharp
-;;   :after (:all company flycheck)
-;;   :hook (omnisharp-mode-hook . company-mode)
-;;   :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
-;;   :preface
-;;   (setq omnisharp-auto-complete-want-documentation nil
-;;         omnisharp-eldoc-support t
-;;         omnisharp-imenu-support t
-;;         omnisharp-company-ignore-case t)
-;;   :config
-;;   (add-to-list 'company-backends #'company-omnisharp))
+(use-package omnisharp
+  :disabled t
+  :after (:all company flycheck)
+  :hook (omnisharp-mode-hook . company-mode)
+  :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
+  :preface
+  (setq omnisharp-auto-complete-want-documentation nil
+        omnisharp-eldoc-support t
+        omnisharp-imenu-support t
+        omnisharp-company-ignore-case t)
+  :config
+  (add-to-list 'company-backends #'company-omnisharp))
 
 (use-package fsharp-mode
   :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
@@ -290,7 +324,7 @@
 
 (use-package projectile
   :delight
-  :hook (after-init . projectile-mode)
+  :hook (after-init-hook . projectile-mode)
   :bind ("C-<tab>" . projectile-next-project-buffer)
   :bind ("C-c C-p" . 'projectile-command-map)
   :preface
