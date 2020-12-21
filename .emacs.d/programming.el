@@ -293,9 +293,9 @@
   (add-to-list 'company-backends #'company-omnisharp))
 
 (use-package fsharp-mode
-  :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
-  ;;:straight nil
-  ;;:load-path "~/code/elisp/emacs-fsharp-mode"
+  ;; :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
+  :straight nil
+  :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all dotnet lsp-mode)
   :commands fsharp-mode
   :hook (fsharp-mode-hook . lsp-deferred)
@@ -329,7 +329,7 @@
         lsp-fsharp-resolve-namespaces t
         lsp-fsharp-enable-reference-code-lens t
         lsp-fsharp-auto-workspace-init t
-        lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules" "tests\/projects"]
+        lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules"]
         lsp-log-io nil)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))

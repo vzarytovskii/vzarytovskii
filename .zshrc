@@ -35,6 +35,10 @@ export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.l
 
 # export LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/$(gcc -dumpversion)/:$LIBRARY_PATH
 
+if [[ -n $MY_PS1 ]]; then
+	PS1="$bg[yellow]$fg_bold[black] $MY_PS1 $reset_color :: $PS1"
+fi
+
 alias cat="bat"
 alias br="br -h"
 alias lsa="br -dp"
@@ -63,7 +67,7 @@ alias rg="rg --no-heading"
 alias ff="/usr/bin/fd -t f"
 alias fd="/usr/bin/fd -t d"
 alias fa="/usr/bin/fd"
-alias nohist="HISTFILE=/dev/null zsh"
+alias nohist="MY_PS1=\"nohist\" HISTFILE=/dev/null zsh"
 alias yay="yay --mflags --skipinteg"
 
 emv() {
