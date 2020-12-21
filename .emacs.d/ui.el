@@ -8,7 +8,8 @@
 
 (use-package all-the-icons)
 
-(use-package modus-themes
+(use-package kaolin-themes
+ :straight (:host github :repo "ogdenwebb/emacs-kaolin-themes" :branch "master")
   :after all-the-icons
   :preface
   (defvar --default-font
@@ -17,17 +18,8 @@
     (font-spec :family "JetBrains Mono" :height 100 :weight 'semi-bold))
   (defvar --variable-pitch-font
     (font-spec :family "JetBrains Mono" :height 100 :weight 'normal))
-  :init
-  (setq modus-themes-slanted-constructs t
-        modus-themes-bold-constructs t
-        modus-themes-syntax 'alt-syntax
-        modus-themes-mode-line nil
-        modus-themes-completions 'opinionated
-        modus-themes-fringes 'subtle
-        modus-themes-intense-hl-line t
-        modus-themes-paren-match 'intense-bold
-        modus-themes-region 'bg-only)
   :config
+
   (setq-default display-line-numbers-width 5)
 
   (setq default-frame-alist
@@ -36,11 +28,27 @@
           (internal-border-width . 1)
           (font . ,(font-xlfd-name --default-font))))
 
+  (setq kaolin-themes-bold t
+        kaolin-themes-italic t
+        kaolin-themes-underline t
+        kaolin-themes-modeline-border nil
+        kaolin-themes-underline-wave nil
+        kaolin-themes-italic-comments nil
+        kaolin-themes-hl-line-colored t
+        kaolin-themes-distinct-fringe t
+        kaolin-themes-distinct-company-scrollbar t
+        kaolin-themes-git-gutter-solid nil)
+
+  (setq kaolin-ocean-alt-bg t)
+
+  (setq pos-tip-background-color (face-background 'tooltip)
+        pos-tip-foreground-color (face-foreground 'tooltip))
+
   (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (modus-themes-load-vivendi))
+  (load-theme 'kaolin-ocean t))
 
 (use-package smart-mode-line
   :config

@@ -80,16 +80,28 @@
 (use-package flycheck-inline
   :after flycheck
   :preface
+
+  (setq flycheck-ov (make-overlay 0 0))
+  (overlay-put flycheck-ov 'invisible t)
+  (overlay-put flycheck-ov 'face '(:extend t :foreground "gray50" :background "#ff0000"))
+
   (defun fc-inline-overlay (msg &optional pos err)
     ;; MSG - message from flycheck
     ;; POS - position marker
     ;; ERR - flycheck-error object, other (including level, id, message, filename) can be extracted.
 
     ;; TODO define face here dependung on level/severity.
-    ;; TODO Maybe use https://www.gnu.org/software/emacs/manual/html_node/elisp/Managing-Overlays.html#Managing-Overlays instead of ov.
-    (ov-set (ov-line) 'after-string (propertize (format "    %s" msg) 'face '(:foreground "gray50")) 'ovfc t))
+    ;; TODO: Clear overlay when leaving the line.
+    (let ((beg (point-at-eol))
+          (end (+ 1 (point-at-eol))))
+      ;; (end (min (point-max) (+ 1 (point-at-eol)))))
+      (move-overlay flycheck-ov beg end)
+      (overlay-put flycheck-ov 'after-string (format "\t//\s%s\n" msg))))
+  ;;(ov-set (ov-line) 'after-string (propertize (format "%s" msg) 'face '(:extend t :foreground "gray50")) 'ovfc t)
+
   (defun fc-inline-overlay-clear ()
-    (ov-clear 'ovfc))
+    (overlay-put flycheck-ov 'invisible t))
+
   :config
   (setq flycheck-inline-display-function 'fc-inline-overlay
         flycheck-inline-clear-function 'fc-inline-overlay-clear)
@@ -294,7 +306,7 @@
         tab-width 4)
   (setq fsharp-doc-idle-delay 0.0
         fsharp-ac-use-popup t
-        fsharp-ac-intellisense-enabled nil
+        fsharp-ac-intellisense-enabled t
         fsharp-smart-indentation t
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
@@ -317,7 +329,7 @@
         lsp-fsharp-resolve-namespaces t
         lsp-fsharp-enable-reference-code-lens t
         lsp-fsharp-auto-workspace-init t
-        lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules" "tests/projects"]
+        lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules" "tests\/projects"]
         lsp-log-io nil)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
