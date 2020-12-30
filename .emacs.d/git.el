@@ -77,12 +77,12 @@
   :bind (:map vc-prefix-map
               ("p" . git-messenger:popup-message)))
 
-(use-package git-gutter
+(use-package git-gutter-fringe
   :delight
   :hook (after-init-hook . global-git-gutter-mode)
   :init (setq git-gutter:visual-line t
               git-gutter:disabled-modes '(asm-mode image-mode)
-              git-gutter:modified-sign "|" ;;"❚"
+              git-gutter:modified-sign "~" ;;"❚"
               git-gutter:added-sign "+" ;;"✚"
               git-gutter:deleted-sign "-" ;;"✖"
               )
@@ -98,6 +98,7 @@
 (use-package gitignore-mode)
 
 (use-package diff-hl
+  :disabled t
   :config
   (global-diff-hl-mode))
 

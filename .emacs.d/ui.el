@@ -8,8 +8,8 @@
 
 (use-package all-the-icons)
 
-(use-package kaolin-themes
- :straight (:host github :repo "ogdenwebb/emacs-kaolin-themes" :branch "master")
+(use-package doom-themes
+  :straight (:host github :repo "hlissner/emacs-doom-themes" :branch "master")
   :after all-the-icons
   :preface
   (defvar --default-font
@@ -23,23 +23,14 @@
   (setq-default display-line-numbers-width 5)
 
   (setq default-frame-alist
-        `((left-fringe . 15)
-          (right-fringe . 15)
-          (internal-border-width . 1)
+        `((left-fringe . 1)
+          (right-fringe . 1)
+          (internal-border-width . 0)
           (font . ,(font-xlfd-name --default-font))))
 
-  (setq kaolin-themes-bold t
-        kaolin-themes-italic t
-        kaolin-themes-underline t
-        kaolin-themes-modeline-border nil
-        kaolin-themes-underline-wave nil
-        kaolin-themes-italic-comments nil
-        kaolin-themes-hl-line-colored t
-        kaolin-themes-distinct-fringe t
-        kaolin-themes-distinct-company-scrollbar t
-        kaolin-themes-git-gutter-solid nil)
-
-  (setq kaolin-ocean-alt-bg t)
+  ;; (fringe-mode 0)
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
 
   (setq pos-tip-background-color (face-background 'tooltip)
         pos-tip-foreground-color (face-foreground 'tooltip))
@@ -48,11 +39,14 @@
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
 
-  (load-theme 'kaolin-ocean t))
+  (doom-themes-visual-bell-config)
+
+  (load-theme 'doom-tomorrow-night t))
 
 (use-package smart-mode-line
   :config
-  (setq sml/no-confirm-load-theme t
+  (setq sml/theme 'dark
+        sml/no-confirm-load-theme t
         sml/shorten-directory t
         sml/shorten-modes t)
   (sml/setup))
@@ -62,6 +56,8 @@
   :straight (:host github :repo "kiennq/emacs-mini-modeline" :branch "master")
   :after smart-mode-line
   :config
+  (setq mini-modeline-enhance-visual nil
+        mini-modeline-display-gui-line nil)
   (mini-modeline-mode t))
 
 (use-package display-line-numbers
@@ -70,6 +66,12 @@
 
 (use-package mixed-pitch
   :diminish)
+
+(use-package solaire-mode
+  :hook (after-init-hook . solaire-global-mode)
+  :hook (minibuffer-setup-hook . solaire-mode-in-minibuffer)
+  :config
+  (solaire-global-mode +1))
 
 (use-package beacon
   :config
@@ -91,6 +93,7 @@
   :config
   (goggles-mode)
   (setq-default goggles-pulse t))
+
 
 (use-package hl-line
   :hook (after-init-hook . global-hl-line-mode))
@@ -134,20 +137,25 @@
 
 (use-package whitespace
   :delight
+  :disabled t
   :hook (prog-mode-hook . whitespace-mode)
   :config
 
   (set-face-background 'whitespace-space nil)
-  (set-face-foreground 'whitespace-space "grey24")
+  (set-face-foreground 'whitespace-space "grey21")
 
   (set-face-background 'whitespace-newline nil)
-  (set-face-foreground 'whitespace-newline "grey24")
+  (set-face-foreground 'whitespace-newline "grey21")
 
 
   (setq-default whitespace-style
-                '(face spaces space-mark tabs newline
+                '(face spaces
+                       space-mark
+                       tabs
+                       newline
                        trailing-space-before
-                       tab space-after-tab
+                       tab
+                       space-after-tab
                        newline-mark))
   (setq whitespace-display-mappings
         '((space-mark 32 [183] [46])
@@ -340,6 +348,29 @@ FACE defaults to inheriting from default and highlight."
         (forward-char))))
 
   (advice-add 'awesome-pair-fix-unbalanced-parentheses :override '+prog/fix-unbalanced-parentheses-or-forward-char))
+
+;; Custom colouring for languages:
+(use-package prism
+  :disabled t
+  :straight (prism :host github :repo "alphapapa/prism.el" :branch "master")
+  :hook (fsharp-mode-hook . prism-whitespace-mode)
+  :hook ((elisp-mode-hook csharp-mode-hook) . prism-mode)
+  :config
+  (prism-set-colors :num 16
+    :desaturations (cl-loop for i from 0 below 16
+                            collect (* i 2.5))
+    :lightens (cl-loop for i from 0 below 16
+                       collect (* i 2.5))
+    :colors (list "dodgerblue" "medium sea green" "sandy brown")
+
+    :comments-fn
+    (lambda (color)
+      (prism-blend color
+                   (face-attribute 'font-lock-comment-face :foreground) 0.25))
+
+    :strings-fn
+    (lambda (color)
+      (prism-blend color "white" 0.5))))
 
 (provide 'ui)
 ;;; ui.el ends here

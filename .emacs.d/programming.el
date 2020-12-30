@@ -236,10 +236,10 @@
         lsp-ui-peek-list-width 60
         lsp-ui-sideline-enable t
         lsp-ui-sideline-update-mode 'line
-        lsp-ui-sideline-show-symbol t
-        lsp-ui-sideline-show-diagnostics t
+        lsp-ui-sideline-show-symbol nil
+        lsp-ui-sideline-show-diagnostics nil
         lsp-ui-sideline-show-hover t
-        lsp-ui-sideline-show-code-actions t
+        lsp-ui-sideline-show-code-actions nil
         lsp-ui-sideline-ignore-duplicate t
         lsp-ui-sideline-delay 0.0
         lsp-ui-imenu-enable t
@@ -337,7 +337,6 @@
 (use-package projectile
   :delight
   :hook (after-init-hook . projectile-mode)
-  :bind ("C-<tab>" . projectile-next-project-buffer)
   :bind ("C-c C-p" . 'projectile-command-map)
   :preface
   (defvar +project/lsp-project-root-cache (make-hash-table :test 'equal)
@@ -360,7 +359,24 @@
                        lsp-folders)))
           (puthash cache-key value +project/lsp-project-root-cache)
           value))))
+
   (defalias '+project/root 'projectile-project-root)
+
+  (defun +project/projectile-buffer-filter (buffer)
+    (let ((name (buffer-name buffer)))
+      (or (and (string-prefix-p "*" name)
+               (not (string-prefix-p "*eww*" name))
+               (not (string-prefix-p "*ein: http" name))
+               (not (string-prefix-p "*ein:notebooklist" name))
+               (not (string-prefix-p "*vterm:" name))
+               (not (string-prefix-p "*cider" name)))
+          (string-match-p "magit.*:" name)
+          (equal (buffer-name (current-buffer)) name))))
+
+  (defun +project/projectile-buffer-filter-function (buffers)
+    (cl-remove-if
+     (lambda (buffer) (+project/projectile-buffer-filter buffer))
+     buffers))
 
   :config
   (setq projectile-project-search-path '("~/code/")
@@ -371,24 +387,8 @@
         projectile-globally-ignored-directories '(".git" "node_modules" "__pycache__" ".vs")
         projectile-globally-ignored-files '("TAGS" "tags" ".DS_Store")
         projectile-completion-system 'ivy)
-  (with-eval-after-load 'projectile
-    (add-to-list 'projectile-project-root-files-functions #'+project/lsp-project-root)
-    (defun +project/projectile-buffer-filter (buffer)
-      (let ((name (buffer-name buffer)))
-        (or (and (string-prefix-p "*" name)
-                 (not (string-prefix-p "*eww*" name))
-                 (not (string-prefix-p "*ein: http" name))
-                 (not (string-prefix-p "*ein:notebooklist" name))
-                 (not (string-prefix-p "*vterm:" name))
-                 (not (string-prefix-p "*cider" name)))
-            (string-match-p "magit.*:" name)
-            (equal (buffer-name (current-buffer)) name))))
 
-    (defun +project/projectile-buffer-filter-function (buffers)
-      (cl-remove-if
-       (lambda (buffer) (+project/projectile-buffer-filter buffer))
-       buffers))
-    (setq projectile-buffers-filter-function #'+project/projectile-buffer-filter-function)))
+  (add-to-list 'projectile-project-root-files-functions #'+project/lsp-project-root))
 
 (use-package counsel-projectile
   :after (:all counsel projectile)
