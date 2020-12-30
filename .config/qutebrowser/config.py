@@ -142,11 +142,11 @@ c.content.headers.custom = {}
 c.content.headers.do_not_track = True
 c.content.headers.referer = "same-domain"
 c.content.headers.user_agent = "Mozilla/5.0 ({os_info}) AppleWebKit/{webkit_version} (KHTML, like Gecko) {qt_key}/{qt_version} {upstream_browser_key}/{upstream_browser_version} Safari/{webkit_version}"
-c.content.host_blocking.enabled = True
-c.content.host_blocking.lists = [
-    "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-]
-c.content.host_blocking.whitelist = []
+#c.content.host_blocking.enabled = True
+#c.content.host_blocking.lists = [
+#    "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+#]
+#c.content.host_blocking.whitelist = []
 c.content.hyperlink_auditing = True
 c.content.images = True
 c.content.javascript.alert = True
