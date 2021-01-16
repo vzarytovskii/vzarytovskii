@@ -8,16 +8,17 @@
 
 (use-package all-the-icons)
 
+;; TODO: Look at modus themes, with some customizations, they can be better readable than doom ones.
 (use-package doom-themes
   :straight (:host github :repo "hlissner/emacs-doom-themes" :branch "master")
   :after all-the-icons
   :preface
   (defvar --default-font
-    (font-spec :family "JetBrains Mono" :height 95 :weight 'normal))
+    (font-spec :family "Fira Code" :size 14 :weight 'medium))
   (defvar --fixed-pitch-font
-    (font-spec :family "JetBrains Mono" :height 100 :weight 'semi-bold))
+    (font-spec :family "Fira Code" :size 10 :weight 'light))
   (defvar --variable-pitch-font
-    (font-spec :family "JetBrains Mono" :height 100 :weight 'normal))
+    (font-spec :family "Fira Code" :size 10 :weight 'light))
   :config
 
   (setq-default display-line-numbers-width 5)
@@ -30,7 +31,7 @@
 
   ;; (fringe-mode 0)
   (setq doom-themes-enable-bold t
-        doom-themes-enable-italic t)
+        doom-themes-enable-italic nil)
 
   (setq pos-tip-background-color (face-background 'tooltip)
         pos-tip-foreground-color (face-foreground 'tooltip))

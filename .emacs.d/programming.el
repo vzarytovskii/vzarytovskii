@@ -77,7 +77,9 @@
   :config
   (setq flycheck-highlighting-mode 'sexps))
 
+;; TODO: Temporary disable inline on-demand error display.
 (use-package flycheck-inline
+  :disabled t
   :after flycheck
   :preface
 
