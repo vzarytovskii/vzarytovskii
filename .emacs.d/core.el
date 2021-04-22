@@ -182,6 +182,9 @@
         window-divider-default-bottom-width 1
         window-divider-default-places 'right-only
 
+	max-lisp-eval-depth 15000
+	max-specpdl-size 15000
+
         show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
