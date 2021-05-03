@@ -181,11 +181,8 @@
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
         window-divider-default-places 'right-only
-
-	max-lisp-eval-depth 15000
-	max-specpdl-size 15000
-
-        show-trailing-whitespace t
+        
+	show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
         backup-directory-alist '(("." . "~/.saves"))
@@ -200,6 +197,7 @@
 
 (use-package fast-scroll
   :delight
+  :disabled t
   ;; TODO: Turn off all highlighter modes, restore them afterwards (turn off font-lock-mode?).
   :hook (fast-scroll-start-hook . (lambda ()
                                     (flycheck-mode -1)
@@ -405,11 +403,11 @@
 
 (use-package undo-tree
   :delight
+  :straight (:host gitlab :repo "tsc25/undo-tree" :branch "master")
   :init
   (setq undo-tree-auto-save-history t
         undo-tree-visualizer-diff t
         undo-tree-visualizer-timestamps t)
-  (global-undo-tree-mode t)
   :bind (("C-x u" . undo-tree-visualize)
          ("C-z"   . 'undo)
          ("C-S-z" .'undo-tree-redo))
@@ -417,7 +415,8 @@
   (progn
     (defun my/undo-tree-restore-default ()
       (setq undo-tree-visualizer-diff t))
-    (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default)))
+    (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
+  (global-undo-tree-mode t))
 
 ;; (use-package point-history
 ;;   :straight nil

@@ -16,24 +16,6 @@
   :config
   (editorconfig-mode 1))
 
-(use-package origami
-  :straight (:host github :repo "jcs-elpa/origami.el" :branch "master")
-  :hook (prog-mode-hook . origami-mode)
-  :preface
-  (defun my/origami-elisp-parser (create)
-    (origami-lisp-parser create
-                         "(\\(def\\|cl-def\\|use-package\\|bind-keys\\)\\w*\\s-*\\(\\s_\\|\\w\\|[:?!]\\)*\\([ \\t]*(.*?)\\)?"))
-  :config
-  (setq origami-parser-alist
-        (cons '(emacs-lisp-mode . my/origami-elisp-parser)
-              (assq-delete-all 'emacs-lisp-mode origami-parser-alist))
-        origami-show-fold-header t)
-  :init
-  (global-origami-mode))
-
-(use-package origami-predef
-  :after origami)
-
 (use-package xref
   :ensure nil
   :bind (;; ("C-." . xref-find-definitions)
@@ -183,6 +165,7 @@
   :straight (:host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
   :config
+  (setq max-specpdl-size 32000) ;; A workaround when running gccemacs in WSL
   (setq lsp-auto-guess-root nil
         lsp-debounce-full-sync-notifications-interval 1.0
         lsp-diagnostic-package :flycheck
@@ -296,8 +279,8 @@
 
 (use-package fsharp-mode
   ;; :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
-  :straight nil
-  :load-path "~/code/elisp/emacs-fsharp-mode"
+  ;; :straight nil
+  ;; :load-path "~/code/elisp/emacs-fsharp-mode"
   :after (:all dotnet lsp-mode)
   :commands fsharp-mode
   :hook (fsharp-mode-hook . lsp-deferred)

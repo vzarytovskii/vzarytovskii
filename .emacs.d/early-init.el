@@ -62,6 +62,8 @@
       jit-lock-stealth-time 0.2
       jit-lock-stealth-verbose nil
       fast-but-imprecise-scrolling t
+      max-lisp-eval-depth most-positive-fixnum
+      max-specpdl-size most-positive-fixnum
       comp-speed 3
       comp-deferred-compilation t
       comp-async-jobs-number 12

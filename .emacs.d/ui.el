@@ -14,7 +14,7 @@
   :after all-the-icons
   :preface
   (defvar --default-font
-    (font-spec :family "Fira Code" :size 14 :weight 'medium))
+    (font-spec :family "Fira Code" :size 12 :weight 'medium))
   (defvar --fixed-pitch-font
     (font-spec :family "Fira Code" :size 10 :weight 'light))
   (defvar --variable-pitch-font
@@ -45,6 +45,7 @@
   (load-theme 'doom-tomorrow-night t))
 
 (use-package smart-mode-line
+  :straight (:host github :repo "vzarytovskii/smart-mode-line" :branch "master")
   :config
   (setq sml/theme 'dark
         sml/no-confirm-load-theme t
