@@ -40,7 +40,7 @@
 ;; Setup use-package and straight.el
 (setq-default straight-repository-branch "develop"
               straight-use-package-by-default t
-              straight-check-for-modifications '(watch-files find-when-checking)
+              straight-check-for-modifications nil
               straight-disable-autoloads nil
               straight-disable-byte-compilation nil
               straight-disable-native-compilation nil
@@ -78,7 +78,9 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-(straight-use-package 'use-package)
+(eval-when-compile
+    (straight-use-package 'use-package))
+
 
 ;; Setup use-package
 (setq-default use-package-always-demand t

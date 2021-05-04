@@ -6,13 +6,21 @@
 
 ;;; Code:
 
+(use-package gcmh
+  :defer 5 
+  :init
+  (setq gcmh-idle-delay 5
+ 	gcmh-high-cons-threshold (* 64 1024 1024))
+  :config
+  (gcmh-mode))
+
 (use-package auto-package-update
   :if (not (daemonp))
   :custom
   (auto-package-update-interval 7) ;; in days
   (auto-package-update-prompt-before-update t)
   (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results t)
+  (auto-package-update-hide-results nil)
   :config
   (auto-package-update-maybe))
 
@@ -52,7 +60,7 @@
   ;; limit number of async processes
   (eval-when-compile
     (require 'cl-lib))
-  (defvar async-maximum-parallel-procs 4)
+  (defvar async-maximum-parallel-procs 20)
   (defvar async--parallel-procs 0)
   (defvar async--queue nil)
   (defvar-local async--cb nil)
@@ -166,6 +174,8 @@
         inhibit-startup-echo-area-message t
         initial-scratch-message nil
 
+	idle-update-delay 1.1	
+
         scroll-margin 0
         scroll-step 1
         scroll-conservatively 100000
@@ -178,6 +188,8 @@
 
         tab-width 4
         frame-resize-pixelwise t
+
+	redisplay-skip-fontification-on-input t
 
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
@@ -263,6 +275,7 @@
 
 (use-package hungry-delete
   :delight
+  :straight (:host github :repo "nflath/hungry-delete" :branch "master")
   :config (global-hungry-delete-mode))
 
 (use-package expand-region

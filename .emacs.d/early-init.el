@@ -17,9 +17,8 @@
   (message "Native JSON is available")
   (message "Native JSON is *not* available"))
 
-(setq package-enable-at-startup t
-      package-quickstart t
-      frame-inhibit-implied-resize t)
+(setq package-enable-at-startup nil
+      package-quickstart t)
 
 (when (display-graphic-p)
   (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
@@ -43,17 +42,27 @@
 (size-indication-mode t)
 (toggle-scroll-bar -1)
 (tool-bar-mode -1)
-(add-to-list 'default-frame-alist
-             '(vertical-scroll-bars . nil))
+
+(when (featurep 'ns)
+      (push '(ns-transparent-titlebar . t) default-frame-alist))
+
+(push '(vertical-scroll-bars . nil) default-frame-alist)
+(push '(menu-bar-lines . 0) default-frame-alist)
+(push '(tool-bar-lines . 0) default-frame-alist)
+(push '(vertical-scroll-bars) default-frame-alist)
+
 
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; GC, JIT and native compilation setup.
 (defvar file-name-handler-alist-old file-name-handler-alist)
+
 (setq gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6
+      frame-inhibit-implied-resize t
       file-name-handler-alist nil
       inhibit-compacting-font-caches t
+      ffap-machine-p-known 'reject
       auto-window-vscroll nil
       read-process-output-max (* 1024 1024 3)
       message-log-max 16384
@@ -63,13 +72,15 @@
       jit-lock-stealth-verbose nil
       fast-but-imprecise-scrolling t
       max-lisp-eval-depth most-positive-fixnum
-      max-specpdl-size most-positive-fixnum
-      comp-speed 3
-      comp-deferred-compilation t
-      comp-async-jobs-number 12
-      comp-native-driver-options
-      '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
-      comp-always-compile t)
+      max-specpdl-size most-positive-fixnum)
+
+(when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
+      (setq comp-speed 3
+            comp-deferred-compilation t
+            comp-async-jobs-number 20
+            comp-native-driver-options '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
+            comp-always-compile t))
+
 
 (add-hook 'emacs-startup-hook
           `(lambda ()
