@@ -95,7 +95,7 @@
 (use-package company
   :delight
   :straight (:host github :repo "company-mode/company-mode" :branch "master")
-  :hook (prog-mode-hook . global-company-mode)
+  :hook (auto-init-hook . global-company-mode)
   :bind (:map company-active-map
               ("C-w" . 'backward-kill-word))
   :config
@@ -146,9 +146,16 @@
 (use-package tree-sitter
   :if (executable-find "tree-sitter")
   :straight (tree-sitter :type git :host github :repo "ubolonton/emacs-tree-sitter" :files ("lisp/*.el"))
+  :custom-face
+  (tree-sitter-hl-face:method.call   ((t (:inherit font-lock-function-name-face))))
+  (tree-sitter-hl-face:function.call ((t (:inherit font-lock-function-name-face))))
+  (tree-sitter-hl-face:operator      ((t (:inherit default))))
+  (tree-sitter-hl-face:type.builtin  ((t (:inherit font-lock-type-face))))
+  (tree-sitter-hl-face:number        ((t (:inherit highlight-numbers-number))))
   :hook (((python-mode-hook
            typescript-mode-hook) . tree-sitter-mode)
-         ((python-mode-hook
+         ((tree-sitter-after-on-hook
+           python-mode-hook
            typescript-mode-hook) . tree-sitter-hl-mode))
   :config
   (add-to-list 'tree-sitter-major-mode-language-alist

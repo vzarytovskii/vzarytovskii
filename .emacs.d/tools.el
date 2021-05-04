@@ -18,6 +18,8 @@
 
 (use-package prescient
   :config
+  (setq prescient-filter-method '(literal regexp initialism fuzzy))
+  (setq prescient-sort-length-enable nil)
   (prescient-persist-mode +1))
 
 (use-package ivy
@@ -81,7 +83,17 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package ivy-prescient
   :after (:all ivy prescient)
-  :config (ivy-prescient-mode +1))
+  :config 
+  (setq ivy-prescient-sort-commands
+        '(:not swiper
+               counsel-grep
+               counsel-rg
+               counsel-projectile-rg
+               ivy-switch-buffer
+               counsel-switch-buffer))
+
+    (setq ivy-prescient-retain-classic-highlighting t)
+  (ivy-prescient-mode +1))
 
 (use-package ivy-rich
   :after ivy

@@ -84,7 +84,8 @@
          ("C-x 3"           . 'hsplit-current-buffer)
          ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
-         ("M-w"             . 'copy-region-or-line))
+         ("M-w"             . 'copy-region-or-line)
+	 ("C-g"             . 'keyboard-quit))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
   :preface

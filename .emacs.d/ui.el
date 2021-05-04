@@ -6,12 +6,36 @@
 
 ;;; Code:
 
+(use-package frame
+  :straight nil
+  :config
+  (add-to-list 'default-frame-alist
+               `((left-fringe . 1)
+                 (right-fringe . 1)
+                 (internal-border-width . 0))))
+
 (use-package all-the-icons)
 
 ;; TODO: Look at modus themes, with some customizations, they can be better readable than doom ones.
 (use-package doom-themes
   :straight (:host github :repo "hlissner/emacs-doom-themes" :branch "master")
   :after all-the-icons
+  :config
+
+  ;; (fringe-mode 0)
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic nil)
+
+  (setq pos-tip-background-color (face-background 'tooltip)
+        pos-tip-foreground-color (face-foreground 'tooltip))
+
+
+  (doom-themes-visual-bell-config)
+
+  (load-theme 'doom-tomorrow-night t))
+
+(use-package faces
+  :straight nil
   :preface
   (defvar --default-font
     (font-spec :family "Fira Code" :size 12 :weight 'medium))
@@ -21,34 +45,17 @@
     (font-spec :family "Fira Code" :size 10 :weight 'light))
   :config
 
-  (setq-default display-line-numbers-width 5)
-
-  (setq default-frame-alist
-        `((left-fringe . 1)
-          (right-fringe . 1)
-          (internal-border-width . 0)
-          (font . ,(font-xlfd-name --default-font))))
-
-  ;; (fringe-mode 0)
-  (setq doom-themes-enable-bold t
-        doom-themes-enable-italic nil)
-
-  (setq pos-tip-background-color (face-background 'tooltip)
-        pos-tip-foreground-color (face-foreground 'tooltip))
-
+  (add-to-list 'default-frame-alist '(font . ,(font-xlfd-name --default-font)))
   (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
-  (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
-
-  (doom-themes-visual-bell-config)
-
-  (load-theme 'doom-tomorrow-night t))
+  (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font)))
 
 (use-package smart-mode-line
   :straight (:host github :repo "vzarytovskii/smart-mode-line" :branch "master")
   :config
-  (setq sml/theme 'dark
+  (setq sml/theme 'respectful
         sml/no-confirm-load-theme t
+        sml/modified-char "*"
         sml/shorten-directory t
         sml/shorten-modes t)
   (sml/setup))
@@ -64,7 +71,9 @@
 
 (use-package display-line-numbers
   :ensure nil
-  :hook (prog-mode-hook . display-line-numbers-mode))
+  :hook (prog-mode-hook . display-line-numbers-mode)
+  :config
+  (setq-default display-line-numbers-width 5))
 
 (use-package mixed-pitch
   :diminish)
@@ -73,6 +82,7 @@
   :hook (after-init-hook . solaire-global-mode)
   :hook (minibuffer-setup-hook . solaire-mode-in-minibuffer)
   :config
+  (setq solaire-mode-auto-swap-bg t)
   (solaire-global-mode +1))
 
 (use-package beacon
@@ -96,12 +106,12 @@
   (goggles-mode)
   (setq-default goggles-pulse t))
 
-
 (use-package hl-line
   :hook (after-init-hook . global-hl-line-mode))
 
 (use-package highlight-indent-guides
   :delight
+  :disabled t
   :hook (prog-mode-hook . highlight-indent-guides-mode)
   :config
   (setq highlight-indent-guides-method 'character
@@ -133,9 +143,15 @@
   :ensure
   :hook (prog-mode-hook . hl-todo-mode))
 
+(use-package highlight-numbers
+  :hook (prog-mode-hook . highlight-numbers-mode))
+
 (use-package digit-groups
   :config
   (digit-groups-global-mode t))
+
+(use-package highlight-escape-sequences
+  :hook (prog-mode . hes-mode))
 
 (use-package whitespace
   :delight
