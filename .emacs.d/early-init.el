@@ -40,27 +40,6 @@
               cursor-in-non-selected-window nil
               indent-tabs-mode nil)
 
-(blink-cursor-mode -1)
-(column-number-mode t)
-(global-display-line-numbers-mode 1)
-(global-subword-mode t)
-(horizontal-scroll-bar-mode -1)
-(line-number-mode +1)
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-(size-indication-mode t)
-(toggle-scroll-bar -1)
-(tool-bar-mode -1)
-
-(when (featurep 'ns)
-      (push '(ns-transparent-titlebar . t) default-frame-alist))
-
-(push '(vertical-scroll-bars . nil) default-frame-alist)
-(push '(menu-bar-lines . 0) default-frame-alist)
-(push '(tool-bar-lines . 0) default-frame-alist)
-(push '(vertical-scroll-bars) default-frame-alist)
-
-
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; GC, JIT and native compilation setup.

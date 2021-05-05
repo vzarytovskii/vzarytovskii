@@ -9,10 +9,26 @@
 (use-package frame
   :straight nil
   :config
-  (add-to-list 'default-frame-alist
-               `((left-fringe . 1)
-                 (right-fringe . 1)
-                 (internal-border-width . 0))))
+  (blink-cursor-mode -1)
+  (column-number-mode t)
+  (global-display-line-numbers-mode 1)
+  (global-subword-mode t)
+  (horizontal-scroll-bar-mode -1)
+  (line-number-mode +1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (size-indication-mode t)
+  (toggle-scroll-bar -1)
+  (tool-bar-mode -1)
+
+  (when (featurep 'ns)
+    (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
+  (add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
+  (add-to-list 'default-frame-alist '(menu-bar-lines . 0))
+  (add-to-list 'default-frame-alist '(tool-bar-lines . 0))
+  (add-to-list 'default-frame-alist '(left-fringe . 1))
+  (add-to-list 'default-frame-alist '(right-fringe . 1))
+  (add-to-list 'default-frame-alist '(internal-border-width . 0)))
 
 (use-package all-the-icons)
 
@@ -37,15 +53,18 @@
 (use-package faces
   :straight nil
   :preface
+  (defvar --font-name
+    "Fira Code")
   (defvar --default-font
-    (font-spec :family "Fira Code" :size 12 :weight 'medium))
+    (font-spec :family --font-name :size 12 :weight 'medium))
   (defvar --fixed-pitch-font
-    (font-spec :family "Fira Code" :size 10 :weight 'light))
+    (font-spec :family --font-name :size 10 :weight 'light))
   (defvar --variable-pitch-font
-    (font-spec :family "Fira Code" :size 10 :weight 'light))
+    (font-spec :family --font-name :size 10 :weight 'light))
   :config
 
-  (add-to-list 'default-frame-alist '(font . ,(font-xlfd-name --default-font)))
+  ;; (add-to-list 'default-frame-alist '(font . (font-face-attributes --default-font)))
+
   (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font)))

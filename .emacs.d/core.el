@@ -159,13 +159,22 @@
   :config
   ;; Defaults
 
+  (setq-default major-mode 'text-mode
+                use-file-dialog nil
+                use-dialog-box t
+                cursor-type 'box
+                x-stretch-cursor t
+                cursor-in-non-selected-window nil
+                indent-tabs-mode nil)
+
+  (fset 'yes-or-no-p 'y-or-n-p)
   (setq inhibit-default-init t
         inhibit-startup-screen t
         inhibit-startup-message t
         inhibit-startup-echo-area-message t
         initial-scratch-message nil
 
-	idle-update-delay 1.1	
+	idle-update-delay 1.1
 
         scroll-margin 0
         scroll-step 1
@@ -185,7 +194,7 @@
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
         window-divider-default-places 'right-only
-        
+
 	show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
