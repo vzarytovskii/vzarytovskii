@@ -31,17 +31,6 @@
 (set-keyboard-coding-system 'utf-8-unix)
 (set-selection-coding-system 'utf-8-unix)
 
-
-(setq-default major-mode 'text-mode
-              use-file-dialog nil
-              use-dialog-box t
-              cursor-type 'box
-              x-stretch-cursor t
-              cursor-in-non-selected-window nil
-              indent-tabs-mode nil)
-
-(fset 'yes-or-no-p 'y-or-n-p)
-
 ;; GC, JIT and native compilation setup.
 (defvar file-name-handler-alist-old file-name-handler-alist)
 
