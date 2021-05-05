@@ -7,7 +7,6 @@
 ;;; Code:
 
 (use-package gcmh
-  :defer 5 
   :init
   (setq gcmh-idle-delay 5
  	gcmh-high-cons-threshold (* 64 1024 1024))
@@ -51,7 +50,6 @@
   :after use-package)
 
 (use-package async
-  :defer 5
   :init
   (setq async-bytecomp-allowed-packages '(all))
   :config
@@ -160,14 +158,7 @@
 
   :config
   ;; Defaults
-  (setq-default major-mode 'text-mode
-                use-file-dialog nil
-                use-dialog-box t
-                cursor-type 'box
-                x-stretch-cursor t
-                cursor-in-non-selected-window nil
-                indent-tabs-mode nil
-                fill-column 0)
+
   (setq inhibit-default-init t
         inhibit-startup-screen t
         inhibit-startup-message t
@@ -276,6 +267,7 @@
 (use-package hungry-delete
   :delight
   :straight (:host github :repo "nflath/hungry-delete" :branch "master")
+  ;; :straight (:host github :repo "nflath/hungry-delete" :branch "master" :build (:not compile))
   :config (global-hungry-delete-mode))
 
 (use-package expand-region

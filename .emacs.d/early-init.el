@@ -31,6 +31,15 @@
 (set-keyboard-coding-system 'utf-8-unix)
 (set-selection-coding-system 'utf-8-unix)
 
+
+(setq-default major-mode 'text-mode
+              use-file-dialog nil
+              use-dialog-box t
+              cursor-type 'box
+              x-stretch-cursor t
+              cursor-in-non-selected-window nil
+              indent-tabs-mode nil)
+
 (blink-cursor-mode -1)
 (column-number-mode t)
 (global-display-line-numbers-mode 1)
@@ -70,9 +79,9 @@
       jit-lock-defer-time 0.05
       jit-lock-stealth-time 0.2
       jit-lock-stealth-verbose nil
-      fast-but-imprecise-scrolling t
-      max-lisp-eval-depth most-positive-fixnum
-      max-specpdl-size most-positive-fixnum)
+      fast-but-imprecise-scrolling t)
+;;      max-lisp-eval-depth most-positive-fixnum
+;;      max-specpdl-size most-positive-fixnum)
 
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
       (setq comp-speed 3
