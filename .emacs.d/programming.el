@@ -35,8 +35,19 @@
 (use-package smart-jump
   ;; TODO: Use quickpeek for smart-jump-keep.
   :after dumb-jump
+  :bind (("M-." . smart-jump-go)
+         ("M-," . smart-jump-back)
+         ("M-/" . smart-jump-references)
+         ("M-?" . smart-jump-references))
   :config
   (smart-jump-setup-default-registers)
+  (smart-jump-register :modes 'lsp-ui-mode
+                       :jump-fn 'lsp-ui-peek-find-definitions
+                       :refs-fn 'lsp-ui-peek-find-references
+                       :pop-fn 'pop-tag-mark
+                       :should-jump t
+                       :heuristic 'point
+                       :async 500)
   (smart-jump-register :modes 'csharp-mode
                        :jump-fn 'omnisharp-go-to-definition
                        :pop-fn 'pop-tag-mark
@@ -95,7 +106,7 @@
 (use-package company
   :delight
   :straight (:host github :repo "company-mode/company-mode" :branch "master")
-  :hook (auto-init-hook . global-company-mode)
+  :hook (after-init-hook . global-company-mode)
   :bind (:map company-active-map
               ("C-w" . 'backward-kill-word))
   :config

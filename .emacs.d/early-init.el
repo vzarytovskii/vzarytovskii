@@ -52,11 +52,11 @@
 ;;      max-specpdl-size most-positive-fixnum)
 
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
-      (setq comp-speed 3
-            comp-deferred-compilation t
-            comp-async-jobs-number 20
-            comp-native-driver-options '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
-            comp-always-compile t))
+      (setq native-comp-speed 3
+            native-comp-deferred-compilation t
+            native-comp-async-jobs-number 20
+            native-comp-driver-options '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
+            native-comp-always-compile t))
 
 
 (add-hook 'emacs-startup-hook

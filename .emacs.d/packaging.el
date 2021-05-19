@@ -67,10 +67,10 @@
   ;; Credits: https://github.com/raxod502/straight.el/643/issues
   (unless (catch 'emacs-version-changed
             (load bootstrap-file nil 'nomessage))
-    (when (boundp 'comp-eln-load-path)
+    (when (boundp 'native-comp-eln-load-path)
       ;; remove leftovers, with confirmation just to be safe
-      (when (yes-or-no-p (format "Delete '%s'?" (car comp-eln-load-path)))
-        (delete-directory (expand-file-name (car comp-eln-load-path)) t))
+      (when (yes-or-no-p (format "Delete '%s'?" (car native-comp-eln-load-path)))
+        (delete-directory (expand-file-name (car native-comp-eln-load-path)) t))
       ;; and try again
       (load bootstrap-file nil 'nomessage))))
 
