@@ -442,38 +442,62 @@
 ;;         point-history-ignore-major-mode '(emacs-lisp-mode ruby-mode))
 ;;   (point-history-mode t))
 
-(use-package point-stack
+
+(setq jump-advised-functions
+      '(isearch-mode
+        find-function-do-it
+        find-library
+        imenu
+	isearch-forward
+        my/swiper
+        counsel-switch-buffer
+        counsel-ibuffer
+        counsel-imenu
+        counsel-recentf
+        counsel-find-file
+        dumb-jump-go
+        dumb-jump-back
+        smart-jump-go
+        smart-jump-back
+        ;; switch-to-buffer
+        ;; change-buffer
+        ;; previous-buffer
+        ;; next-buffer
+        beginning-of-buffer
+        end-of-buffer
+	backward-up-list
+	beginning-of-defun
+	end-of-defun
+	find-function
+	find-variable
+	mark-defun
+	mark-whole-buffer
+        xref-find-definitions
+        xref-find-references
+        xref-pop-marker-stack
+        xref-push-marker-stack
+        magit-diff-visit-file))
+
+(use-package point-stack ;; Alternative: jumplist (ganmacs/jumplist)
   :straight (:host github :repo "dgutov/point-stack" :branch "master")
   :bind (("M-[" . 'point-stack-pop)
          ("M-]" . 'point-stack-forward-stack-pop))
   :config
-  (setq point-stack-advised-functions
-        '(isearch-mode
-          find-function-do-it
-          find-library
-          imenu
-          my/swiper
-          counsel-switch-buffer
-          counsel-ibuffer
-          counsel-imenu
-          counsel-recentf
-          counsel-find-file
-          dumb-jump-go
-          dumb-jump-back
-          smart-jump-go
-          smart-jump-back
-          ;; switch-to-buffer
-          ;; change-buffer
-          ;; previous-buffer
-          ;; next-buffer
-          beginning-of-buffer
-          end-of-buffer
-          xref-find-definitions
-          xref-find-references
-          xref-pop-marker-stack
-          xref-push-marker-stack
-          magit-diff-visit-file))
+  (setq point-stack-advised-functions jump-advised-functions)
   (point-stack-setup-advices))
+
+(use-package jump-tree ;; TODO: Can it replace point-stack.
+  :straight (:host github :repo "vzarytovskii/jump-tree" :branch "master")
+  :init
+  (setq jump-tree-map '())
+  :hook (after-init-hook . global-jump-tree-mode)
+  :bind (:map jump-tree-map
+              ("M-\\" . jump-tree-visualize))
+  :config
+  (setq jump-tree-pos-list-record-commands jump-advised-functions
+	jump-tree-pos-list-offset-threshold 200
+	jump-tree-pos-list-switch-buffer t))
+
 
 (use-package smartparens
   :delight
