@@ -256,8 +256,7 @@
 
 (use-package sharper
   :straight (:host github :repo "sebasmonia/sharper" :branch "master")
-  :bind
-  ("M-b n" . sharper-main-transient))
+  :bind ("C-x n" . sharper-main-transient))
 
 (use-package csharp-mode
   :disabled t

@@ -453,8 +453,8 @@
         '(isearch-mode
           find-function-do-it
           find-library
-          imenu)
-        isearch-forward
+          imenu
+	  isearch-forward
         my/swiper
         counsel-switch-buffer
         counsel-ibuffer
@@ -482,7 +482,7 @@
         xref-find-references
         xref-pop-marker-stack
         xref-push-marker-stack
-        magit-diff-visit-file)
+        magit-diff-visit-file))
 
   (setq point-stack-advised-functions jump-advised-functions)
   (point-stack-setup-advices))
