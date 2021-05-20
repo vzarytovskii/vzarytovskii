@@ -257,7 +257,7 @@
 (use-package sharper
   :straight (:host github :repo "sebasmonia/sharper" :branch "master")
   :bind
-  ("C-c n" . sharper-main-transient))
+  ("M-b n" . sharper-main-transient))
 
 (use-package csharp-mode
   :disabled t
@@ -297,9 +297,7 @@
 
 (use-package fsharp-mode
   ;; :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
-  ;; :straight nil
-  ;; :load-path "~/code/elisp/emacs-fsharp-mode"
-  :after (:all dotnet lsp-mode)
+  :after (:all sharper dotnet lsp-mode)
   :commands fsharp-mode
   :hook (fsharp-mode-hook . lsp-deferred)
   :hook (fsharp-mode-hook . dotnet-mode)

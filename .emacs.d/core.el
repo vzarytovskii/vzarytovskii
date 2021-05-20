@@ -443,12 +443,18 @@
 ;;   (point-history-mode t))
 
 
-(setq jump-advised-functions
-      '(isearch-mode
-        find-function-do-it
-        find-library
-        imenu
-	isearch-forward
+(use-package point-stack ;; Alternative: jumplist (ganmacs/jumplist)
+  ;; TODO: Add fuinction which will show list of points via ivy.
+  :straight (:host github :repo "dgutov/point-stack" :branch "master")
+  :bind (("M-[" . 'point-stack-pop)
+         ("M-]" . 'point-stack-forward-stack-pop))
+  :config
+  (setq jump-advised-functions
+        '(isearch-mode
+          find-function-do-it
+          find-library
+          imenu)
+        isearch-forward
         my/swiper
         counsel-switch-buffer
         counsel-ibuffer
@@ -465,39 +471,21 @@
         ;; next-buffer
         beginning-of-buffer
         end-of-buffer
-	backward-up-list
-	beginning-of-defun
-	end-of-defun
-	find-function
-	find-variable
-	mark-defun
-	mark-whole-buffer
+        backward-up-list
+        beginning-of-defun
+        end-of-defun
+        find-function
+        find-variable
+        mark-defun
+        mark-whole-buffer
         xref-find-definitions
         xref-find-references
         xref-pop-marker-stack
         xref-push-marker-stack
-        magit-diff-visit-file))
+        magit-diff-visit-file)
 
-(use-package point-stack ;; Alternative: jumplist (ganmacs/jumplist)
-  :straight (:host github :repo "dgutov/point-stack" :branch "master")
-  :bind (("M-[" . 'point-stack-pop)
-         ("M-]" . 'point-stack-forward-stack-pop))
-  :config
   (setq point-stack-advised-functions jump-advised-functions)
   (point-stack-setup-advices))
-
-(use-package jump-tree ;; TODO: Can it replace point-stack.
-  :straight (:host github :repo "vzarytovskii/jump-tree" :branch "master")
-  :init
-  (setq jump-tree-map '())
-  :hook (after-init-hook . global-jump-tree-mode)
-  :bind (:map jump-tree-map
-              ("M-\\" . jump-tree-visualize))
-  :config
-  (setq jump-tree-pos-list-record-commands jump-advised-functions
-	jump-tree-pos-list-offset-threshold 200
-	jump-tree-pos-list-switch-buffer t))
-
 
 (use-package smartparens
   :delight
