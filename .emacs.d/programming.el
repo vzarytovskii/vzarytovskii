@@ -259,33 +259,33 @@
   :bind ("C-x n" . sharper-main-transient))
 
 (use-package csharp-mode
-  :disabled t
-  :after (:all lsp-mode company flycheck dotnet omnisharp)
+  :after (:all lsp-mode company flycheck dotnet omnisharp tree-sitter)
   :hook (csharp-mode-hook . lsp-deferred)
   :hook (csharp-mode-hook . omnisharp-mode)
   :hook (csharp-mode-hook . dotnet-mode)
   :hook (csharp-mode-hook . company-mode)
   :hook (csharp-mode-hook . flycheck-mode)
+  :hook (csharp-mode-hook . tree-sitter-alist-mode)
   :hook (csharp-mode-hook . (lambda ()
-                         (subword-mode)
-                         (setq-local fill-function-arguments-first-argument-same-line t)
-                         (setq-local fill-function-arguments-second-argument-same-line nil)
-                         (setq-local fill-function-arguments-last-argument-same-line t)
-                         (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
+                              (subword-mode)
+                              (setq-local fill-function-arguments-first-argument-same-line t)
+                              (setq-local fill-function-arguments-second-argument-same-line nil)
+                              (setq-local fill-function-arguments-last-argument-same-line t)
+                              (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
   :config
-  (setq lsp-csharp-server-path "~/code/csharp/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio")
+  ;; (setq lsp-csharp-server-path "~/code/csharp/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio")
   (setq indent-tabs-mode nil
         c-syntactic-indentation t
+        c-set-style "ellemtel"
         c-basic-offset 4
         truncate-lines t
         tab-width 4)
   (electric-pair-local-mode 1))
 
 (use-package omnisharp
-  :disabled t
   :after (:all company flycheck)
   :hook (omnisharp-mode-hook . company-mode)
-  :hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
+  ;;:hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
   :preface
   (setq omnisharp-auto-complete-want-documentation nil
         omnisharp-eldoc-support t
@@ -311,7 +311,7 @@
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
-        lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
+        ;;lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
         lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
@@ -379,7 +379,7 @@
      buffers))
 
   :config
-  (setq projectile-project-search-path '("~/code/")
+  (setq projectile-project-search-path '("/mnt/c/Users/vlza/code/")
         projectile-auto-discover t
         projectile-enable-caching t
         projectile-indexing-method 'alien

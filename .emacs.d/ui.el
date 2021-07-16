@@ -48,7 +48,7 @@
 
   (doom-themes-visual-bell-config)
 
-  (load-theme 'doom-tomorrow-night t))
+  (load-theme 'doom-one t))
 
 (use-package faces
   :straight nil
@@ -99,7 +99,6 @@
 
 (use-package solaire-mode
   :hook (after-init-hook . solaire-global-mode)
-  :hook (minibuffer-setup-hook . solaire-mode-in-minibuffer)
   :config
   (setq solaire-mode-auto-swap-bg t)
   (solaire-global-mode +1))
@@ -289,8 +288,8 @@ FACE defaults to inheriting from default and highlight."
     (add-hook 'common-lisp-mode-hook #'parinfer-mode)
     (add-hook 'lisp-mode-hook #'parinfer-mode)))
 
-(use-package rainbow-delimiters
-  :hook (prog-mode-hook . rainbow-delimiters-mode))
+;;(use-package rainbow-delimiters
+;;  :hook (prog-mode-hook . rainbow-delimiters-mode))
 
 (use-package awesome-pair
   :straight (:host github :repo "manateelazycat/awesome-pair" :branch "master")

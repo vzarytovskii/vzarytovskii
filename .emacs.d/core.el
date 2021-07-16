@@ -208,6 +208,11 @@
         show-paren-style 'parenthesis
         frame-resize-pixelwise t))
 
+(use-package dired
+  :straight nil
+  :config
+  (setq dired-kill-when-opening-new-dired-buffer t))
+
 (use-package fast-scroll
   :delight
   :disabled t

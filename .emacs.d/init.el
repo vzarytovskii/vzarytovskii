@@ -27,5 +27,10 @@
 ;; Load actual config
 (load-user "config.el")
 
+(message "*** Emacs loaded in %s with %d garbage collections."
+  (format "%.2f seconds"
+    (float-time
+      (time-subtract after-init-time before-init-time))) gcs-done)
+
 (provide 'init)
 ;;; init.el ends here

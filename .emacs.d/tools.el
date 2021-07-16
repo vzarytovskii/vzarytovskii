@@ -83,7 +83,7 @@ If ALL is non-nil, `swiper-all' is run."
 
 (use-package ivy-prescient
   :after (:all ivy prescient)
-  :config 
+  :config
   (setq ivy-prescient-sort-commands
         '(:not swiper
                counsel-grep
@@ -92,7 +92,7 @@ If ALL is non-nil, `swiper-all' is run."
                ivy-switch-buffer
                counsel-switch-buffer))
 
-    (setq ivy-prescient-retain-classic-highlighting t)
+  (setq ivy-prescient-retain-classic-highlighting t)
   (ivy-prescient-mode +1))
 
 (use-package ivy-rich
