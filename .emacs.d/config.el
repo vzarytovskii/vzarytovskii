@@ -24,5 +24,8 @@
 ;; Programming confg
 (load-user "programming.el")
 
+;; Misc (telegram, mail, calendar, etc0
+(load-user "misc.el")
+
 (provide 'config)
 ;;; config.el ends here

@@ -69,6 +69,8 @@
   (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
   (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font)))
 
+(use-package visual-fill-column)
+
 (use-package smart-mode-line
   :straight (:host github :repo "vzarytovskii/smart-mode-line" :branch "master")
   :config
@@ -263,6 +265,9 @@ FACE defaults to inheriting from default and highlight."
   ;; TODO: Use ob to show off-screen parens
   (advice-add #'show-paren-function :after #'show-paren-off-screen)
   :hook (after-init-hook . show-paren-mode))
+
+(use-package rainbow-identifiers
+  :hook (prog-mode-hook . rainbow-identifiers-mode))
 
 (use-package smartparens
   :delight
