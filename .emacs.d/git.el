@@ -60,7 +60,10 @@
   :config
   (add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode))
 
-(use-package github-explorer)
+(use-package graphql)
+
+(use-package github-explorer
+  :after graphql)
 
 (use-package github-review
   :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
