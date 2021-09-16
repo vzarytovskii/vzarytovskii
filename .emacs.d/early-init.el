@@ -34,6 +34,9 @@
 ;; GC, JIT and native compilation setup.
 (defvar file-name-handler-alist-old file-name-handler-alist)
 
+(defvar default-gc-cons-threshold)
+(setq default-gc-cons-threshold 67108864) ; 64mb
+
 (setq gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6
       frame-inhibit-implied-resize t
@@ -55,14 +58,15 @@
       (setq native-comp-speed 3
             native-comp-deferred-compilation t
             native-comp-async-jobs-number 20
-            native-comp-driver-options '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
+            native-comp-driver-options '("-march=native" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
+            native-comp-compiler-options '("-march=native" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
             native-comp-always-compile t))
 
 
 (add-hook 'emacs-startup-hook
           `(lambda ()
              (setq file-name-handler-alist file-name-handler-alist-old
-                   gc-cons-threshold 67108864 ; 64mb
+                   gc-cons-threshold default-gc-cons-threshold ; 64mb
                    gc-cons-percentage 0.1)
              (garbage-collect)) t)
 
@@ -79,7 +83,7 @@
   (setq gc-cons-threshold most-positive-fixnum))
 
 (defun restore-garbage-collection-h ()
-  (run-at-time 1 nil (lambda () (setq gc-cons-threshold 67108864))))
+  (run-at-time 1 nil (lambda () (setq gc-cons-threshold default-gc-cons-threshold))))
 
 (add-hook 'minibuffer-setup-hook #'defer-garbage-collection-h)
 (add-hook 'minibuffer-exit-hook #'restore-garbage-collection-h)
