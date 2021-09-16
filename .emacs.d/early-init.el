@@ -58,8 +58,8 @@
       (setq native-comp-speed 3
             native-comp-deferred-compilation t
             native-comp-async-jobs-number 20
-            native-comp-driver-options '("-march=native" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
-            native-comp-compiler-options '("-march=native" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
+            native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
+            native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
             native-comp-always-compile t))
 
 
