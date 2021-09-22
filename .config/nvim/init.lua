@@ -1,5 +1,5 @@
 -- require('impatient')
-arequire'plugins'
+require'plugins'
 
 -- Load .nvimrc manually until this PR is merged.
 -- https://github.com/neovim/neovim/pull/13503
