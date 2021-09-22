@@ -6,17 +6,18 @@ end
 
 vim.cmd [[packadd packer.nvim]]
 
-require('packer').init {
-  config = {
-    compile_path = vim.fn.stdpath('config')..'/lua/packer_compiled.lua'
-  },
-  profile = { enable = true }
-}
-
-require('packer').startup(function()
+require('packer').startup({function()
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
-end)
+end,
+config = {
+  compile_path = vim.fn.stdpath('config')..'/lua/packer_compiled.lua',
+  display = {
+    open_fn = function()
+      return require('packer.util').float({ border = 'single' })
+    end
+  }
+}})
 
 vim.cmd([[
   augroup packer_user_config
