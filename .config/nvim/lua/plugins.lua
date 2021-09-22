@@ -9,6 +9,7 @@ vim.cmd [[packadd packer.nvim]]
 require('packer').startup({function()
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
+  use 'hoob3rt/lualine.nvim'
 end,
 config = {
   compile_path = vim.fn.stdpath('config')..'/lua/packer_compiled.lua',
