@@ -14,11 +14,8 @@
   (message "Native complation is *not* available"))
 
 (if (functionp 'json-serialize)
-  (message "Native JSON is available")
+    (message "Native JSON is available")
   (message "Native JSON is *not* available"))
-
-(setq package-enable-at-startup nil
-      package-quickstart t)
 
 (when (display-graphic-p)
   (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
