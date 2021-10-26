@@ -264,7 +264,7 @@
 
 (use-package so-long
   :ensure nil
-  :hook (after-init . global-so-long-mode))
+  :hook (after-init-hook . global-so-long-mode))
 
 (use-package vlf
   :defer t
@@ -536,8 +536,8 @@
   :ensure nil
   :if (and (executable-find "aspell") *spell-check-support-enabled*)
   ;; Add spell-checking in comments for all programming language modes
-  :hook ((prog-mode . flyspell-prog-mode)
-         (flyspell-mode . (lambda ()
+  :hook ((prog-mode-hook . flyspell-prog-mode)
+         (flyspell-mode-hook . (lambda ()
                             (dolist (key '("C-;" "C-."))
                               (unbind-key key flyspell-mode-map)))))
   :init

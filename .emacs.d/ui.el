@@ -232,7 +232,7 @@
   (digit-groups-global-mode t))
 
 (use-package highlight-escape-sequences
-  :hook (prog-mode . hes-mode))
+  :hook (prog-mode-hook . hes-mode))
 
 (use-package whitespace
   :delight
@@ -378,9 +378,9 @@ FACE defaults to inheriting from default and highlight."
                ("M-n" . 'awesome-pair-jump-right)
                ("M-p" . 'awesome-pair-jump-left)
                ("M-RET" . 'awesome-pair-jump-out-pair-and-newline)))
-  :hook (((prog-mode web-mode conf-mode yaml-mode editorconfig-mode vue-mode) . awesome-pair-mode)
-         ((c++-mode java-mode rust-mode) . (lambda () (local-set-key (kbd "<") '+prog/insert-angle)))
-         (rust-mode . (lambda () (local-set-key (kbd "|") '+prog/insert-rust-closure))))
+  :hook (((prog-mode-hook web-mode-hook conf-mode-hook yaml-mode-hook editorconfig-mode-hook vue-mode-hook) . awesome-pair-mode)
+         ((c++-mode-hook java-mode-hook rust-mode-hook) . (lambda () (local-set-key (kbd "<") '+prog/insert-angle)))
+         (rust-mode-hook . (lambda () (local-set-key (kbd "|") '+prog/insert-rust-closure))))
   :config
   (defun awesome-pair-in-string-p-advice (&optional state)
     (unless (or (bobp) (eobp))

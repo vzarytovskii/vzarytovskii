@@ -116,7 +116,7 @@
 
 (use-package company-quickhelp
   :after company
-  :hook (global-company-mode . company-quickhelp-mode)
+  :hook (global-company-mode-hook . company-quickhelp-mode)
   :config
   (setq pos-tip-use-relative-coordinates t
         company-quickhelp-delay 0.3))
