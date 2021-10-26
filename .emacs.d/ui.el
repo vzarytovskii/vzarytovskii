@@ -232,7 +232,7 @@
   (digit-groups-global-mode t))
 
 (use-package highlight-escape-sequences
-  :hook (prog-mode-hook . hes-mode))
+  :hook (after-init-hook . hes-mode))
 
 (use-package whitespace
   :delight

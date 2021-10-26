@@ -6,6 +6,9 @@
 
 ;;; Code:
 
+(use-package git-modes
+  :defer t)
+
 (use-package magit
   :commands (magit magit-status magit-blame magit-mode magit-file-popup)
   :bind (("C-x g" . magit-status)
@@ -73,7 +76,9 @@
 
 (use-package git-blamed)
 
-(use-package git-timemachine)
+(use-package git-timemachine
+  :bind ("C-x v t" . git-timemachine-toggle))
+
 
 (use-package git-messenger
   :init (setq git-messenger:show-detail t)
