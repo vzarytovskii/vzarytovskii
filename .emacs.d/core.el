@@ -7,6 +7,7 @@
 ;;; Code:
 
 (use-package gcmh
+  :delight
   :init
   (setq gcmh-idle-delay 5
  	gcmh-high-cons-threshold (* 64 1024 1024))
@@ -47,7 +48,7 @@
   :hook (after-init-hook . savehist-mode))
 
 (use-package super-save
-  :diminish
+  :delight
   :defer 0.5
   :config
   (add-to-list 'super-save-triggers 'switch-window)
@@ -89,6 +90,7 @@
 
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
+  :delight auto-revert-mode
   :bind (("C-z"             . nil)
          ("C-x C-z"         . nil)
          ("C-h h"           . nil)
@@ -532,9 +534,9 @@
 
 ;; Spelling
 (use-package flyspell
-  :diminish
+  :delight
   :ensure nil
-  :if (and (executable-find "aspell") *spell-check-support-enabled*)
+  :if (executable-find "aspell")
   ;; Add spell-checking in comments for all programming language modes
   :hook ((prog-mode-hook . flyspell-prog-mode)
          (flyspell-mode-hook . (lambda ()

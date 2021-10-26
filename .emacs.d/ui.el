@@ -272,6 +272,7 @@
   :hook (prog-mode-hook . unicode-troll-stopper-mode))
 
 (use-package aggressive-indent
+  :delight
   :hook (emacs-lisp-mode-hook . aggressive-indent-mode)
   :hook (csharp-mode-hook . aggressive-indent-mode)
   :hook (fsharp-mode-hook . aggressive-indent-mode)

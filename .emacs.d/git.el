@@ -86,7 +86,7 @@
               ("p" . git-messenger:popup-message)))
 
 (use-package git-gutter-fringe
-  :delight
+  :delight git-gutter-mode
   :hook (after-init-hook . global-git-gutter-mode)
   :init (setq git-gutter:visual-line t
               git-gutter:disabled-modes '(asm-mode image-mode)
