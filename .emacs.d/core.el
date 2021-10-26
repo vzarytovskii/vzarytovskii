@@ -46,6 +46,16 @@
   (setq savehist-save-minibuffer-history t)
   :hook (after-init-hook . savehist-mode))
 
+(use-package super-save
+  :diminish
+  :defer 0.5
+  :config
+  (add-to-list 'super-save-triggers 'switch-window)
+  (setq super-save-idle-duration 1)
+  (setq super-save-auto-save-when-idle t)
+  (setq save-silently t)
+  (super-save-mode 1))
+
 (use-package delight
   :after use-package)
 
@@ -251,6 +261,22 @@
 (use-package popwin)
 
 ;; Editing and navigation (including windows navigation, dwim/mwin, mc, etc):
+
+(use-package so-long
+  :ensure nil
+  :hook (after-init . global-so-long-mode))
+
+(use-package vlf
+  :defer t
+  :preface
+  (defun ffap-vlf ()
+    "Find file at point with VLF."
+    (interactive)
+    (require 'ffap)
+    (let ((file (ffap-file-at-point)))
+      (unless (file-exists-p file)
+        (error "File does not exist: %s" file))
+      (vlf file))))
 
 (use-package recentf
   :ensure nil
@@ -503,6 +529,28 @@
   (adaptive-fill-regexp "[ t]+|[ t]*([0-9]+.|*+)[ t]*")
   (adaptive-fill-first-line-regexp "^* *$")
   (sentence-end "\\([。、！？]\\|……\\|[,.?!][]\"')}]*\\($\\|[ \t]\\)\\)[ \t\n]*"))
+
+;; Spelling
+(use-package flyspell
+  :diminish
+  :ensure nil
+  :if (and (executable-find "aspell") *spell-check-support-enabled*)
+  ;; Add spell-checking in comments for all programming language modes
+  :hook ((prog-mode . flyspell-prog-mode)
+         (flyspell-mode . (lambda ()
+                            (dolist (key '("C-;" "C-."))
+                              (unbind-key key flyspell-mode-map)))))
+  :init
+  (setq flyspell-issue-message-flag nil
+        ispell-program-name "aspell"
+        ispell-extra-args '("--sug-mode=fast" "--lang=en_US" "--camel-case")
+        ispell-personal-dictionary
+        (expand-file-name "en_US.personal" "~/.config/aspell/")))
+
+;; Correcting words with flyspell via completing-read
+(use-package flyspell-correct
+  :after flyspell
+  :bind (:map flyspell-mode-map ("C-," . flyspell-correct-wrapper)))
 
 (provide 'core)
 ;;; config.el ends here

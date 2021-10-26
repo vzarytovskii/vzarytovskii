@@ -334,6 +334,17 @@
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 
+(use-package json-mode
+  :mode "\\.json\\'")
+
+(use-package json-reformat
+  :bind (:map json-mode-map
+              ("C-c C-f" . json-reformat-region))
+  :after json-mode)
+
+(use-package json-snatcher
+  :after json-mode)
+
 (use-package projectile
   :delight
   :hook (after-init-hook . projectile-mode)
