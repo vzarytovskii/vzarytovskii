@@ -178,9 +178,11 @@
   :after tree-sitter)
 
 ;; LSP Configuration:
+
+(use-package lsp-treemacs)
+
 (use-package lsp-mode
   :delight
-  :straight (:host github :repo "emacs-lsp/lsp-mode" :branch "master")
   :commands (lsp lsp-deferred)
   :config
   (setq max-specpdl-size 32000) ;; A workaround when running gccemacs in WSL

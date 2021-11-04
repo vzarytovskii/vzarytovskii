@@ -7,9 +7,13 @@ end
 vim.cmd [[packadd packer.nvim]]
 
 require('packer').startup({function()
+-- General
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
-  use 'hoob3rt/lualine.nvim'
+
+-- UI
+  use "projekt0n/github-nvim-theme"
+  use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
 end,
 config = {
   compile_path = vim.fn.stdpath('config')..'/lua/packer_compiled.lua',
