@@ -68,8 +68,16 @@
 (use-package github-explorer
   :after graphql)
 
+;; Have multiple packages for PR handling, just to test them out.
 (use-package github-review
   :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
+
+(use-package code-review
+  :after (:all magit forge))
+
+(use-package pr-review
+  :straight (:host github :repo "blahgeek/emacs-pr-review" :files (:defaults "graphql"))
+  :after (:all magit forge)) 
 
 (use-package git-link
   :bind (("C-x C-g i")))
@@ -98,8 +106,6 @@
   :bind (("C-c v =" . git-gutter:popup-hunk)
          ("C-c p" . git-gutter:previous-hunk)
          ("C-c n" . git-gutter:next-hunk)))
-
-(use-package gitattributes-mode)
 
 (use-package gitconfig-mode)
 
