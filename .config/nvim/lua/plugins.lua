@@ -14,6 +14,14 @@ require('packer').startup({function()
 -- UI
   use "projekt0n/github-nvim-theme"
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
+
+-- LSP & Autocompletion
+  use 'neovim/nvim-lspconfig'
+  use 'williamboman/nvim-lsp-installer'
+  use 'hrsh7th/nvim-cmp'
+  use 'hrsh7th/cmp-nvim-lsp'
+  use 'saadparwaiz1/cmp_luasnip'
+  use 'L3MON4D3/LuaSnip'
 end,
 config = {
   compile_path = vim.fn.stdpath('config')..'/lua/packer_compiled.lua',

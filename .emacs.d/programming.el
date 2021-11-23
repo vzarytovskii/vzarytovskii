@@ -313,12 +313,12 @@
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
-        ;;lsp-fsharp-server-install-dir "~/code/fsharp/FsAutoComplete/bin/release_netcore/"
+        lsp-fsharp-server-install-dir "~/fsac/"
         lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
-        lsp-fsharp-union-case-stub-generation t
+        lrsp-fsharp-union-case-stub-generation t
         lsp-fsharp-union-case-stub-generation-body "failwith \"TODO\""
         lsp-fsharp-record-stub-generation t
         lsp-fsharp-record-stub-generation-body "failwith \"TODO\""
