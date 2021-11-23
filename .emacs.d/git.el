@@ -25,6 +25,8 @@
           (unpushed . show)
           (untracked . show)
           (unstaged . show)
+          (pullreqs . show)
+          (issues . show)
           (stashes . hide)
           (todos . show)
           (recent . show)))

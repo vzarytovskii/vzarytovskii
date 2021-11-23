@@ -66,3 +66,5 @@
 	conflictStyle = diff3
 [init]
 	templatedir = ~/.git-templates
+[forge]
+	remote = upstream
