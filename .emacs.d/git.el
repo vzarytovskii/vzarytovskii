@@ -107,10 +107,6 @@
          ("C-c p" . git-gutter:previous-hunk)
          ("C-c n" . git-gutter:next-hunk)))
 
-(use-package gitconfig-mode)
-
-(use-package gitignore-mode)
-
 (use-package diff-hl
   :disabled t
   :config
