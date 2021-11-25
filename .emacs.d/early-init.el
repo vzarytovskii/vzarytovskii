@@ -43,7 +43,7 @@
 (setq garbage-collection-messages t
       comp-deferred-compilation nil
       gc-cons-threshold most-positive-fixnum
-      gc-cons-percentage 0.6
+      gc-cons-percentage 0.9
       frame-inhibit-implied-resize t
       file-name-handler-alist nil
       inhibit-compacting-font-caches t
@@ -60,19 +60,19 @@
 ;;      max-specpdl-size most-positive-fixnum)
 
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
-      (setq native-comp-speed 3
-            native-comp-deferred-compilation nil
-            native-comp-async-jobs-number 20
-            native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
-            native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
-            native-comp-always-compile t))
+  (setq native-comp-speed 3
+        native-comp-deferred-compilation nil
+        native-comp-async-jobs-number 20
+        native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
+        native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
+        native-comp-always-compile t))
 
 
 (add-hook 'emacs-startup-hook
           `(lambda ()
              (setq file-name-handler-alist file-name-handler-alist-old
                    gc-cons-threshold default-gc-cons-threshold
-                   gc-cons-percentage 0.1)
+                   gc-cons-percentage 0.5)
              (garbage-collect)) t)
 
 ;; GC automatically while unfocusing the frame
