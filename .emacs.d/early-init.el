@@ -17,6 +17,12 @@
     (message "Native JSON is available")
   (message "Native JSON is *not* available"))
 
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (message "*** Emacs loaded in %s seconds with %d garbage collections."
+      (emacs-init-time "%.2f")
+      gcs-done)))
+
 (when (display-graphic-p)
   (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
 
@@ -32,9 +38,10 @@
 (defvar file-name-handler-alist-old file-name-handler-alist)
 
 (defvar default-gc-cons-threshold)
-(setq default-gc-cons-threshold 67108864) ; 64mb
+(setq default-gc-cons-threshold (* 128 1024 1024)) ; 128mb
 
-(setq gc-cons-threshold most-positive-fixnum
+(setq comp-deferred-compilation nil
+      gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6
       frame-inhibit-implied-resize t
       file-name-handler-alist nil
@@ -53,7 +60,7 @@
 
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
       (setq native-comp-speed 3
-            native-comp-deferred-compilation t
+            native-comp-deferred-compilation nil
             native-comp-async-jobs-number 20
             native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
             native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
