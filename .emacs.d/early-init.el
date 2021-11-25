@@ -40,7 +40,8 @@
 (defvar default-gc-cons-threshold)
 (setq default-gc-cons-threshold (* 512 1024 1024)) ; 512mb
 
-(setq comp-deferred-compilation nil
+(setq garbage-collection-messages t
+      comp-deferred-compilation nil
       gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6
       frame-inhibit-implied-resize t
