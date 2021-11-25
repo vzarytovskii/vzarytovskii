@@ -160,6 +160,30 @@
 (use-package mixed-pitch
   :diminish)
 
+(use-package dimmer
+  :config
+  (setq dimmer-exclusion-predicates '(window-minibuffer-p)
+        dimmer-exclusion-regexp-list '("^\\*Minibuf-[0-9]+\\*" "^*Messages*")
+        dimmer-fraction 0.35)
+  (defun dimmer-off ()
+    (dimmer-process-all)
+    (dimmer-mode -1))
+
+  (defun dimmer-on ()
+    (dimmer-mode 1)
+    (dimmer-process-all))
+
+  (add-hook 'focus-out-hook #'dimmer-off)
+  (add-hook 'focus-in-hook  #'dimmer-on)
+  (add-hook 'minibuffer-setup-hook #'dimmer-off)
+  (add-hook 'minibuffer-exit-hook  #'dimmer-on)
+
+  (dimmer-mode t))
+
+  (dimmer-configure-which-key)
+  (dimmer-configure-org)
+  (dimmer-configure-posframe))
+
 (use-package solaire-mode
   :hook (after-init-hook . solaire-global-mode)
   :config
