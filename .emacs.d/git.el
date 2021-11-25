@@ -54,7 +54,7 @@
 
 (use-package magit-delta
   :delight
-  :if (executable-find "git-delta")
+  :if (executable-find "delta")
   :after magit
   :config
   (setq magit-delta-hide-plus-minus-markers nil)
