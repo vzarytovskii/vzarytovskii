@@ -9,21 +9,13 @@
 (use-package esup
   :ensure)
 
-(use-package gcmh
-  :delight
-  :init
-  (setq gcmh-idle-delay 5
- 	gcmh-high-cons-threshold (* 512 1024 1024))
-  :config
-  (gcmh-mode))
-
 (use-package auto-package-update
   :if (not (daemonp))
   :custom
   (auto-package-update-interval 7) ;; in days
   (auto-package-update-prompt-before-update t)
   (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results t)
+  (auto-package-update-hide-results nil)
   :config
   (auto-package-update-maybe))
 
