@@ -66,6 +66,7 @@
 
 (use-package flycheck
   :delight
+  :defer t
   :hook (after-init-hook . global-flycheck-mode)
   :config
   (setq flycheck-highlighting-mode 'sexps))

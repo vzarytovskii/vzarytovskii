@@ -38,7 +38,7 @@
 (defvar file-name-handler-alist-old file-name-handler-alist)
 
 (defvar default-gc-cons-threshold)
-(setq default-gc-cons-threshold (* 128 1024 1024)) ; 128mb
+(setq default-gc-cons-threshold (* 512 1024 1024)) ; 512mb
 
 (setq comp-deferred-compilation nil
       gc-cons-threshold most-positive-fixnum
@@ -70,7 +70,7 @@
 (add-hook 'emacs-startup-hook
           `(lambda ()
              (setq file-name-handler-alist file-name-handler-alist-old
-                   gc-cons-threshold default-gc-cons-threshold ; 64mb
+                   gc-cons-threshold default-gc-cons-threshold
                    gc-cons-percentage 0.1)
              (garbage-collect)) t)
 

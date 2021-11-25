@@ -10,6 +10,7 @@
   :defer t)
 
 (use-package magit
+  :defer t
   :commands (magit magit-status magit-blame magit-mode magit-file-popup)
   :bind (("C-x g" . magit-status)
          ("C-x C-g r" . magit-run)
@@ -53,6 +54,7 @@
 
 (use-package magit-delta
   :delight
+  :if (executable-find "git-delta")
   :after magit
   :config
   (setq magit-delta-hide-plus-minus-markers nil)
@@ -79,7 +81,7 @@
 
 (use-package pr-review
   :straight (:host github :repo "blahgeek/emacs-pr-review" :files (:defaults "graphql"))
-  :after (:all magit forge)) 
+  :after (:all magit forge))
 
 (use-package git-link
   :bind (("C-x C-g i")))
@@ -152,14 +154,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
        "Save and bury buffer" :color blue)
       ("q" nil "cancel" :color blue)))
   :hook ((find-file-hook . (lambda ()
-                        (save-excursion
-                          (goto-char (point-min))
-                          (when (re-search-forward "^<<<<<<< " nil t)
-                            (smerge-mode 1)))))
+                             (save-excursion
+                               (goto-char (point-min))
+                               (when (re-search-forward "^<<<<<<< " nil t)
+                                 (smerge-mode 1)))))
          (magit-diff-visit-file . (lambda ()
                                     (when smerge-mode
                                       (smerge-hydra/body))))))
 
+;; TODO:Move to common packages
 (use-package transient
   :config
   (setq transient-default-level 5))

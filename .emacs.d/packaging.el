@@ -17,8 +17,7 @@
   (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
   (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
 
-  (setq package-enable-at-startup nil
-        package-quickstart t
+  (setq package-quickstart t
         gnutls-algorithm-priority  "NORMAL:-VERS-TLS1.3"
         package-archive-priorities
         '(("melpa" .  500)
@@ -26,6 +25,7 @@
           ("elpa" . 300)
           ("org" . 200)
           ("gnu" . 100)))
+
   ;; Initialise the packages, avoiding a re-initialisation.
   (unless (bound-and-true-p package--initialized)
     (setq package-enable-at-startup nil)
@@ -53,7 +53,7 @@
   (setq-default use-package-always-demand t
                 use-package-always-defer nil
                 use-package-always-ensure nil
-                use-package-expand-minimally nil
+                use-package-expand-minimally t
                 use-package-enable-imenu-support t
                 use-package-compute-statistics nil
                 use-package-hook-name-suffix nil)

@@ -6,6 +6,9 @@
 
 ;;; Code:
 
+(use-package esup
+  :ensure)
+
 (use-package gcmh
   :delight
   :init
