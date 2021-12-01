@@ -11,5 +11,5 @@ configuration {
 	show-icons: false;
 	sidebar-mode: false;
 	matching: "fuzzy";
-	theme: "oneliner";
 }
+@theme "oneliner"

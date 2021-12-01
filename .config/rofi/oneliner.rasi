@@ -7,7 +7,7 @@
     background-color:      Black;
     border-color:          White;
     text-color:           #cccccc;
-    font:            "JetBrains Mono 8";
+    font:            "JetBrains Mono 14";
 }
 
 prompt {
