@@ -198,7 +198,7 @@
 
 (use-package goggles
   :delight
-  :straight (:host github :repo "minad/goggles" :branch "master")
+  :straight (:host github :repo "minad/goggles" :branch "main")
   :config
   (goggles-mode)
   (setq-default goggles-pulse t))
