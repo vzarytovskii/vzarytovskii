@@ -314,7 +314,7 @@
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
-        lsp-fsharp-server-install-dir "~/fsac/"
+        ;; lsp-fsharp-server-install-dir "~/fsac/"
         lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
@@ -393,7 +393,7 @@
      buffers))
 
   :config
-  (setq projectile-project-search-path '("/mnt/c/Users/vlza/code/")
+  (setq projectile-project-search-path '("~/code/")
         projectile-auto-discover t
         projectile-enable-caching t
         projectile-indexing-method 'alien

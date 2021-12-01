@@ -111,17 +111,57 @@
   :config
   (modus-themes-load-vivendi))
 
+(use-package theme-changer
+  :after modus-themes
+  :init
+  (setq calendar-location-name "Prague, CR"
+        calendar-latitude 50.0755
+        calendar-longitude 14.4378)
+  :config
+  (change-theme 'modus-operandi 'modus-vivendi))
+
 (use-package faces
   :straight nil
   :preface
+
+  (defun my-dpi ()
+    (let* ((attrs (car (display-monitor-attributes-list)))
+           (size (assoc 'mm-size attrs))
+           (sizex (cadr size))
+           (res (cdr (assoc 'geometry attrs)))
+           (resx (- (caddr res) (car res)))
+           dpi)
+      (catch 'exit
+        ;; in terminal
+        (unless sizex
+          (throw 'exit 10))
+        ;; on big screen
+        (when (> sizex 1000)
+          (throw 'exit 10))
+        ;; DPI
+        (* (/ (float resx) sizex) 25.4))))
+
+   (defun my-preferred-font-size ()
+     (let ( (dpi (my-dpi)) )
+       (message "DPI: %d" dpi)
+       (cond
+         ((< dpi 110) 11)
+         ((< dpi 130) 12)
+         ((< dpi 160) 13)
+       (t 14))))
+
+  (defvar my-preferred-font-size (my-preferred-font-size))
+
+  (message "Preferred font size: %d" my-preferred-font-size)
+
   (defvar --font-name
     "Fira Code")
   (defvar --default-font
-    (font-spec :family --font-name :size 12 :weight 'medium))
+    (font-spec :family --font-name :size my-preferred-font-size :weight 'medium))
   (defvar --fixed-pitch-font
-    (font-spec :family --font-name :size 10 :weight 'light))
+    (font-spec :family --font-name :size my-preferred-font-size :weight 'light))
   (defvar --variable-pitch-font
-    (font-spec :family --font-name :size 10 :weight 'light))
+    (font-spec :family --font-name :size my-preferred-font-size :weight 'light))
   :config
 
   ;; (add-to-list 'default-frame-alist '(font . (font-face-attributes --default-font)))
