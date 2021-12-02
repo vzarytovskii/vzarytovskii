@@ -10,6 +10,6 @@ configuration {
 	width: 100;
 	show-icons: false;
 	sidebar-mode: false;
-	matching: "fuzzy";
+	matching: "normal";
 }
 @theme "oneliner"

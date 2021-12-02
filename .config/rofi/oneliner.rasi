@@ -34,6 +34,7 @@ prompt {
     layout:     horizontal;
     spacing:    5px;
     lines:      100;
+    background-color: transparent;
 }
 
 #entry {
@@ -41,10 +42,11 @@ prompt {
     width:      10em;
 }
 
-#element {
+element {
     padding: 0px 2px;
 }
 
-#element selected {
-    background-color: #444444;
+element selected {
+   text-color: #ffffff; 
+   background-color: #ffffff;
 }

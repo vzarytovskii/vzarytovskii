@@ -105,7 +105,6 @@ c.colors.tabs.selected.even.fg = "#cccccc"
 c.colors.tabs.selected.odd.bg = "#121212"
 c.colors.tabs.selected.odd.fg = "#cccccc"
 c.colors.webpage.bg = "black"
-c.colors.webpage.prefers_color_scheme_dark = True
 
 c.completion.cmd_history_max_items = 100
 c.completion.delay = 0
@@ -168,7 +167,7 @@ c.content.local_storage = True
 c.content.mouse_lock = "ask"
 c.content.mute = True
 c.content.netrc_file = None
-c.content.notifications = "ask"
+c.content.notifications.enabled = False
 c.content.pdfjs = True
 c.content.persistent_storage = "ask"
 c.content.plugins = False
@@ -177,8 +176,7 @@ c.content.private_browsing = False
 c.content.proxy = "system"
 c.content.proxy_dns_requests = True
 c.content.register_protocol_handler = "ask"
-c.content.site_specific_quirks = True
-c.content.ssl_strict = "ask"
+c.content.site_specific_quirks.enabled = True
 c.content.user_stylesheets = []
 c.content.webgl = True
 c.content.webrtc_ip_handling_policy = "all-interfaces"
@@ -403,7 +401,7 @@ c.url.yank_ignored_parameters = [
 c.window.hide_decoration = True
 c.window.title_format = "{perc}{current_title}{title_sep}"
 
-c.zoom.default = "100%"
+c.zoom.default = "150%"
 c.zoom.levels = [
     "25%",
     "33%",
