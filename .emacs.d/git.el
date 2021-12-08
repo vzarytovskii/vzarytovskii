@@ -117,7 +117,7 @@
   (global-diff-hl-mode))
 
 (use-package smerge-mode
-  :delight
+  :after hydra
   :preface
   (with-eval-after-load 'hydra
     (defhydra smerge-hydra
@@ -158,9 +158,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                (goto-char (point-min))
                                (when (re-search-forward "^<<<<<<< " nil t)
                                  (smerge-mode 1)))))
-         (magit-diff-visit-file . (lambda ()
-                                    (when smerge-mode
-                                      (smerge-hydra/body))))))
+         (magit-diff-visit-file-hook . (lambda ()
+                                         (when smerge-mode
+                                           (smerge-hydra/body))))))
 
 ;; TODO:Move to common packages
 (use-package transient
