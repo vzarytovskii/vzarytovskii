@@ -251,7 +251,15 @@
         lsp-ui-imenu-enable t
         lsp-ui-imenu-kind-position 'top))
 
-;; Language-specific configs:
+(use-package ruled-switch-buffer
+  :straight (:host github :repo "kzkn/ruled-switch-buffer" :branch "main")
+  :config
+  (ruled-switch-buffer-define fs-to-fsi
+                              :matcher (lambda (fn) (string-match ".fs$" fn))
+                              :mappers (lambda (fn) (replace-regexp-in-string "\\.fs$" ".fsi" fn)))
+  (ruled-switch-buffer-define fsi-to-fs
+                              :matcher (lambda (fn) (string-match ".fsi$" fn))
+                              :mappers (lambda (fn) (replace-regexp-in-string "\\.fsi$" ".fs" fn))));; Language-specific configs:
 ;; .NET
 (use-package dotnet
   :config
