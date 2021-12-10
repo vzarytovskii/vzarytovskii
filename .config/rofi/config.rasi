@@ -1,9 +1,9 @@
 configuration {
 	modi: "run";
-	location: 1;
+	location: 0;
 	separator-style: none;
 	bw: 0;
-	font: "JetBrains Mono 7";
+	font: "JetBrains Mono 17";
 	lines: 1;
 	columns: 9;
 	hide-scrollbar: true;
@@ -12,4 +12,4 @@ configuration {
 	sidebar-mode: false;
 	matching: "normal";
 }
-@theme "oneliner"
+@theme "android_notification"

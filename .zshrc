@@ -33,6 +33,8 @@ export DOTNET_USE_POLLING_FILE_WATCHER=true
 
 export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
 
+export MOZ_ENABLE_WAYLAND=1
+
 # export LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/$(gcc -dumpversion)/:$LIBRARY_PATH
 
 if [[ -n $MY_PS1 ]]; then
