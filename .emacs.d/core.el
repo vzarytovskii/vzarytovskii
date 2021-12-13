@@ -305,7 +305,9 @@
   :delight
   :straight (:host github :repo "nflath/hungry-delete" :branch "master")
   ;; :straight (:host github :repo "nflath/hungry-delete" :branch "master" :build (:not compile))
-  :config (global-hungry-delete-mode))
+  :config 
+  (setq hungry-delete-join-reluctantly t)
+  (global-hungry-delete-mode))
 
 (use-package expand-region
   :bind (("C-=" . 'er/expand-region)

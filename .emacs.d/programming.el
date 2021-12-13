@@ -345,6 +345,12 @@
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 
+(use-package yaml-mode)
+(use-package flymake-yamllint
+  :straight (:host github :repo "shaohme/flymake-yamllint" :branch "main")
+  :after (:all yaml-mode flymake)
+  :hook (yaml-mode-hook . flymake-yamllint-setup))
+
 (use-package json-mode
   :mode "\\.json\\'")
 

@@ -18,17 +18,17 @@
          ("C-x C-g c" . magit-commit)
          ("C-x C-g g" . magit-grep))
   :config
-  (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))
-  (setq magit-diff-refine-hunk t)
-  (setq magit-commit-arguments '("--verbose"))
-  (setq magit-section-initial-visibility-alist
+  (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)
+        magit-diff-refine-hunk t
+  	magit-commit-arguments '("--verbose")
+  	magit-section-initial-visibility-alist
         '((unpulled . show)
           (unpushed . show)
           (untracked . show)
           (unstaged . show)
           (pullreqs . show)
           (issues . show)
-          (stashes . hide)
+          (stashes . show)
           (todos . show)
           (recent . show)))
   (progn
