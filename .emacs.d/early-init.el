@@ -54,7 +54,7 @@
   (let ((idle-t (if (eq gc-idle-delay 'auto)
                     (* gc-auto-idle-delay-factor gc-last-gc-time)
                   gc-idle-delay)))
-    (message "Registering IDLE GC: %s" idle-t)
+    ;; (message "Registering IDLE GC: %s" idle-t)
     (if (timerp gc-idle-timer)
       	(timer-set-time gc-idle-timer idle-t)
       (setq gc-idle-timer
@@ -62,7 +62,7 @@
 
 (defun gc-idle-garbage-collect ()
   "Run garbage collection after `gc-idle-delay'."
-  (message "Running idle GC: %s" (current-time))
+  ;; (message "Running idle GC: %s" (current-time))
   (setf gc-last-gc-time (gc-time (garbage-collect)))
   (gc-set-low-threshold))
 
