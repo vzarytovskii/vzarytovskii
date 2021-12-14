@@ -92,9 +92,9 @@
          ("<C-backspace>"   . nil)
          ([delete]          . 'delete-forward-char)
          ("C-x C-2"         . 'vsplit-last-buffer)
-         ("C-x 2"           . 'vsplit-current-buffer)
-         ("C-x C-3"         . 'hsplit-last-buffer)
-         ("C-x 3"           . 'hsplit-current-buffer)
+         ("C-x C-2"           . 'vsplit-current-buffer)
+         ("C-x 3"         . 'hsplit-last-buffer)
+         ("C-x C-3"           . 'hsplit-current-buffer)
          ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
@@ -305,7 +305,7 @@
   :delight
   :straight (:host github :repo "nflath/hungry-delete" :branch "master")
   ;; :straight (:host github :repo "nflath/hungry-delete" :branch "master" :build (:not compile))
-  :config 
+  :config
   (setq hungry-delete-join-reluctantly t)
   (global-hungry-delete-mode))
 
@@ -389,7 +389,7 @@
            (side . bottom)
            (slot . -1)
            (window-parameters . ((no-other-window . t))))
-           ;; left side window
+          ;; left side window
           ("\\*Help.*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-width . 0.20)       ; See the :hook
@@ -446,6 +446,27 @@
           (?r winner-redo)))
   (ace-window-display-mode t))
 
+(use-package zoom
+  :init
+  (defvar default-zoom-size '(0.5 . 0.5))
+  (defun zoom-to-default ()
+    (interactive)
+    (custom-set-variables '(zoom-size default-zoom-size))
+    (zoom))
+  (defvar maximum-zoom-size '(0.99 . 0.99))
+  (defun zoom-to-maximum ()
+    (interactive)
+    (custom-set-variables '(zoom-size maximum-zoom-size))
+    (zoom))
+  :bind (("C-x z" . zoom-to-maximum)
+         ("C-x C-z" . zoom-to-default))
+  :config
+  (custom-set-variables
+   '(zoom-ignored-major-modes '(dired-mode markdown-mode))
+   '(zoom-ignored-buffer-names '("zoom.el" "init.el"))
+   '(zoom-ignored-buffer-name-regexps '("^*calc"))
+   '(zoom-size '(0.99 . 0.99))))
+
 (use-package undo-tree
   :delight
   :straight (:host gitlab :repo "tsc25/undo-tree" :branch "master")
@@ -485,34 +506,34 @@
           find-library
           imenu
 	  isearch-forward
-        my/swiper
-        counsel-switch-buffer
-        counsel-ibuffer
-        counsel-imenu
-        counsel-recentf
-        counsel-find-file
-        dumb-jump-go
-        dumb-jump-back
-        smart-jump-go
-        smart-jump-back
-        ;; switch-to-buffer
-        ;; change-buffer
-        ;; previous-buffer
-        ;; next-buffer
-        beginning-of-buffer
-        end-of-buffer
-        backward-up-list
-        beginning-of-defun
-        end-of-defun
-        find-function
-        find-variable
-        mark-defun
-        mark-whole-buffer
-        xref-find-definitions
-        xref-find-references
-        xref-pop-marker-stack
-        xref-push-marker-stack
-        magit-diff-visit-file))
+          my/swiper
+          counsel-switch-buffer
+          counsel-ibuffer
+          counsel-imenu
+          counsel-recentf
+          counsel-find-file
+          dumb-jump-go
+          dumb-jump-back
+          smart-jump-go
+          smart-jump-back
+          ;; switch-to-buffer
+          ;; change-buffer
+          ;; previous-buffer
+          ;; next-buffer
+          beginning-of-buffer
+          end-of-buffer
+          backward-up-list
+          beginning-of-defun
+          end-of-defun
+          find-function
+          find-variable
+          mark-defun
+          mark-whole-buffer
+          xref-find-definitions
+          xref-find-references
+          xref-pop-marker-stack
+          xref-push-marker-stack
+          magit-diff-visit-file))
 
   (setq point-stack-advised-functions jump-advised-functions)
   (point-stack-setup-advices))
@@ -537,8 +558,8 @@
   ;; Add spell-checking in comments for all programming language modes
   :hook ((prog-mode-hook . flyspell-prog-mode)
          (flyspell-mode-hook . (lambda ()
-                            (dolist (key '("C-;" "C-."))
-                              (unbind-key key flyspell-mode-map)))))
+                                 (dolist (key '("C-;" "C-."))
+                                   (unbind-key key flyspell-mode-map)))))
   :init
   (setq flyspell-issue-message-flag nil
         ispell-program-name "aspell"

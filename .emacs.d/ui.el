@@ -102,6 +102,7 @@
 (use-package visual-fill-column)
 
 (use-package smart-mode-line
+  :disabled t
   :straight (:host github :repo "vzarytovskii/smart-mode-line" :branch "master")
   :config
   (setq sml/theme 'respectful
@@ -317,6 +318,7 @@ FACE defaults to inheriting from default and highlight."
   :hook (prog-mode-hook . rainbow-identifiers-mode))
 
 (use-package smartparens
+  :disabled t
   :delight
   :config
   (progn
