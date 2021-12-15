@@ -69,14 +69,14 @@ alias rg="rg --no-heading"
 alias ff="/usr/bin/fd -t f"
 alias fd="/usr/bin/fd -t d"
 alias fa="/usr/bin/fd"
-alias nohist="MY_PS1=\"nohist\" HISTFILE=/dev/null zsh"
+alias nohist="PS1=\"(nohist) $PS1\" HISTFILE=/dev/null zsh"
 alias yay="yay --mflags --skipinteg"
 
 emv() {
     for file in *.$1; do mv "$file" "$(basename "$file" .$1).$2"; done
 }
 
-if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
+#if [ "$TMUX" = "" ]; then (tmux has-session && tmux attach || tmux); fi
 [ -f "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env" ] && source "${GHCUP_INSTALL_BASE_PREFIX:=$HOME}/.ghcup/env"
 
 # opam configuration
