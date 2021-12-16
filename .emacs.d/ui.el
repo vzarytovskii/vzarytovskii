@@ -73,9 +73,9 @@
     (let ( (dpi (my-dpi)) )
       (message "DPI: %d" dpi)
       (cond
-       ((< dpi 110) 11)
-       ((< dpi 130) 12)
-       ((< dpi 160) 13)
+       ((< dpi 110) 14)
+       ((< dpi 130) 15)
+       ((< dpi 160) 16)
        ((> dpi 250) 17)
        (t 14))))
 
