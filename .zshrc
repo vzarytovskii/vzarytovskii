@@ -28,7 +28,7 @@ export _JAVA_AWT_WM_NONREPARENTING=1
 
 export DISABLEARCADE=1
 
-export DOTNET_ROOT=~/.dotnet
+#export DOTNET_ROOT=~/.dotnet
 export DOTNET_USE_POLLING_FILE_WATCHER=true
 
 export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH
@@ -41,7 +41,7 @@ if [[ -n $MY_PS1 ]]; then
 	PS1="$bg[yellow]$fg_bold[black] $MY_PS1 $reset_color :: $PS1"
 fi
 
-alias cat="bat"
+#alias cat="bat"
 alias br="br -h"
 alias lsa="br -dp"
 alias ls="exa"

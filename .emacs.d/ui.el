@@ -69,14 +69,14 @@
         ;; DPI
         (* (/ (float resx) sizex) 25.4))))
 
-   (defun my-preferred-font-size ()
-     (let ( (dpi (my-dpi)) )
-       (message "DPI: %d" dpi)
-       (cond
-         ((< dpi 110) 11)
-         ((< dpi 130) 12)
-         ((< dpi 160) 13)
-	 ((> dpi 250) 25)
+  (defun my-preferred-font-size ()
+    (let ( (dpi (my-dpi)) )
+      (message "DPI: %d" dpi)
+      (cond
+       ((< dpi 110) 11)
+       ((< dpi 130) 12)
+       ((< dpi 160) 13)
+       ((> dpi 250) 17)
        (t 14))))
 
   (defvar my-preferred-font-size (my-preferred-font-size))
