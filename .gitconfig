@@ -36,6 +36,11 @@
 	editor = emacs
 	whitespace = -trailing-space
 	hooksPath = /home/v/.git-templates/hooks
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
 [branch]
 	autosetuprebase = always
 [diff]
@@ -44,6 +49,7 @@
 	mnemonicPrefix = true
 	wordRegex = .
 	submodule = log
+	colorMoved = default
 [log]
 	abbrevCommit = true
 	follow = true

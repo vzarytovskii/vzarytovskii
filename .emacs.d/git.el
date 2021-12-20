@@ -44,6 +44,9 @@
                  (flyspell-mode)
                  (set-fill-column 120)))))
 
+(use-package magit-lfs
+  :after magit)
+
 (use-package magit-todos
   :after magit
   :hook (magit-mode-hook . magit-todos-mode)
@@ -56,9 +59,9 @@
   :delight
   :if (executable-find "delta")
   :after magit
+  :hook (magit-mode-hook . magit-delta-mode)
   :config
-  (setq magit-delta-hide-plus-minus-markers nil)
-  (magit-delta-mode))
+  (setq magit-delta-hide-plus-minus-markers nil))
 
 (use-package forge
   :after magit)
