@@ -69,6 +69,8 @@
 
 (use-package graphql)
 
+(use-package gh-notify)
+
 (use-package github-explorer
   :after graphql)
 
@@ -88,9 +90,28 @@
 
 (use-package git-blamed)
 
+(use-package blamer
+  :ensure t
+  :defer 20
+  :custom
+  (blamer-idle-time 0.3)
+  (blamer-min-offset 70)
+  :custom-face
+  (blamer-face ((t :foreground "#7a88cf"
+                    :background nil
+                    :height 140
+                    :italic t)))
+  :config
+  (setq blamer-author-formatter " ✎ %s "
+	blamer-datetime-formatter "[%s]"
+	blamer-commit-formatter "● %s"
+	blamer-prettify-time-p t
+	blamer-type 'both)
+
+  (global-blamer-mode 1))
+
 (use-package git-timemachine
   :bind ("C-x v t" . git-timemachine-toggle))
-
 
 (use-package git-messenger
   :init (setq git-messenger:show-detail t)
