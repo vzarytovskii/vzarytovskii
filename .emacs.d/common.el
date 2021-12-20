@@ -12,9 +12,13 @@
     (interactive)
     (load-file user-init-file))
 
-(defconst *sys/gui*
-  (display-graphic-p)
-  "Are we running on a GUI Emacs?")
+(defconst *sys/gui* (display-graphic-p))
+(defconst *sys/is-mac* (eq system-type 'darwin))
+(defconst *sys/is-linux* (or (eq system-type 'gnu/linux) (eq system-type 'linux)))
+(defconst *sys/is-unix* (or *sys/is-linux* (eq system-type 'usg-unix-v) (eq system-type 'berkeley-unix)))
+(defconst *sys/is-windows* (or (eq system-type 'ms-dos) (eq system-type 'windows-nt)))
+(defconst *sys/is-cygwin* (eq system-type 'cygwin))
+(defconst *sys/is-wsl* (and *sys/is-linux* (getenv "WSLENV")))
 
 (provide 'common)
 ;;; common.el ends here
