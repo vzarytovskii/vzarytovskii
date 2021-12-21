@@ -94,20 +94,18 @@
 (use-package git-blamed)
 
 (use-package blamer
-  :ensure t
-  :defer 20
   :custom
   (blamer-idle-time 0.3)
   (blamer-min-offset 70)
-  :custom-face
-  (blamer-face ((t :foreground "#7a88cf"
-                    :background nil
-                    :height 140
-                    :italic t)))
+  ;;:custom-face
+  ;;(blamer-face ((t :foreground "#7a88cf"
+  ;;:background nil
+  ;;:height 140
+  ;;:italic t)))
   :config
   (setq blamer-author-formatter " ✎ %s "
 	blamer-datetime-formatter "[%s]"
-	blamer-commit-formatter "● %s"
+	blamer-commit-formatter " ● %s"
 	blamer-prettify-time-p t
 	blamer-type 'both)
 
@@ -129,7 +127,7 @@
               git-gutter:modified-sign "~" ;;"❚"
               git-gutter:added-sign "+" ;;"✚"
               git-gutter:deleted-sign "-" ;;"✖"
-              )
+              blamer-max-commit-message-length 100)
 
   :bind (("C-c v =" . git-gutter:popup-hunk)
          ("C-c p" . git-gutter:previous-hunk)

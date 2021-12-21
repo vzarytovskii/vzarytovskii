@@ -84,7 +84,7 @@
   (message "Preferred font size: %d" my-preferred-font-size)
 
   (defvar --font-name
-    "Fira Code")
+    "Consolas")
   (defvar --default-font
     (font-spec :family --font-name :size my-preferred-font-size :weight 'medium))
   (defvar --fixed-pitch-font
