@@ -25,10 +25,12 @@
   :bind ("C-." . imenu-anywhere))
 
 (use-package dumb-jump
+  :commands (dumb-jump-xref-activate)
   :preface
   (defun override-dumb-jump-prompt-user-for-choice (proj results)
     (let ((choices (--map (dumb-jump--format-result proj it) results)))
       (funcall dumb-jump-ivy-jump-to-selected-function results choices proj)))
+  :hook (xref-backend-functions . dumb-jump-xref-activate)
   :config
   (advice-add 'dumb-jump-prompt-user-for-choice :override #'override-dumb-jump-prompt-user-for-choice))
 
@@ -221,6 +223,7 @@
   :after lsp-mode
   :hook (lsp-after-open-hook . lsp-ui-mode)
   :hook (lsp-after-open-hook . lsp-lens-mode)
+  :hook (lsp-after-open-hook . lsp-signature-mode)
   :hook (lsp-after-open-hook . lsp-ui-sideline-mode)
   :hook (lsp-after-open-hook . lsp-headerline-breadcrumb-mode)
   :commands lsp-ui-mode
@@ -341,7 +344,7 @@
         lsp-fsharp-enable-reference-code-lens t
         lsp-fsharp-auto-workspace-init t
         lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules"]
-        lsp-log-io nil)
+        lsp-log-io t)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 

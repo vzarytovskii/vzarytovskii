@@ -7,12 +7,19 @@
 ;;; Code:
 
 (use-package deadgrep
+  :preface
+  (defun deadgrep--include-args (rg-args)
+    (push "--color=ansi" rg-args)
+    (push "--hidden" rg-args)
+    (push "--follow" rg-args))
   :if (executable-find "rg")
   :bind ("M-s" . 'deadgrep)
   :bind (:map deadgrep-mode-map
               ("M-e" . deadgrep-edit-mode)
               ("RET" . deadgrep-visit-result-other-window)
-              ("o" . deadgrep-visit-result)))
+              ("o" . deadgrep-visit-result))
+  :config
+  (advice-add 'deadgrep--arguments :filter-return #'deadgrep--include-args))
 
 (use-package flx)
 

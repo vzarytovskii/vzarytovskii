@@ -82,6 +82,8 @@
   :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
 
 (use-package code-review
+  ;; :disabled t
+  :straight (:host github :repo "vzarytovskii/code-review")
   :after (:all magit forge))
 
 (use-package pr-review
@@ -94,6 +96,7 @@
 (use-package git-blamed)
 
 (use-package blamer
+  :disabled t
   :custom
   (blamer-idle-time 0.3)
   (blamer-min-offset 70)
