@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;; Core packages config, for main config, see config.el
 
-;;; -*- lexical-binding: t -*-
+;;; core.el -*- lexical-binding: t -*-
 
 ;;; Code:
 

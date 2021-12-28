@@ -1,8 +1,6 @@
-;;; init.el --- Emacs configuration bootstrap.
+;;; init.el --- Emacs configuration bootstrap. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Emacs bootstrap, for main configuration, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 

@@ -1,11 +1,8 @@
-;;; packaging.el --- Emacs packaging setup.
+;;; packaging.el --- Emacs packaging setup. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Emacs packaging setup, for main configuration, see config.el
 
-;;; -*- lexical-binding: t -*-
-
 ;;; Code:
-
 
 ;; Setup package system
 

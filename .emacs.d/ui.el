@@ -1,8 +1,6 @@
-;;; ui.el --- UI Configuration.
+;;; ui.el --- UI Configuration. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; User Interface config (theme, fonts, linenum, etc), for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 

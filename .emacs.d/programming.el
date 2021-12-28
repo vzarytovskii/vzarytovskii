@@ -1,8 +1,6 @@
-;;; programming.el --- Programming-related packages configuration (such as editorconfig, code folding, lsp, etc.).
+;;; programming.el --- Programming-related packages configuration (such as editorconfig, code folding, lsp, etc.).  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Core packages config, for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;; General config
 (use-package eldoc

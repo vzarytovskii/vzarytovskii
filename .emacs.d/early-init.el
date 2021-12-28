@@ -1,8 +1,6 @@
-;;; early-init.el --- Emacs 27+ early init.
+;;; early-init.el --- Emacs 27+ early init. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Emacs 27+ early init, for main configuration, see config.el.
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 

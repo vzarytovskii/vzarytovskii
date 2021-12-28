@@ -1,8 +1,6 @@
-;;; common.el --- Common functions and libs used in the config.
+;;; common.el --- Common functions and libs used in the config. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Custom helper functions and libs, for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 

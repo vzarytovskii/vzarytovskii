@@ -1,8 +1,6 @@
-;;; tools.el --- Emacs tools configuration
+;;; tools.el --- Emacs tools configuration. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Tools configuration (such as ripgrep, ivy, projectile, etc), for main config, see init.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 

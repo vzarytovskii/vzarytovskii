@@ -1,8 +1,6 @@
-;;; git.el --- Git-relate packages configuration.
+;;; git.el --- Git-relate packages configuration. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; All git-related packages config, for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 
@@ -83,7 +81,7 @@
 
 (use-package code-review
   ;; :disabled t
-  :straight (:host github :repo "vzarytovskii/code-review")
+  ;;:straight (:host github :repo "vzarytovskii/code-review")
   :after (:all magit forge))
 
 (use-package pr-review
