@@ -50,7 +50,7 @@
   (setq-default use-package-always-demand t
                 use-package-always-defer nil
                 use-package-always-ensure nil
-                use-package-expand-minimally t
+                use-package-expand-minimally nil
                 use-package-enable-imenu-support t
                 use-package-compute-statistics nil
                 use-package-hook-name-suffix nil)
