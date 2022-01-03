@@ -62,7 +62,9 @@
   (setq magit-delta-hide-plus-minus-markers nil))
 
 (use-package forge
-  :after magit)
+  :after magit
+  :config
+  (setq forge-topic-list-limit '(100 . -10)))
 
 (use-package git-commit-insert-issue
   :config
