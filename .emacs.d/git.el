@@ -79,14 +79,18 @@
 
 ;; Have multiple packages for PR handling, just to test them out.
 (use-package github-review
+  :disabled t
   :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
 
 (use-package code-review
   ;; :disabled t
   ;;:straight (:host github :repo "vzarytovskii/code-review")
-  :after (:all magit forge))
+  :after (:all magit forge)
+  :config
+  (setq code-review-new-buffer-window-strategy #'switch-to-buffer))
 
 (use-package pr-review
+  :disabled t
   :straight (:host github :repo "blahgeek/emacs-pr-review" :files (:defaults "graphql"))
   :after (:all magit forge))
 
