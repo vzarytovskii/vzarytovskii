@@ -52,6 +52,14 @@
   (setq save-silently t)
   (super-save-mode 1))
 
+(use-package ansi-color
+  :ensure nil
+  :preface
+  (defun my-colorize-compilation-buffer ()
+    (when (eq major-mode 'compilation-mode)
+      (ansi-color-apply-on-region compilation-after-start (point-max))))
+  :hook (compilation-filter-hook . my-colorize-compilation-buffer))
+
 (use-package delight
   :after use-package)
 

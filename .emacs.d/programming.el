@@ -109,10 +109,23 @@
   :straight (:host github :repo "company-mode/company-mode" :branch "master")
   :hook (after-init-hook . global-company-mode)
   :bind (:map company-active-map
-              ("C-w" . 'backward-kill-word))
+               ("C-w" . 'backward-kill-word))
   :config
-  (setq company-minimum-prefix-length 1
-        company-idle-delay 0.01)
+  (setq company-minimum-prefix-length 2
+        company-idle-delay (lambda ()
+                             (if (company-in-string-or-comment) nil 0.3))
+        company-require-match nil
+        company-frontends
+        '(company-pseudo-tooltip-unless-just-one-frontend-with-delay
+          company-preview-frontend
+          company-echo-metadata-frontend)
+        company-tooltip-align-annotations t
+        company-tooltip-limit 10
+        company-tooltip-offset-display 'lines
+        company-tooltip-flip-when-above t
+        company-text-icons-add-background t
+        company-show-quick-access 'left)
+
   (push 'company-capf company-backends))
 
 (use-package company-quickhelp
@@ -150,6 +163,15 @@
   :after (:all all-the-icons company)
   :config
   (company-posframe-mode 1))
+
+;; Snippets config
+(use-package yasnippet
+  :hook (prog-mode-hook . yas-global-mode)
+  :config
+  (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
 
 ;; Tree-sitter config
 (use-package tsc
