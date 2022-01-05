@@ -74,7 +74,7 @@
        ((< dpi 110) 14)
        ((< dpi 130) 15)
        ((< dpi 160) 16)
-       ((> dpi 250) 16)
+       ((> dpi 160) 15)
        (t 14))))
 
   (defvar my-preferred-font-size (my-preferred-font-size))

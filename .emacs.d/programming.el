@@ -109,22 +109,22 @@
   :straight (:host github :repo "company-mode/company-mode" :branch "master")
   :hook (after-init-hook . global-company-mode)
   :bind (:map company-active-map
-               ("C-w" . 'backward-kill-word))
+              ("C-w" . 'backward-kill-word))
   :config
   (setq company-minimum-prefix-length 2
         company-idle-delay (lambda ()
-                             (if (company-in-string-or-comment) nil 0.3))
+                             (if (company-in-string-or-comment) nil 0.1))
         company-require-match nil
         company-frontends
         '(company-pseudo-tooltip-unless-just-one-frontend-with-delay
           company-preview-frontend
           company-echo-metadata-frontend)
         company-tooltip-align-annotations t
-        company-tooltip-limit 10
+        company-tooltip-limit 20
         company-tooltip-offset-display 'lines
         company-tooltip-flip-when-above t
         company-text-icons-add-background t
-        company-show-quick-access 'left)
+        company-show-quick-access 'right)
 
   (push 'company-capf company-backends))
 
@@ -133,9 +133,10 @@
   :hook (global-company-mode-hook . company-quickhelp-mode)
   :config
   (setq pos-tip-use-relative-coordinates t
-        company-quickhelp-delay 0.3))
+        company-quickhelp-delay 0.0))
 
 (use-package company-box
+  :disabled t
   :delight
   :after (:all all-the-icons company)
   :functions (my-company-box--make-line
@@ -157,6 +158,7 @@
   :after (:all company prescient))
 
 (use-package company-posframe
+  :disabled t
   :delight
   :if (and (>= emacs-major-version 26)
            (display-graphic-p))
@@ -164,10 +166,23 @@
   :config
   (company-posframe-mode 1))
 
+
 ;; Snippets config
 (use-package yasnippet
+  :after company
   :hook (prog-mode-hook . yas-global-mode)
   :config
+  (defvar company-mode/enable-yas t
+    "Enable yasnippet for all backends.")
+
+  (defun company-mode/backend-with-yas (backend)
+    (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+        backend
+      (append (if (consp backend) backend (list backend))
+              '(:with company-yasnippet))))
+
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+
   (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
 
 (use-package yasnippet-snippets
