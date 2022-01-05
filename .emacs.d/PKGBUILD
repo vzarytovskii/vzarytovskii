@@ -1,4 +1,4 @@
-pkgname="emacs-git"
+pkgname="emacs-git-custom"
 pkgver=29.0.50.153342
 pkgrel=1
 pkgdesc="GNU Emacs. Development master branch."
@@ -8,8 +8,8 @@ license=('GPL3' )
 depends=('alsa-lib' 'gnutls' 'libxml2' 'jansson' 'm17n-lib' 'libotf' 'harfbuzz' 'gpm' 'gtk3' 'libjpeg-turbo' 'giflib' 'cairo' 'webkit2gtk' 'libgccjit' 'gcc' )
 makedepends=('git' 'xorgproto')
 provides=('emacs' 'emacs-seq')
-conflicts=('emacs' 'emacs26-git' 'emacs-27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq' )
-replaces=('emacs26-git' 'emacs27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq')
+conflicts=('emacs' 'emacs-git' 'emacs26-git' 'emacs-27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq' )
+replaces=('emacs-git' 'emacs26-git' 'emacs27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq')
 #source=("emacs-git::git://git.savannah.gnu.org/emacs.git")
 source=("emacs-git::git://github.com/emacs-mirror/emacs.git")
 #source=("emacs-git::git://github.com/flatwhatson/emacs.git#branch=pgtk-nativecomp")
