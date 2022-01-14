@@ -355,8 +355,6 @@
   :mode "\\.json\\'")
 
 (use-package json-reformat
-  :bind (:map json-mode-map
-              ("C-c C-f" . json-reformat-region))
   :after json-mode)
 
 (use-package json-snatcher
@@ -366,6 +364,9 @@
   :delight
   :hook (after-init-hook . projectile-mode)
   :bind ("C-c C-p" . 'projectile-command-map)
+  :bind (:map projectile-command-map
+              ("C-x C-f" . 'projectile-find-file)
+              ("C-x f" . 'find-file))
   :preface
   (defvar +project/lsp-project-root-cache (make-hash-table :test 'equal)
     "Cached value of function `+project/lsp-project-root`.")
