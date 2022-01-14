@@ -1,11 +1,8 @@
-;;; packaging.el --- Emacs packaging setup.
+;;; packaging.el --- Emacs packaging setup. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Emacs packaging setup, for main configuration, see config.el
 
-;;; -*- lexical-binding: t -*-
-
 ;;; Code:
-
 
 ;; Setup package system
 
@@ -53,7 +50,7 @@
   (setq-default use-package-always-demand t
                 use-package-always-defer nil
                 use-package-always-ensure nil
-                use-package-expand-minimally t
+                use-package-expand-minimally nil
                 use-package-enable-imenu-support t
                 use-package-compute-statistics nil
                 use-package-hook-name-suffix nil)

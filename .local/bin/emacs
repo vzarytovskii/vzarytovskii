@@ -12,13 +12,24 @@ function change_focus() {
 }
 
 function is_server_running() {
-  ps ux | grep "$EMACS_BIN --fg-daemon" | grep -v grep >/dev/null 
+  ps ux | grep "$EMACS_BIN --fg-daemon" | grep -v grep >/dev/null
 }
+
+# Detect terminals with 24bit support (snippet is from tecosaur's Emacs config, https://tecosaur.github.io/emacs-config/config.html)
+if { [ "$COLORTERM" = truecolor ] || [ "$COLORTERM" = 24bit ]; } && [ "$(tput colors 2>/dev/null)" -lt 257 ]; then
+  if echo "$TERM" | grep -q "^\w\+-[0-9]"; then
+    termstub="${TERM%%-*}"; else
+    termstub="${TERM#*-}"; fi
+
+  if infocmp "$termstub-direct" >/dev/null 2>&1; then
+    TERM="$termstub-direct"; else
+    TERM="xterm-direct"; fi # should be fairly safe
+fi
 
 # Check for server running explicitly, as oppose to using -e/ALTERNATE_EDITOR, since we want to run differently depending whether it's terminal or not.
 if ! is_server_running; then
-  echo "\e[33mWARNING\e[m: No server is running." 
-  if [[ -t 1 ]]; then
+  echo "\e[33mWARNING\e[m: No server is running."
+  if [[ -t 1 ]]; then # We running in terminal.
     $EMACS_BIN -nw "$@"
   else
     $EMACS_BIN "$@"
@@ -28,8 +39,8 @@ fi
 
 # If launched from the terminal, spawn a new emacsclient (i.e. for magit, repl, mu4e, etc);
 if [[ -t 1 ]]; then
-	$EMACSCLIENT_BIN -tqc "$@"
-	exit 0
+  $EMACSCLIENT_BIN -tqc "$@"
+  exit 0
 fi
 
 # Try switching to emacs frame if minimized
@@ -37,9 +48,9 @@ test "$(visible_frames)" -eq "1" && change_focus
 
 # If there's no frame, or we're running not from terminal, spawn new emacsclient explicitly.
 if [[ "$(visible_frames)" -lt  "2" || ! -t 1 ]]; then
-	$EMACSCLIENT_BIN -n -c "$@" && change_focus
+  $EMACSCLIENT_BIN -n -c "$@" && change_focus
 else # Something is running already, change focus.
   # If some arguments have been passed, spawn new client.
-	test  "$#" -ne "0" && $EMACSCLIENT_BIN -n "$@"
+  test  "$#" -ne "0" && $EMACSCLIENT_BIN -n "$@"
   change_focus
 fi

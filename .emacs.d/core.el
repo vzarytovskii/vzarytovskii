@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;; Core packages config, for main config, see config.el
 
-;;; -*- lexical-binding: t -*-
+;;; core.el -*- lexical-binding: t -*-
 
 ;;; Code:
 
@@ -15,7 +15,7 @@
   (auto-package-update-interval 7) ;; in days
   (auto-package-update-prompt-before-update t)
   (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results nil)
+  (auto-package-update-hide-results t)
   :config
   (auto-package-update-maybe))
 
@@ -51,6 +51,14 @@
   (setq super-save-auto-save-when-idle t)
   (setq save-silently t)
   (super-save-mode 1))
+
+(use-package ansi-color
+  :ensure nil
+  :preface
+  (defun my-colorize-compilation-buffer ()
+    (when (eq major-mode 'compilation-mode)
+      (ansi-color-apply-on-region compilation-after-start (point-max))))
+  :hook (compilation-filter-hook . my-colorize-compilation-buffer))
 
 (use-package delight
   :after use-package)
@@ -248,7 +256,7 @@
 (use-package exec-path-from-shell
   :custom
   (exec-path-from-shell-check-startup-files nil)
-  (exec-path-from-shell-variables '("PATH" "DOTNET_HOME" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO"))
+  (exec-path-from-shell-variables '("PATH" "DOTNET_HOME" "DOTNET_ROOT" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO"))
   :config
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))

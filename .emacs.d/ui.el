@@ -1,8 +1,6 @@
-;;; ui.el --- UI Configuration.
+;;; ui.el --- UI Configuration. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; User Interface config (theme, fonts, linenum, etc), for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 
@@ -70,13 +68,13 @@
         (* (/ (float resx) sizex) 25.4))))
 
   (defun my-preferred-font-size ()
-    (let ( (dpi (my-dpi)) )
+    (let ((dpi (my-dpi)))
       (message "DPI: %d" dpi)
       (cond
        ((< dpi 110) 14)
        ((< dpi 130) 15)
        ((< dpi 160) 16)
-       ((> dpi 250) 17)
+       ((> dpi 160) 15)
        (t 14))))
 
   (defvar my-preferred-font-size (my-preferred-font-size))
@@ -84,7 +82,7 @@
   (message "Preferred font size: %d" my-preferred-font-size)
 
   (defvar --font-name
-    "Consolas")
+    "Fira Code")
   (defvar --default-font
     (font-spec :family --font-name :size my-preferred-font-size :weight 'medium))
   (defvar --fixed-pitch-font
@@ -95,9 +93,12 @@
 
   ;; (add-to-list 'default-frame-alist '(font . (font-face-attributes --default-font)))
 
-  (apply 'set-face-attribute 'default nil (font-face-attributes --default-font))
-  (apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
-  (apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font)))
+  (setf (alist-get 'font default-frame-alist)
+        (font-xlfd-name --default-font))
+  ;;(set-face-attribute 'default t (font-face-attributes --default-font))
+  ;;(apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
+  ;;(apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
+  )
 
 (use-package visual-fill-column)
 
@@ -222,7 +223,7 @@
 
 (use-package whitespace
   :delight
-  :disabled t
+  :disabled nil
   :hook (prog-mode-hook . whitespace-mode)
   :config
 
@@ -359,13 +360,6 @@ FACE defaults to inheriting from default and highlight."
                ("\"" . 'awesome-pair-double-quote)
                ("DEL" . 'awesome-pair-backward-delete)
                ;; ("C-k" . 'awesome-pair-kill)
-               ("M-\"" . 'awesome-pair-wrap-double-quote)
-               ("M-[" . 'awesome-pair-wrap-bracket)
-               ("M-{" . 'awesome-pair-wrap-curly)
-               ("M-(" . 'awesome-pair-wrap-round)
-               ("M-]" . 'awesome-pair-unwrap)
-               ("M-n" . 'awesome-pair-jump-right)
-               ("M-p" . 'awesome-pair-jump-left)
                ("M-RET" . 'awesome-pair-jump-out-pair-and-newline)))
   :hook (((prog-mode-hook web-mode-hook conf-mode-hook yaml-mode-hook editorconfig-mode-hook vue-mode-hook) . awesome-pair-mode)
          ((c++-mode-hook java-mode-hook rust-mode-hook) . (lambda () (local-set-key (kbd "<") '+prog/insert-angle)))

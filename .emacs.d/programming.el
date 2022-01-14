@@ -1,8 +1,6 @@
-;;; programming.el --- Programming-related packages configuration (such as editorconfig, code folding, lsp, etc.).
+;;; programming.el --- Programming-related packages configuration (such as editorconfig, code folding, lsp, etc.).  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Core packages config, for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;; General config
 (use-package eldoc
@@ -25,10 +23,12 @@
   :bind ("C-." . imenu-anywhere))
 
 (use-package dumb-jump
+  :commands (dumb-jump-xref-activate)
   :preface
   (defun override-dumb-jump-prompt-user-for-choice (proj results)
     (let ((choices (--map (dumb-jump--format-result proj it) results)))
       (funcall dumb-jump-ivy-jump-to-selected-function results choices proj)))
+  :hook (xref-backend-functions . dumb-jump-xref-activate)
   :config
   (advice-add 'dumb-jump-prompt-user-for-choice :override #'override-dumb-jump-prompt-user-for-choice))
 
@@ -111,8 +111,21 @@
   :bind (:map company-active-map
               ("C-w" . 'backward-kill-word))
   :config
-  (setq company-minimum-prefix-length 1
-        company-idle-delay 0.01)
+  (setq company-minimum-prefix-length 2
+        company-idle-delay (lambda ()
+                             (if (company-in-string-or-comment) nil 0.1))
+        company-require-match nil
+        company-frontends
+        '(company-pseudo-tooltip-unless-just-one-frontend-with-delay
+          company-preview-frontend
+          company-echo-metadata-frontend)
+        company-tooltip-align-annotations t
+        company-tooltip-limit 20
+        company-tooltip-offset-display 'lines
+        company-tooltip-flip-when-above t
+        company-text-icons-add-background t
+        company-show-quick-access 'right)
+
   (push 'company-capf company-backends))
 
 (use-package company-quickhelp
@@ -120,9 +133,10 @@
   :hook (global-company-mode-hook . company-quickhelp-mode)
   :config
   (setq pos-tip-use-relative-coordinates t
-        company-quickhelp-delay 0.3))
+        company-quickhelp-delay 0.0))
 
 (use-package company-box
+  :disabled t
   :delight
   :after (:all all-the-icons company)
   :functions (my-company-box--make-line
@@ -144,12 +158,35 @@
   :after (:all company prescient))
 
 (use-package company-posframe
+  :disabled t
   :delight
   :if (and (>= emacs-major-version 26)
            (display-graphic-p))
   :after (:all all-the-icons company)
   :config
   (company-posframe-mode 1))
+
+
+;; Snippets config
+(use-package yasnippet
+  :after company
+  :hook (prog-mode-hook . yas-global-mode)
+  :config
+  (defvar company-mode/enable-yas t
+    "Enable yasnippet for all backends.")
+
+  (defun company-mode/backend-with-yas (backend)
+    (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+        backend
+      (append (if (consp backend) backend (list backend))
+              '(:with company-yasnippet))))
+
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+
+  (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
 
 ;; Tree-sitter config
 (use-package tsc
@@ -221,6 +258,7 @@
   :after lsp-mode
   :hook (lsp-after-open-hook . lsp-ui-mode)
   :hook (lsp-after-open-hook . lsp-lens-mode)
+  :hook (lsp-after-open-hook . lsp-signature-mode)
   :hook (lsp-after-open-hook . lsp-ui-sideline-mode)
   :hook (lsp-after-open-hook . lsp-headerline-breadcrumb-mode)
   :commands lsp-ui-mode
@@ -341,7 +379,7 @@
         lsp-fsharp-enable-reference-code-lens t
         lsp-fsharp-auto-workspace-init t
         lsp-fsharp-exclude-directories ["paket-files" ".git" "packages" "node_modules"]
-        lsp-log-io nil)
+        lsp-log-io t)
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 

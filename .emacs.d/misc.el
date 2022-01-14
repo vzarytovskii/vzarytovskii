@@ -1,8 +1,6 @@
-;;; common.el --- Misc packages, like telega, notmuch, etc.
+;;; common.el --- Misc packages, like telega, notmuch, etc. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Misc packages, for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 

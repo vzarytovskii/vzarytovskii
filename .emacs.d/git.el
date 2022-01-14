@@ -1,8 +1,6 @@
-;;; git.el --- Git-relate packages configuration.
+;;; git.el --- Git-relate packages configuration. -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; All git-related packages config, for main config, see config.el
-
-;;; -*- lexical-binding: t -*-
 
 ;;; Code:
 
@@ -64,7 +62,9 @@
   (setq magit-delta-hide-plus-minus-markers nil))
 
 (use-package forge
-  :after magit)
+  :after magit
+  :config
+  (setq forge-topic-list-limit '(100 . -10)))
 
 (use-package git-commit-insert-issue
   :config
@@ -79,12 +79,18 @@
 
 ;; Have multiple packages for PR handling, just to test them out.
 (use-package github-review
+  :disabled t
   :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
 
 (use-package code-review
-  :after (:all magit forge))
+  ;; :disabled t
+  ;;:straight (:host github :repo "vzarytovskii/code-review")
+  :after (:all magit forge)
+  :config
+  (setq code-review-new-buffer-window-strategy #'switch-to-buffer))
 
 (use-package pr-review
+  :disabled t
   :straight (:host github :repo "blahgeek/emacs-pr-review" :files (:defaults "graphql"))
   :after (:all magit forge))
 
@@ -94,6 +100,7 @@
 (use-package git-blamed)
 
 (use-package blamer
+  :disabled t
   :custom
   (blamer-idle-time 0.3)
   (blamer-min-offset 70)
