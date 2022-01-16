@@ -372,25 +372,26 @@
         switch-to-buffer-in-dedicated-window 'pop
         display-buffer-alist
         '(;; top side window
+          ;;
+          ;; bottom side window
           ("\\*\\(Flymake\\|Package-Lint\\|vc-git :\\).*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
-           (side . top)
+           (side . bottom)
            (slot . 0)
            (window-parameters . ((no-other-window . t))))
           ("\\*Messages.*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
-           (side . top)
+           (side . bottom)
            (slot . 1)
            (window-parameters . ((no-other-window . t))))
           ("\\*\\(Backtrace\\|Warnings\\|Compile-Log\\)\\*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
-           (side . top)
+           (side . bottom)
            (slot . 2)
            (window-parameters . ((no-other-window . t))))
-          ;; bottom side window
           ("\\*\\(Output\\|Register Preview\\).*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-width . 0.16)       ; See the :hook
@@ -579,6 +580,18 @@
 (use-package flyspell-correct
   :after flyspell
   :bind (:map flyspell-mode-map ("C-," . flyspell-correct-wrapper)))
+
+;; Terminal
+(use-package vterm)
+(use-package vterm-toggle
+  :bind (("C-`" . vterm-toggle)
+         ("C-M-`" . vterm-toggle-cd))
+  :config
+  (setq vterm-toggle-cd-auto-create-buffer nil
+        vterm-toggle-fullscreen-p t)
+  (add-to-list 'display-buffer-alist
+               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
+                 (display-buffer-reuse-window display-buffer-same-window))))
 
 (provide 'core)
 ;;; config.el ends here

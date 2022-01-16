@@ -35,16 +35,29 @@
 
 (use-package all-the-icons)
 
-(use-package kaolin-themes)
+(use-package kaolin-themes
+  :disabled t)
+
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  ;; (load-theme 'doom-one t)
+
+  (doom-themes-visual-bell-config)
+  (doom-themes-neotree-config)
+  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  (doom-themes-org-config))
 
 (use-package theme-changer
-  :after kaolin-themes
+  :after doom-themes
   :init
   (setq calendar-location-name "Prague, CR"
         calendar-latitude 50.0755
         calendar-longitude 14.4378)
   :config
-  (change-theme 'kaolin-light 'kaolin-dark))
+  (change-theme 'doom-tomorrow-day 'doom-tomorrow-night))
 
 (use-package faces
   :straight nil
@@ -74,7 +87,7 @@
        ((< dpi 110) 14)
        ((< dpi 130) 15)
        ((< dpi 160) 16)
-       ((> dpi 160) 15)
+       ((> dpi 160) 14)
        (t 14))))
 
   (defvar my-preferred-font-size (my-preferred-font-size))
@@ -85,22 +98,70 @@
     "Fira Code")
   (defvar --default-font
     (font-spec :family --font-name :size my-preferred-font-size :weight 'medium))
-  (defvar --fixed-pitch-font
-    (font-spec :family --font-name :size my-preferred-font-size :weight 'light))
-  (defvar --variable-pitch-font
-    (font-spec :family --font-name :size my-preferred-font-size :weight 'light))
   :config
-
-  ;; (add-to-list 'default-frame-alist '(font . (font-face-attributes --default-font)))
 
   (setf (alist-get 'font default-frame-alist)
         (font-xlfd-name --default-font))
-  ;;(set-face-attribute 'default t (font-face-attributes --default-font))
-  ;;(apply 'set-face-attribute 'fixed-pitch nil (font-face-attributes --fixed-pitch-font))
-  ;;(apply 'set-face-attribute 'variable-pitch nil (font-face-attributes --variable-pitch-font))
-  )
+  (set-frame-font --default-font t t)
+  (when (display-graphic-p)
+    (setq font-use-system-font t)))
 
 (use-package visual-fill-column)
+
+;; Modeline
+
+(use-package doom-modeline
+  :hook (after-init-hook . doom-modeline-mode)
+  :config
+  (setq doom-modeline-height 25
+        doom-modeline-bar-width 4
+        doom-modeline-hud nil
+        doom-modeline-window-width-limit fill-column
+        doom-modeline-project-detection 'auto
+        doom-modeline-buffer-file-name-style 'auto
+        doom-modeline-icon *sys/gui*
+        doom-modeline-major-mode-icon t
+        doom-modeline-major-mode-color-icon t
+        doom-modeline-buffer-state-icon t
+        doom-modeline-buffer-modification-icon t
+        doom-modeline-unicode-fallback nil
+        doom-modeline-minor-modes nil
+        doom-modeline-enable-word-count nil
+        doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode)
+        doom-modeline-buffer-encoding t
+        doom-modeline-indent-info nil
+        doom-modeline-checker-simple-format t
+        doom-modeline-number-limit 99
+        doom-modeline-vcs-max-length 12
+        oom-modeline-workspace-name t
+        doom-modeline-persp-name t
+        doom-modeline-display-default-persp-name nil
+        doom-modeline-persp-icon t
+        doom-modeline-lsp t
+        doom-modeline-github t
+        doom-modeline-github-interval (* 30 60)
+        doom-modeline-modal-icon t
+        doom-modeline-mu4e nil
+        doom-modeline-gnus t
+        doom-modeline-gnus-timer 2
+        doom-modeline-irc nil
+        doom-modeline-irc-stylize 'identity
+        doom-modeline-env-version t
+        doom-modeline-env-enable-python t
+        doom-modeline-env-enable-ruby t
+        doom-modeline-env-enable-perl t
+        doom-modeline-env-enable-go t
+        doom-modeline-env-enable-elixir t
+        doom-modeline-env-enable-rust t
+        doom-modeline-env-python-executable "python"
+        doom-modeline-env-ruby-executable "ruby"
+        doom-modeline-env-perl-executable "perl"
+        doom-modeline-env-go-executable "go"
+        doom-modeline-env-elixir-executable "iex"
+        doom-modeline-env-rust-executable "rustc"
+        doom-modeline-env-load-string "..."
+        doom-modeline-before-update-env-hook nil
+        doom-modeline-after-update-env-hook nil))
 
 (use-package smart-mode-line
   :disabled t
@@ -114,6 +175,7 @@
   (sml/setup))
 
 (use-package mini-modeline
+  :disabled t
   :delight
   :straight (:host github :repo "kiennq/emacs-mini-modeline" :branch "master")
   :after smart-mode-line
@@ -132,6 +194,7 @@
   :diminish)
 
 (use-package dimmer
+  :disabled t
   :config
   (setq dimmer-adjustment-mode :both
 	dimmer-watch-frame-focus-events t
@@ -179,7 +242,6 @@
 
 (use-package highlight-indent-guides
   :delight
-  :disabled t
   :hook (prog-mode-hook . highlight-indent-guides-mode)
   :config
   (setq highlight-indent-guides-method 'character

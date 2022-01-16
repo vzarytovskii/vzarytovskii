@@ -383,12 +383,15 @@
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 
+;; YAML
 (use-package yaml-mode)
+
 (use-package flymake-yamllint
   :straight (:host github :repo "shaohme/flymake-yamllint" :branch "main")
   :after (:all yaml-mode flymake)
   :hook (yaml-mode-hook . flymake-yamllint-setup))
 
+;; JSON
 (use-package json-mode
   :mode "\\.json\\'")
 
@@ -400,6 +403,18 @@
 (use-package json-snatcher
   :after json-mode)
 
+;; Docker
+(use-package docker
+  :if (executable-find "docker"))
+
+(use-package dockerfile-mode
+  :config
+  (setq dockerfile-mode-command "docker"))
+
+(use-package docker-compose-mode
+  :if (executable-find "docker-compose"))
+
+;; Projectile
 (use-package projectile
   :delight
   :hook (after-init-hook . projectile-mode)

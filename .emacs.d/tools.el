@@ -7,7 +7,7 @@
 (use-package deadgrep
   :preface
   (defun deadgrep--include-args (rg-args)
-    (push "--color=ansi" rg-args)
+    (push "--color=auto" rg-args)
     (push "--hidden" rg-args)
     (push "--follow" rg-args))
   :if (executable-find "rg")
