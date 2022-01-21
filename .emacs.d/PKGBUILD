@@ -1,5 +1,5 @@
 pkgname="emacs-git-custom"
-pkgver=29.0.50.153633
+pkgver=29.0.50.153808
 pkgrel=1
 pkgdesc="GNU Emacs. Development master branch."
 arch=('x86_64' )
@@ -61,10 +61,10 @@ build() {
     --with-x
     --with-x-toolkit=gtk3
     --with-xinput2
-    --with-xwidgets
+    --without-xwidgets
     --with-zlib
     --without-compress-install
-    --without-dbus
+    --with-dbus
     --without-dconf
     --without-gconf
     --without-gsettings

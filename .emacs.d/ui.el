@@ -38,6 +38,7 @@
 (use-package kaolin-themes
   :disabled t)
 
+
 (use-package doom-themes
   :config
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
@@ -50,14 +51,55 @@
   (doom-themes-treemacs-config)
   (doom-themes-org-config))
 
+;; If we running Linux, use GTK theme when switching
+(defvar dark-theme 'doom-tomorrow-day)
+(defvar light-theme 'doom-tomorrow-night)
+
+(use-package dbus
+  :after doom-themes
+  :if *sys/is-linux*
+  :preface
+  (defun call-process-string (program &rest args)
+    "Call process`PROGRAM' with `ARGS' and return the output as string."
+    (with-temp-buffer
+      (apply #'call-process program nil t nil args)
+      (buffer-string)))
+  (defun set-theme-from-gtk ()
+    "Set modus theme by checking whether GTK theme is dark."
+    (let ((gtk-theme (downcase
+                      (call-process-string "gsettings"
+                                           "get"
+                                           "org.gnome.desktop.interface"
+                                           "gtk-theme"))))
+      (if (or (string-match-p "dark"  gtk-theme)
+              (string-match-p "black" gtk-theme))
+          (load-theme dark-theme t)
+        (load-theme light-theme t))))
+
+  (defun gtk-theme-changed (path _ _)
+    "DBus handler to detect when the GTK theme has changed."
+    (when (string-equal path "/org/gnome/desktop/interface/gtk-theme")
+      (set-theme-from-gtk)))
+  :config
+  (dbus-register-signal
+   :session
+   "ca.desrt.dconf"
+   "/ca/desrt/dconf/Writer/user"
+   "ca.desrt.dconf.Writer"
+   "Notify"
+   #'gtk-theme-changed)
+  (set-theme-from-gtk))
+
+;; If we running anything else (including WSL), we use location to switch theme.
 (use-package theme-changer
   :after doom-themes
+  :if (or *sys/is-wsl* (not *sys/is-linux*))
   :init
   (setq calendar-location-name "Prague, CR"
         calendar-latitude 50.0755
         calendar-longitude 14.4378)
   :config
-  (change-theme 'doom-tomorrow-day 'doom-tomorrow-night))
+  (change-theme light-theme dark-theme))
 
 (use-package faces
   :straight nil
@@ -312,7 +354,7 @@
 
 (use-package whitespace-cleanup-mode
   :delight
-  :hook (before-save-hook . delete-trailing-whitespace)
+  :hook (write-file-hooks . delete-trailing-whitespace)
   :hook (prog-mode-hook . whitespace-cleanup-mode)
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
 
