@@ -38,7 +38,6 @@
 (use-package kaolin-themes
   :disabled t)
 
-
 (use-package doom-themes
   :config
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
@@ -52,8 +51,8 @@
   (doom-themes-org-config))
 
 ;; If we running Linux, use GTK theme when switching
-(defvar dark-theme 'doom-tomorrow-day)
-(defvar light-theme 'doom-tomorrow-night)
+(defvar dark-theme 'doom-tomorrow-night)
+(defvar light-theme 'doom-tomorrow-day)
 
 (use-package dbus
   :after doom-themes
@@ -66,11 +65,13 @@
       (buffer-string)))
   (defun set-theme-from-gtk ()
     "Set modus theme by checking whether GTK theme is dark."
+    (message "Setting GTK theme")
     (let ((gtk-theme (downcase
                       (call-process-string "gsettings"
                                            "get"
                                            "org.gnome.desktop.interface"
                                            "gtk-theme"))))
+      (message "Gtk theme: %s" gtk-theme)
       (if (or (string-match-p "dark"  gtk-theme)
               (string-match-p "black" gtk-theme))
           (load-theme dark-theme t)
