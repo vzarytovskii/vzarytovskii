@@ -42,6 +42,11 @@
                  (flyspell-mode)
                  (set-fill-column 120)))))
 
+(use-package libgit)
+
+(use-package magit-libgit
+  :after (:all magit libgit))
+
 (use-package magit-lfs
   :after magit)
 

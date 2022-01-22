@@ -169,6 +169,7 @@
 
 ;; Snippets config
 (use-package yasnippet
+  :defer t
   :after company
   :hook (prog-mode-hook . yas-global-mode)
   :config
@@ -193,6 +194,7 @@
   :straight (tsc :host github :repo "ubolonton/emacs-tree-sitter" :files ("core/*.el")))
 
 (use-package tree-sitter
+  :defer t
   :if (executable-find "tree-sitter")
   :straight (tree-sitter :type git :host github :repo "ubolonton/emacs-tree-sitter" :files ("lisp/*.el"))
   :custom-face
@@ -211,6 +213,7 @@
                '(rustic-mode . rust)))
 
 (use-package tree-sitter-langs
+  :defer t
   :if (executable-find "tree-sitter")
   :straight (tree-sitter-langs :type git :host github :repo "ubolonton/emacs-tree-sitter" :files ("langs/*.el" "langs/queries"))
   :after tree-sitter)

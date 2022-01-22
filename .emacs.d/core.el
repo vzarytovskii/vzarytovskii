@@ -100,16 +100,24 @@
          ("<C-backspace>"   . nil)
          ([delete]          . 'delete-forward-char)
          ("C-x C-2"         . 'vsplit-last-buffer)
-         ("C-x C-2"           . 'vsplit-current-buffer)
-         ("C-x 3"         . 'hsplit-last-buffer)
-         ("C-x C-3"           . 'hsplit-current-buffer)
+         ("C-x C-2"         . 'vsplit-current-buffer)
+         ("C-x 3"           . 'hsplit-last-buffer)
+         ("C-x C-3"         . 'hsplit-current-buffer)
          ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
-	 ("C-g"             . 'keyboard-quit))
+	 ("C-g"             . 'keyboard-quit)
+         ("C-k"             . 'kill-buffer)
+         ("C-K"             . 'kill-this-buffer))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
   :preface
+
+  (defun kill-this-buffer ()
+    "Kill the current buffer."
+    (interactive)
+    (kill-buffer nil))
+
   (defun flash-mode-line ()
     (invert-face 'mode-line)
     (run-with-timer 0.1 nil #'invert-face 'mode-line))
@@ -594,4 +602,4 @@
                  (display-buffer-reuse-window display-buffer-same-window))))
 
 (provide 'core)
-;;; config.el ends here
+;;; core.el ends here

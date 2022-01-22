@@ -9,7 +9,6 @@
   :config
   (blink-cursor-mode -1)
   (column-number-mode t)
-  (global-display-line-numbers-mode 1)
   (global-subword-mode t)
   (horizontal-scroll-bar-mode -1)
   (line-number-mode +1)
@@ -130,7 +129,7 @@
        ((< dpi 110) 14)
        ((< dpi 130) 15)
        ((< dpi 160) 16)
-       ((> dpi 160) 14)
+       ((> dpi 160) 13)
        (t 14))))
 
   (defvar my-preferred-font-size (my-preferred-font-size))
@@ -281,7 +280,10 @@
   (setq-default goggles-pulse t))
 
 (use-package hl-line
-  :hook (after-init-hook . global-hl-line-mode))
+  :hook ((vterm-mode-hook . (lambda() (setq-local global-hl-line-mode nil)))
+         (comint-mode-hook . (lambda () (setq-local global-hl-line-mode nil)))
+         (text-mode-hook . global-hl-line-mode)
+         (prog-mode-hook . global-hl-line-mode)))
 
 (use-package highlight-indent-guides
   :delight
