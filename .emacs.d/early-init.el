@@ -36,23 +36,26 @@
      ,@body
      (float-time (time-since time))))
 
+(defun gc-set-highest-threshold ()
+  "Set high gc threshold."
+  (setq gc-cons-percentage 1.0)
+  (setq gc-cons-threshold gc-high-cons-threshold))
+
 (defun gc-set-high-threshold ()
-  "Sets high gc threshold"
+  "Set high gc threshold."
   (setq gc-cons-percentage 0.7)
   (setq gc-cons-threshold gc-high-cons-threshold))
 
 (defun gc-set-low-threshold ()
-  "Sets high gc threshold"
+  "Set high gc threshold."
   (setq gc-cons-percentage 0.5)
   (setq gc-cons-threshold gc-low-cons-threshold))
 
 (defun gc-register-idle-gc ()
-  "Register a timer to run `gc-idle-garbage-collect'.
-   Cancel the previous one if present."
+  "Register a timer to run `gc-idle-garbage-collect'.  Cancel the previous one if present."
   (let ((idle-t (if (eq gc-idle-delay 'auto)
                     (* gc-auto-idle-delay-factor gc-last-gc-time)
                   gc-idle-delay)))
-    ;; (message "Registering IDLE GC: %s" idle-t)
     (if (timerp gc-idle-timer)
       	(timer-set-time gc-idle-timer idle-t)
       (setq gc-idle-timer
@@ -64,7 +67,7 @@
   (setf gc-last-gc-time (gc-time (garbage-collect)))
   (gc-set-low-threshold))
 
-(gc-set-high-threshold)
+(gc-set-highest-threshold)
 
 (setq file-name-handler-alist nil)
 

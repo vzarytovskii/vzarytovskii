@@ -7,7 +7,7 @@
 (use-package deadgrep
   :preface
   (defun deadgrep--include-args (rg-args)
-    (push "--color=ansi" rg-args)
+    (push "--color=auto" rg-args)
     (push "--hidden" rg-args)
     (push "--follow" rg-args))
   :if (executable-find "rg")
@@ -141,6 +141,49 @@ If ALL is non-nil, `swiper-all' is run."
         '((complete-symbol . ivy-posframe-display-at-point)
           (t               . ivy-posframe-display-at-frame-top-center)))
   (ivy-posframe-mode 1))
+
+(use-package dired
+  :straight nil
+  :config
+  (setq dired-recursive-deletes 'always
+        delete-by-moving-to-trash t
+        dired-dwim-target t
+        dired-listing-switches
+        "-AGhlv --group-directories-first --time-style=long-iso"))
+
+(use-package dired-x :straight nil)
+
+;; Addtional syntax highlighting for dired
+(use-package diredfl
+  :after dired
+  :hook
+  (dired-mode-hook . diredfl-mode))
+
+;; Narrow a dired buffer to the files matching a stringx.
+(use-package dired-narrow
+  :after dired
+  :bind (:map dired-mode-map ("C-c C-n" . dired-narrow)))
+
+;; A poor man's treemacs
+(use-package dired-subtree
+  :after dired
+  :bind (:map dired-mode-map ("TAB" . dired-subtree-toggle)))
+
+;; Drop-in replacement for find-dired
+(use-package fd-dired
+  :after dired
+  :bind (:map dired-mode-map ("C-c C-f" . fd-dired)))
+
+(use-package dirvish
+  :after dired
+  :config
+  (dirvish-override-dired-mode)
+  (dirvish-peek-mode)
+  (setq dirvish-header-style 'normal)
+  :bind (:map dired-mode-map
+              ("SPC" . dirvish-show-history)
+              ([remap dired-do-copy] . dirvish-yank)
+              ("o" . dirvish-other-buffer)))
 
 (provide 'tools)
 ;;; tools.el ends here

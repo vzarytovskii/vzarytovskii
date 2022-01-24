@@ -86,3 +86,5 @@
 	templatedir = ~/.git-templates
 [forge]
 	remote = upstream
+[pull]
+	rebase = false

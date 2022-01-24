@@ -1,5 +1,5 @@
 pkgname="emacs-git-custom"
-pkgver=29.0.50.
+pkgver=29.0.50.153808
 pkgrel=1
 pkgdesc="GNU Emacs. Development master branch."
 arch=('x86_64' )
@@ -10,8 +10,8 @@ makedepends=('git' 'xorgproto')
 provides=('emacs' 'emacs-seq')
 conflicts=('emacs' 'emacs-git' 'emacs26-git' 'emacs-27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq' )
 replaces=('emacs-git' 'emacs26-git' 'emacs27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq')
-source=("emacs::git://git.savannah.gnu.org/emacs.git")
-#source=("emacs::git://github.com/emacs-mirror/emacs.git")
+#source=("emacs-git-custom::git://git.savannah.gnu.org/emacs.git")
+source=("emacs-git-custom::git://github.com/emacs-mirror/emacs.git")
 options=(!strip)
 md5sums=('SKIP')
 
@@ -23,7 +23,7 @@ export CXXFLAGS=" -fuse-ld=gold -flto -fuse-linker-plugin -O3 -mtune=native -mar
 
 ################################################################################
 pkgver() {
-  cd "$srcdir/emacs-git"
+  cd "$srcdir/emacs-git-custom"
 
   printf "%s.%s" \
     "$(grep AC_INIT configure.ac | \
@@ -32,12 +32,12 @@ pkgver() {
 }
 
 prepare() {
-  cd "$srcdir/emacs-git"
+  cd "$srcdir/emacs-git-custom"
   [[ -x configure ]] || ( ./autogen.sh git && ./autogen.sh autoconf )
 }
 
 build() {
-  cd "$srcdir/emacs-git"
+  cd "$srcdir/emacs-git-custom"
 
   local _conf=(
     --prefix=/usr
@@ -61,10 +61,10 @@ build() {
     --with-x
     --with-x-toolkit=gtk3
     --with-xinput2
-    --with-xwidgets
+    --without-xwidgets
     --with-zlib
     --without-compress-install
-    --without-dbus
+    --with-dbus
     --without-dconf
     --without-gconf
     --without-gsettings
@@ -82,7 +82,7 @@ build() {
 }
 
 package() {
-  cd "$srcdir/emacs-git"
+  cd "$srcdir/emacs-git-custom"
 
   make DESTDIR="$pkgdir/" install
 

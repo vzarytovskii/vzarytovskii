@@ -100,16 +100,24 @@
          ("<C-backspace>"   . nil)
          ([delete]          . 'delete-forward-char)
          ("C-x C-2"         . 'vsplit-last-buffer)
-         ("C-x C-2"           . 'vsplit-current-buffer)
-         ("C-x 3"         . 'hsplit-last-buffer)
-         ("C-x C-3"           . 'hsplit-current-buffer)
+         ("C-x C-2"         . 'vsplit-current-buffer)
+         ("C-x 3"           . 'hsplit-last-buffer)
+         ("C-x C-3"         . 'hsplit-current-buffer)
          ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
-	 ("C-g"             . 'keyboard-quit))
+	 ("C-g"             . 'keyboard-quit)
+         ("C-k"             . 'kill-buffer)
+         ("C-K"             . 'kill-this-buffer))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
   :preface
+
+  (defun kill-this-buffer ()
+    "Kill the current buffer."
+    (interactive)
+    (kill-buffer nil))
+
   (defun flash-mode-line ()
     (invert-face 'mode-line)
     (run-with-timer 0.1 nil #'invert-face 'mode-line))
@@ -372,25 +380,26 @@
         switch-to-buffer-in-dedicated-window 'pop
         display-buffer-alist
         '(;; top side window
+          ;;
+          ;; bottom side window
           ("\\*\\(Flymake\\|Package-Lint\\|vc-git :\\).*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
-           (side . top)
+           (side . bottom)
            (slot . 0)
            (window-parameters . ((no-other-window . t))))
           ("\\*Messages.*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
-           (side . top)
+           (side . bottom)
            (slot . 1)
            (window-parameters . ((no-other-window . t))))
           ("\\*\\(Backtrace\\|Warnings\\|Compile-Log\\)\\*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
-           (side . top)
+           (side . bottom)
            (slot . 2)
            (window-parameters . ((no-other-window . t))))
-          ;; bottom side window
           ("\\*\\(Output\\|Register Preview\\).*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-width . 0.16)       ; See the :hook
@@ -580,5 +589,17 @@
   :after flyspell
   :bind (:map flyspell-mode-map ("C-," . flyspell-correct-wrapper)))
 
+;; Terminal
+(use-package vterm)
+(use-package vterm-toggle
+  :bind (("C-`" . vterm-toggle)
+         ("C-M-`" . vterm-toggle-cd))
+  :config
+  (setq vterm-toggle-cd-auto-create-buffer nil
+        vterm-toggle-fullscreen-p t)
+  (add-to-list 'display-buffer-alist
+               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
+                 (display-buffer-reuse-window display-buffer-same-window))))
+
 (provide 'core)
-;;; config.el ends here
+;;; core.el ends here
