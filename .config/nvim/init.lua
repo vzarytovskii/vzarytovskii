@@ -3,5 +3,3 @@ if pcall(require, 'impatient') then
 end
 
 require 'plugins'
-require 'ui'
-require 'lsp'
