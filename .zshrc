@@ -28,7 +28,7 @@ export _JAVA_AWT_WM_NONREPARENTING=1
 
 export DISABLEARCADE=1
 
-#export DOTNET_ROOT=~/.dotnet
+export DOTNET_ROOT=~/.dotnet
 export DOTNET_USE_POLLING_FILE_WATCHER=true
 
 export PATH=~/.ghcup:~/git-fuzzy/bin:~/.dotnet:~/.dotnet/tools:~/.cargo/bin:~/.local/bin/:$PATH

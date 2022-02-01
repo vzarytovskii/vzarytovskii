@@ -1,4 +1,3 @@
-require('github-theme').setup()
 require('lualine').setup {
   options = { 
     lower = true,
