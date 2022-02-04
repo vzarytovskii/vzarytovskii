@@ -590,8 +590,10 @@
   :bind (:map flyspell-mode-map ("C-," . flyspell-correct-wrapper)))
 
 ;; Terminal
-(use-package vterm)
+(use-package vterm
+  :if (not *sys/is-wsl*))
 (use-package vterm-toggle
+  :after vterm
   :bind (("C-`" . vterm-toggle)
          ("C-M-`" . vterm-toggle-cd))
   :config
