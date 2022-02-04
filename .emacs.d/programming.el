@@ -39,6 +39,7 @@
          ("M-," . smart-jump-back)
          ("M-/" . smart-jump-references)
          ("M-?" . smart-jump-references))
+  :custom (dumb-jump-selector 'ivy)
   :config
   (smart-jump-setup-default-registers)
   (smart-jump-register :modes 'lsp-ui-mode
