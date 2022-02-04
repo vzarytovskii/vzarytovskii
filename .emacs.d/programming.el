@@ -363,7 +363,7 @@
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
-        ;; lsp-fsharp-server-install-dir "~/fsac/"
+        lsp-fsharp-server-install-dir "~/code/fsautocomplete/bin/release_netcore" 
         lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t

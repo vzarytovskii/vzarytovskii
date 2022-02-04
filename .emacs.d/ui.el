@@ -55,7 +55,7 @@
 
 (use-package dbus
   :after doom-themes
-  :if *sys/is-linux*
+  :if (and *sys/is-linux* (not *sys/is-wsl*))
   :preface
   (defun call-process-string (program &rest args)
     "Call process`PROGRAM' with `ARGS' and return the output as string."
