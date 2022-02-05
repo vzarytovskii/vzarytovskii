@@ -39,6 +39,7 @@
          ("M-," . smart-jump-back)
          ("M-/" . smart-jump-references)
          ("M-?" . smart-jump-references))
+  :custom (dumb-jump-selector 'ivy)
   :config
   (smart-jump-setup-default-registers)
   (smart-jump-register :modes 'lsp-ui-mode
@@ -363,7 +364,7 @@
         fsharp-indent-offset 4
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
-        ;; lsp-fsharp-server-install-dir "~/fsac/"
+        lsp-fsharp-server-install-dir "~/code/fsautocomplete/bin/release_netcore" 
         lsp-fsharp-server-args '("--verbose")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t

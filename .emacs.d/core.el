@@ -108,10 +108,18 @@
          ("M-w"             . 'copy-region-or-line)
 	 ("C-g"             . 'keyboard-quit)
          ("C-k"             . 'kill-buffer)
-         ("C-K"             . 'kill-this-buffer))
+         ("C-K"             . 'kill-this-buffer)
+         ("C-c o"           . 'switch-to-minibuffer))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
   :preface
+
+  (defun switch-to-minibuffer ()
+    "Switch to minibuffer window."
+    (interactive)
+    (if (active-minibuffer-window)
+        (select-window (active-minibuffer-window))
+      (error "Minibuffer is not active")))
 
   (defun kill-this-buffer ()
     "Kill the current buffer."
@@ -590,8 +598,10 @@
   :bind (:map flyspell-mode-map ("C-," . flyspell-correct-wrapper)))
 
 ;; Terminal
-(use-package vterm)
+(use-package vterm
+  :if (not *sys/is-wsl*))
 (use-package vterm-toggle
+  :after vterm
   :bind (("C-`" . vterm-toggle)
          ("C-M-`" . vterm-toggle-cd))
   :config
