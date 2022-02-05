@@ -1,13 +1,41 @@
 vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
 
+local ok, treesitter = pcall(require, "nvim-treesitter.configs")
+
+if not ok then
+  return
+end
+
+treesitter.setup {
+  ensure_installed = "all",
+  sync_install = false,
+  highlight = {
+    enable = true,
+  },
+  indent = {
+    enable = true
+  }
+}
+
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
+local servers = { 'fsautocomplete', 'csharp_ls' }
 local lsp_installer = require('nvim-lsp-installer')
-lsp_installer.on_server_ready(function(server)
-    local opts = {}
-    server:setup(opts)
-end)
+local lsp_installer_servers = require('nvim-lsp-installer.servers')
+
+for _, server_name in pairs(servers) do
+    local server_available, server = lsp_installer_servers.get_server(server_name)
+    if server_available then
+        server:on_ready(function ()
+            local opts = {}
+            server:setup(opts)
+        end)
+        if not server:is_installed() then
+            server:install()
+        end
+    end
+end
 
 local nvim_lsp = require('lspconfig')
 local on_attach = function(client, bufnr)
@@ -37,7 +65,6 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
 end
 
-local servers = { 'fsautocomplete', 'csharp_ls' }
 for _, lsp in ipairs(servers) do
   nvim_lsp[lsp].setup {
     on_attach = on_attach,
@@ -63,6 +90,9 @@ nvim_lsp.csharp_ls.setup {
       AutomaticWorkspaceInit = true
     }
 }
+
+require('lspsaga').init_lsp_saga()
+vim.api.nvim_set_keymap('n', 'gh', ':Lspsaga lsp_finder<CR>', { noremap = true, silent = true })
 
 vim.o.completeopt = 'menuone,noselect'
 
@@ -110,3 +140,26 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
+
+require("trouble").setup()
+
+local dap_install = require("dap-install")
+local dbg_list = require("dap-install.api.debuggers").get_installed_debuggers()
+for _, debugger in ipairs(dbg_list) do
+	dap_install.config(debugger)
+end
+
+local dap, dapui = require("dap"), require("dapui")
+dap.listeners.after.event_initialized["dapui_config"] = function()
+  dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+  dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+  dapui.close()
+end
+require("nvim-dap-virtual-text").setup()
+
+require('gitsigns').setup()
+require('octo').setup()

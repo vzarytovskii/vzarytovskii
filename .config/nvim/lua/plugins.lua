@@ -27,20 +27,37 @@ packer.startup({function()
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
 
--- UI
+  -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
+  use { 'marko-cerovac/material.nvim' }
 
--- Dev: Autocomplete, TreeSitter, LSP, etc.
+  -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
 
   use 'neovim/nvim-lspconfig'
   use 'williamboman/nvim-lsp-installer'
+ 
+  use 'glepnir/lspsaga.nvim'
+
   use 'hrsh7th/nvim-cmp'
   use 'hrsh7th/cmp-nvim-lsp'
+
   use 'saadparwaiz1/cmp_luasnip'
   use 'L3MON4D3/LuaSnip'
 
   use { 'nvim-treesitter/nvim-treesitter', config = 'vim.cmd [[TSUpdate]]' }
+
+  use { "folke/trouble.nvim", requires = "kyazdani42/nvim-web-devicons" }
+
+  -- DAP
+  use 'mfussenegger/nvim-dap'
+  use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
+  use 'theHamsta/nvim-dap-virtual-text'
+  use "Pocco81/DAPInstall.nvim"
+
+  -- Git
+  use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
+  use { 'pwntester/octo.nvim', requires = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim', 'kyazdani42/nvim-web-devicons' } }
 
   if packer_bootstrap then
     require('packer').sync()
@@ -68,4 +85,3 @@ vim.cmd([[
 
 require 'ui'
 require 'dev'
-require 'treesitter'

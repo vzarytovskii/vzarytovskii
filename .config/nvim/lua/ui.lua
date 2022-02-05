@@ -1,3 +1,8 @@
+require('material').setup()
+vim.g.material_style = "deep ocean"
+vim.cmd 'colorscheme material'
+
+
 require('lualine').setup {
   options = { 
     lower = true,
@@ -5,7 +10,7 @@ require('lualine').setup {
     padding = 1,
     left_padding = 1,
     right_padding = 1,
-    theme = "16color"
+    theme = "material-stealth"
   },
   sections = { lualine_a = {{ 'mode', lower = false }}, lualine_b = { 'branch' }}
 }
