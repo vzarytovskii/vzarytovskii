@@ -1,32 +1,45 @@
 local fn = vim.fn
 
 local ok, packer = pcall(require, "packer")
+
 if not ok then
+  local packer_bootstrap = false
   local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
+
   print "Cloning packer..."
-  fn.delete(packer_path, "rf")
-  
+  fn.delete(install_path, "rf")
+
   if fn.empty(fn.glob(install_path)) > 0 then
     fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
+    packer_bootstrap = true
   end
 
   vim.cmd [[packadd packer.nvim]]
 
-  packer_exists, packer = pcall(require, "packer")
+  ok, packer = pcall(require, "packer")
 
-  if packer_exists then
+  if ok then
     print "Packer cloned successfully."
   else
-    error("Couldn't clone packer !\nPacker path: " .. packer_path .. "\n" .. packer)
+    error("Couldn't clone packer !\nPacker path: " .. install_path .. "\n" .. packer)
   end
+
+  if packer_bootstrap then
+    packer.sync()
+  end
+
 end
 
-packer.startup({function()
-  
+vim.wo.signcolumn = "yes"
+vim.wo.number = true
+
+packer.startup({function(use)
+
   -- General
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
 
+  use 'nvim-telescope/telescope.nvim'
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
   use { 'marko-cerovac/material.nvim' }
@@ -36,8 +49,10 @@ packer.startup({function()
 
   use 'neovim/nvim-lspconfig'
   use 'williamboman/nvim-lsp-installer'
- 
-  use 'glepnir/lspsaga.nvim'
+
+  use 'jose-elias-alvarez/null-ls.nvim'
+
+  use 'tami5/lspsaga.nvim'
 
   use 'hrsh7th/nvim-cmp'
   use 'hrsh7th/cmp-nvim-lsp'
@@ -59,9 +74,6 @@ packer.startup({function()
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'pwntester/octo.nvim', requires = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim', 'kyazdani42/nvim-web-devicons' } }
 
-  if packer_bootstrap then
-    require('packer').sync()
-  end
 end,
 config = {
   auto_clean = true,

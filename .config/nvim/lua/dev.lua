@@ -6,6 +6,9 @@ if not ok then
   return
 end
 
+require('gitsigns').setup()
+require('octo').setup()
+
 treesitter.setup {
   ensure_installed = "all",
   sync_install = false,
@@ -14,38 +17,69 @@ treesitter.setup {
   },
   indent = {
     enable = true
-  }
+  },
+  context_commentstring = {
+    enable = true,
+    enable_autocmd = false,
+  },
+  autopairs = {
+    enable = true,
+  },
+  rainbow = {
+    enable = true,
+    disable = { "html" },
+    extended_mode = false,
+    max_file_lines = nil,
+  },
 }
+
+local config = {
+    virtual_text = true,
+    signs = {
+      active = signs,
+    },
+    update_in_insert = true,
+    underline = true,
+    severity_sort = true,
+    float = {
+      focusable = false,
+      style = "minimal",
+      border = "rounded",
+      source = "always",
+      header = "",
+      prefix = "",
+    },
+}
+
+-- vim.diagnostic.config(config)
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
-local servers = { 'fsautocomplete', 'csharp_ls' }
-local lsp_installer = require('nvim-lsp-installer')
-local lsp_installer_servers = require('nvim-lsp-installer.servers')
-
-for _, server_name in pairs(servers) do
-    local server_available, server = lsp_installer_servers.get_server(server_name)
-    if server_available then
-        server:on_ready(function ()
-            local opts = {}
-            server:setup(opts)
-        end)
-        if not server:is_installed() then
-            server:install()
-        end
-    end
+local function lsp_highlight_document(client)
+  if client.resolved_capabilities.document_highlight then
+    vim.api.nvim_exec(
+      [[
+      augroup lsp_document_highlight
+        autocmd! * <buffer>
+        autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
+        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
+      augroup END
+    ]],
+      false
+    )
+  end
 end
 
-local nvim_lsp = require('lspconfig')
 local on_attach = function(client, bufnr)
   local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+  lsp_highlight_document(client)
 
   local opts = { noremap=true, silent=true }
-
+--[[
   buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
   buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
   buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
@@ -63,36 +97,80 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
   buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
+]]--
 end
 
-for _, lsp in ipairs(servers) do
-  nvim_lsp[lsp].setup {
-    on_attach = on_attach,
-    capabilities = capabilities,
-    flags = {
-      debounce_text_changes = 150,
-    }
-  }
+
+local nvim_lsp = require('lspconfig')
+local lsp_installer_servers = require('nvim-lsp-installer.servers')
+local servers = {
+	hls = {},
+	grammarly = {},
+	sumneko_lua = {},
+	fsautocomplete = {
+	  cmd = { "dotnet", "fsautocomplete", "--background-service-enabled" }
+	},
+	csharp_ls = {}
+}
+
+local function merge(t1, t2)
+    for k, v in pairs(t2) do
+        if (type(v) == "table") and (type(t1[k] or false) == "table") then
+            merge(t1[k], t2[k])
+        else
+            t1[k] = v
+        end
+    end
+    return t1
 end
 
-nvim_lsp.fsautocomplete.setup {
-    cmd = { "fsautocomplete", "--background-service-enabled" },
-    filetypes = { "fsharp" },
-    init_options = {
-      AutomaticWorkspaceInit = true
-    }
-}
+for server_name, server_opts in pairs(servers) do
+    local server_available, server = lsp_installer_servers.get_server(server_name)
+    if server_available then
+        if not server:is_installed() then
+            server:install()
+        end
+	server:on_ready(function ()
+            local opts = {
+    		on_attach = on_attach,
+    		capabilities = capabilities,
+    		flags = {
+      			debounce_text_changes = 150,
+    		}
+	    }
 
-nvim_lsp.csharp_ls.setup {
-    cmd = { "csharp-ls" },
-    filetypes = { "cs" },
-    init_options = {
-      AutomaticWorkspaceInit = true
-    }
-}
+	    merge(opts, server_opts)
+	    nvim_lsp[server_name].setup(opts)
+	    server:setup(opts)
+        end)
+    else
+	error("No server available for: " .. server_name .. "\n")
+    end
+end
 
 require('lspsaga').init_lsp_saga()
-vim.api.nvim_set_keymap('n', 'gh', ':Lspsaga lsp_finder<CR>', { noremap = true, silent = true })
+local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(0, ...) end
+buf_set_keymap('n', 'K', ':Lspsaga hover_doc<CR>', { noremap = true, silent = true })
+buf_set_keymap('n', 'gh', ':Lspsaga lsp_finder<CR>', { noremap = true, silent = true })
+buf_set_keymap('n', 'gd', ':Lspsaga preview_definition<CR>', { noremap = true, silent = true })
+buf_set_keymap('n', '<leader>ca', ':Lspsaga code_action<CR>', { noremap = true, silent= true })
+buf_set_keymap('v', '<leader>ca', ':<C-U>Lspsaga range_code_action<CR>', { noremap = true, silent= true })
+buf_set_keymap("n", "gx", "<cmd>Lspsaga code_action<cr>", {silent = true, noremap = true})
+buf_set_keymap("x", "gx", ":<c-u>Lspsaga range_code_action<cr>", {silent = true, noremap = true})
+buf_set_keymap("n", "K",  "<cmd>Lspsaga hover_doc<cr>", {silent = true, noremap = true})
+buf_set_keymap("n", "go", "<cmd>Lspsaga show_line_diagnostics<cr>", {silent = true, noremap = true})
+buf_set_keymap("n", "gj", "<cmd>Lspsaga diagnostic_jump_next<cr>", {silent = true, noremap = true})
+buf_set_keymap("n", "gk", "<cmd>Lspsaga diagnostic_jump_prev<cr>", {silent = true, noremap = true})
+--buf_set_keymap("n", "<C-u>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<cr>", nil)
+--buf_set_keymap("n", "<C-d>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<cr>", nil)
+
+local null_ls = require("null-ls")
+null_ls.setup({
+    sources = {
+        -- null_ls.builtins.completion.spell,
+	null_ls.builtins.code_actions.gitsigns,
+    },
+})
 
 vim.o.completeopt = 'menuone,noselect'
 
@@ -138,6 +216,8 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
+    { name = "buffer" },
+    { name = "path" },
   },
 }
 
@@ -161,5 +241,3 @@ dap.listeners.before.event_exited["dapui_config"] = function()
 end
 require("nvim-dap-virtual-text").setup()
 
-require('gitsigns').setup()
-require('octo').setup()
