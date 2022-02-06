@@ -2,7 +2,6 @@ require('material').setup()
 vim.g.material_style = "deep ocean"
 vim.cmd 'colorscheme material'
 
-
 require('lualine').setup {
   options = { 
     lower = true,
@@ -13,4 +12,10 @@ require('lualine').setup {
     theme = "material-stealth"
   },
   sections = { lualine_a = {{ 'mode', lower = false }}, lualine_b = { 'branch' }}
+}
+
+require("indent_blankline").setup {
+    space_char_blankline = " ",
+    show_current_context = true,
+    show_current_context_start = true,
 }

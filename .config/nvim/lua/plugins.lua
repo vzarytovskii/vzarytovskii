@@ -30,6 +30,9 @@ if not ok then
 
 end
 
+vim.opt.list = true
+vim.opt.listchars:append("space:⋅")
+vim.opt.listchars:append("eol:↴")
 vim.wo.signcolumn = "yes"
 vim.wo.number = true
 
@@ -43,6 +46,7 @@ packer.startup({function(use)
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
   use { 'marko-cerovac/material.nvim' }
+  use 'lukas-reineke/indent-blankline.nvim'
 
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
