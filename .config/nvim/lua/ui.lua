@@ -3,7 +3,7 @@ vim.g.material_style = "deep ocean"
 vim.cmd 'colorscheme material'
 
 require('lualine').setup {
-  options = { 
+  options = {
     lower = true,
     icons_enabled = 1,
     padding = 1,
@@ -13,4 +13,3 @@ require('lualine').setup {
   },
   sections = { lualine_a = {{ 'mode', lower = false }}, lualine_b = { 'branch' }}
 }
-

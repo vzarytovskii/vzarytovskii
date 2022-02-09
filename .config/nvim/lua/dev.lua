@@ -56,6 +56,20 @@ local config = {
 local lsp_signature = require 'lsp_signature'
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+capabilities.textDocument.completion.completionItem.preselectSupport = true
+capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
+capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
+capabilities.textDocument.completion.completionItem.deprecatedSupport = true
+capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
+capabilities.textDocument.completion.completionItem.tagSupport = { valueSet = { 1 } }
+capabilities.textDocument.completion.completionItem.resolveSupport = {
+   properties = {
+      "documentation",
+      "detail",
+      "additionalTextEdits",
+   },
+}
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 local function lsp_highlight_document(client)
@@ -222,10 +236,13 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
+    { name = "nvim_lua" },
     { name = "buffer" },
     { name = "path" },
   },
 }
+
+require "lsp_signature".setup()
 
 require("trouble").setup()
 
