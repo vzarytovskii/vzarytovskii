@@ -46,7 +46,6 @@ packer.startup({function(use)
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
   use { 'marko-cerovac/material.nvim' }
-  use 'lukas-reineke/indent-blankline.nvim'
 
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
@@ -57,6 +56,8 @@ packer.startup({function(use)
   use 'jose-elias-alvarez/null-ls.nvim'
 
   use 'tami5/lspsaga.nvim'
+
+  use 'ray-x/lsp_signature.nvim'
 
   use 'hrsh7th/nvim-cmp'
   use 'hrsh7th/cmp-nvim-lsp'

@@ -5,7 +5,7 @@ vim.cmd 'colorscheme material'
 require('lualine').setup {
   options = { 
     lower = true,
-    icons_enabled = 0,
+    icons_enabled = 1,
     padding = 1,
     left_padding = 1,
     right_padding = 1,
@@ -14,8 +14,3 @@ require('lualine').setup {
   sections = { lualine_a = {{ 'mode', lower = false }}, lualine_b = { 'branch' }}
 }
 
-require("indent_blankline").setup {
-    space_char_blankline = " ",
-    show_current_context = true,
-    show_current_context_start = true,
-}
