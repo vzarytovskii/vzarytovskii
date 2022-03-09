@@ -1,9 +1,9 @@
 local fn = vim.fn
 
 local ok, packer = pcall(require, "packer")
+local packer_bootstrap = false
 
 if not ok then
-  local packer_bootstrap = false
   local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
 
   print "Cloning packer..."
@@ -19,13 +19,9 @@ if not ok then
   ok, packer = pcall(require, "packer")
 
   if ok then
-    print "Packer cloned successfully."
+    print "Packer loaded successfully."
   else
-    error("Couldn't clone packer !\nPacker path: " .. install_path .. "\n" .. packer)
-  end
-
-  if packer_bootstrap then
-    packer.sync()
+    error("Couldn't load packer !\nPacker path: " .. install_path .. "\n" .. packer)
   end
 
 end
@@ -69,6 +65,9 @@ packer.startup({function(use)
 
   use { "folke/trouble.nvim", requires = "kyazdani42/nvim-web-devicons" }
 
+  -- Comments
+  use 'numToStr/Comment.nvim'
+
   -- DAP
   use 'mfussenegger/nvim-dap'
   use { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap"} }
@@ -78,7 +77,11 @@ packer.startup({function(use)
   -- Git
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'pwntester/octo.nvim', requires = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim', 'kyazdani42/nvim-web-devicons' } }
+  use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' } 
 
+  -- Misc
+  use 'anuvyklack/pretty-fold.nvim'
+  use { 'danymat/neogen', requires = { 'nvim-treesitter/nvim-treesitter' } }
 end,
 config = {
   auto_clean = true,
@@ -96,9 +99,15 @@ config = {
 vim.cmd([[
   augroup packer_user_config
     autocmd!
-    autocmd BufWritePost plugins.lua source <afile> | PackerCompile
+    autocmd BufWritePost */nvim/lua/*.lua source <afile> | PackerCompile
   augroup end
 ]])
+
+
+if packer_bootstrap then
+  packer.sync()
+  vim.api.nvim_command "PackerCompile"
+end
 
 require 'ui'
 require 'dev'

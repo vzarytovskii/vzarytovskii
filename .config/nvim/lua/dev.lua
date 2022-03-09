@@ -13,6 +13,7 @@ end
 
 require('gitsigns').setup()
 require('octo').setup()
+require('neogit').setup()
 
 treesitter.setup {
   ensure_installed = "all",
@@ -103,7 +104,7 @@ local on_attach = function(client, bufnr)
   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
   lsp_highlight_document(client)
 
-  local opts = { noremap=true, silent=true }
+  -- local opts = { noremap=true, silent=true }
 --[[
   buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
   buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
@@ -154,9 +155,10 @@ local function merge(t1, t2)
 end
 
 for server_name, server_opts in pairs(servers) do
-    local server_available, server = lsp_installer_servers.get_server(server_name)
-    if server_available then
+  local server_available, server = lsp_installer_servers.get_server(server_name)
+  if server_available then
         if not server:is_installed() then
+            print("Server ", server_name, " is not installed. Installing...")
             server:install()
         end
         server:on_ready(function ()
@@ -273,3 +275,17 @@ dap.listeners.before.event_exited["dapui_config"] = function()
 end
 require("nvim-dap-virtual-text").setup()
 
+local comment = require('Comment')
+comment.setup()
+
+local commentft = require('Comment.ft')
+commentft.set('yaml', '#%s')
+         .set('javascript', {'//%s', '/* %s */'})
+         .set('conf', '#%s')
+         .set('fsharp', {'// %s', '(* %s *)'})
+         .set('csharp', {'// %s', '/* %s */'})
+
+require("pretty-fold").setup()
+require("pretty-fold.preview").setup()
+
+require("neogen").setup()
