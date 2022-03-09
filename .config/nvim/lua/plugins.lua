@@ -48,7 +48,7 @@ packer.startup({function(use)
   use { 'marko-cerovac/material.nvim' }
 
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
-  use 'adelarsq/neofsharp.vim'
+  use 'dietrichm/neofsharp.vim'
 
   use 'neovim/nvim-lspconfig'
   use 'williamboman/nvim-lsp-installer'
