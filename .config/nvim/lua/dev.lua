@@ -279,9 +279,9 @@ local comment = require('Comment')
 comment.setup()
 
 local commentft = require('Comment.ft')
-commentft.set('yaml', '#%s')
-         .set('javascript', {'//%s', '/* %s */'})
-         .set('conf', '#%s')
+commentft.set('yaml', '# %s')
+         .set('javascript', {'// %s', '/* %s */'})
+         .set('conf', '# %s')
          .set('fsharp', {'// %s', '(* %s *)'})
          .set('csharp', {'// %s', '/* %s */'})
 

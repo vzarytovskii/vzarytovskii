@@ -29,6 +29,10 @@ end
 vim.opt.list = true
 vim.opt.listchars:append("space:⋅")
 vim.opt.listchars:append("eol:↴")
+vim.opt.updatetime = 250
+--vim.opt.completeopt:append({'menuone','noselect','noinsert'})
+--vim.opt.completeopt:remove('preview')
+vim.opt.shortmess:append('c')
 vim.wo.signcolumn = "yes"
 vim.wo.number = true
 
@@ -57,9 +61,10 @@ packer.startup({function(use)
 
   use 'hrsh7th/nvim-cmp'
   use 'hrsh7th/cmp-nvim-lsp'
-
   use 'saadparwaiz1/cmp_luasnip'
   use 'L3MON4D3/LuaSnip'
+
+  use 'github/copilot.vim'
 
   use { 'nvim-treesitter/nvim-treesitter', config = 'vim.cmd [[TSUpdate]]' }
 
@@ -78,6 +83,9 @@ packer.startup({function(use)
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'pwntester/octo.nvim', requires = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim', 'kyazdani42/nvim-web-devicons' } }
   use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' } 
+
+  -- Testing
+  use { "rcarriga/vim-ultest", requires = {"vim-test/vim-test"}, run = ":UpdateRemotePlugins" }
 
   -- Misc
   use 'anuvyklack/pretty-fold.nvim'
