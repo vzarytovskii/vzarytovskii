@@ -1,5 +1,10 @@
 vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
 
+vim.opt.tabstop=8
+vim.opt.shiftwidth=2
+vim.opt.expandtab=true
+vim.opt.smartindent=true
+
 local ok, treesitter = pcall(require, "nvim-treesitter.configs")
 
 if not ok then
@@ -8,6 +13,7 @@ end
 
 require('gitsigns').setup()
 require('octo').setup()
+require('neogit').setup()
 
 treesitter.setup {
   ensure_installed = "all",
@@ -91,8 +97,8 @@ local virtualtypes = require 'virtualtypes'
 
 local on_attach = function(client, bufnr)
   lsp_signature.on_attach({
-	bind = true,
-	floating_window = true,
+        bind = true,
+        floating_window = true,
   })
 
   virtualtypes.on_attach(client, bufnr)
@@ -103,7 +109,7 @@ local on_attach = function(client, bufnr)
   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
   lsp_highlight_document(client)
 
-  local opts = { noremap=true, silent=true }
+  -- local opts = { noremap=true, silent=true }
 --[[
   buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
   buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
@@ -129,13 +135,17 @@ end
 local nvim_lsp = require('lspconfig')
 local lsp_installer_servers = require('nvim-lsp-installer.servers')
 local servers = {
-	hls = {},
-	grammarly = {},
-	sumneko_lua = {},
-	fsautocomplete = {
-	  cmd = { "dotnet", "fsautocomplete", "--background-service-enabled" }
-	},
-	csharp_ls = {}
+        hls = {},
+        grammarly = {},
+        sumneko_lua = {},
+        fsautocomplete = {
+          cmd = { "fsautocomplete", "--background-service-enabled" },
+          filetypes = { "fsharp" },
+          init_options = {
+             AutomaticWorkspaceInit = true
+          },
+        },
+        csharp_ls = {}
 }
 
 local function merge(t1, t2)
@@ -150,26 +160,27 @@ local function merge(t1, t2)
 end
 
 for server_name, server_opts in pairs(servers) do
-    local server_available, server = lsp_installer_servers.get_server(server_name)
-    if server_available then
+  local server_available, server = lsp_installer_servers.get_server(server_name)
+  if server_available then
         if not server:is_installed() then
+            print("Server ", server_name, " is not installed. Installing...")
             server:install()
         end
-	server:on_ready(function ()
+        server:on_ready(function ()
             local opts = {
-    		on_attach = on_attach,
-    		capabilities = capabilities,
-    		flags = {
-      			debounce_text_changes = 150,
-    		}
-	    }
+                on_attach = on_attach,
+                capabilities = capabilities,
+                flags = {
+                        debounce_text_changes = 150,
+                }
+            }
 
-	    merge(opts, server_opts)
-	    nvim_lsp[server_name].setup(opts)
-	    server:setup(opts)
+            merge(opts, server_opts)
+            nvim_lsp[server_name].setup(opts)
+            server:setup(opts)
         end)
     else
-	error("No server available for: " .. server_name .. "\n")
+        error("No server available for: " .. server_name .. "\n")
     end
 end
 
@@ -193,7 +204,7 @@ local null_ls = require("null-ls")
 null_ls.setup({
     sources = {
         -- null_ls.builtins.completion.spell,
-	null_ls.builtins.code_actions.gitsigns,
+        null_ls.builtins.code_actions.gitsigns,
     },
 })
 
@@ -254,7 +265,7 @@ require("trouble").setup()
 local dap_install = require("dap-install")
 local dbg_list = require("dap-install.api.debuggers").get_installed_debuggers()
 for _, debugger in ipairs(dbg_list) do
-	dap_install.config(debugger)
+        dap_install.config(debugger)
 end
 
 local dap, dapui = require("dap"), require("dapui")
@@ -269,3 +280,17 @@ dap.listeners.before.event_exited["dapui_config"] = function()
 end
 require("nvim-dap-virtual-text").setup()
 
+local comment = require('Comment')
+comment.setup()
+
+local commentft = require('Comment.ft')
+commentft.set('yaml', '# %s')
+         .set('javascript', {'// %s', '/* %s */'})
+         .set('conf', '# %s')
+         .set('fsharp', {'// %s', '(* %s *)'})
+         .set('csharp', {'// %s', '/* %s */'})
+
+require("pretty-fold").setup()
+require("pretty-fold.preview").setup()
+
+require("neogen").setup()
