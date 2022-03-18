@@ -1,5 +1,5 @@
 pkgname="emacs-git-custom"
-pkgver=29.0.50.153808
+pkgver=29.0.50.154965
 pkgrel=1
 pkgdesc="GNU Emacs. Development master branch."
 arch=('x86_64' )
