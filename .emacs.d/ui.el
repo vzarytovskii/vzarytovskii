@@ -38,6 +38,7 @@
   :disabled t)
 
 (use-package doom-themes
+  :disabled t
   :config
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
@@ -50,11 +51,36 @@
   (doom-themes-org-config))
 
 ;; If we running Linux, use GTK theme when switching
-(defvar dark-theme 'doom-tomorrow-night)
-(defvar light-theme 'doom-tomorrow-day)
+
+(use-package modus-themes
+  :init
+  ;; Add all your customizations prior to loading the themes
+  (setq modus-themes-italic-constructs nil
+        modus-themes-bold-constructs nil
+        modus-themes-mixed-fonts nil
+        modus-themes-subtle-line-numbers nil
+        modus-themes-deuteranopia nil
+        modus-themes-tabs-accented t
+        modus-themes-variable-pitch-ui nil
+        modus-themes-inhibit-reload t
+        modus-themes-fringes 'subtle
+        modus-themes-syntax '(green-strings)
+        modus-themes-hl-line '(intense accented)
+        modus-themes-paren-match '(bold)
+        modus-themes-completions '((matches   . (extrabold))
+                                   (selection . (semibold accented))
+                                   (popup     . (accented intense)))
+        modus-themes-region '(bg-only no-extend)
+        modus-themes-diffs nil)
+
+  ;; Load the theme files before enabling a theme
+  (modus-themes-load-themes))
+
+(defvar dark-theme 'modus-vivendi)
+(defvar light-theme 'modus-operandi)
 
 (use-package dbus
-  :after doom-themes
+  :after modus-themes
   :if (and *sys/is-linux* (not *sys/is-wsl*))
   :preface
   (defun call-process-string (program &rest args)
@@ -92,7 +118,7 @@
 
 ;; If we running anything else (including WSL), we use location to switch theme.
 (use-package theme-changer
-  :after doom-themes
+  :after modus-themes
   :if (or *sys/is-wsl* (not *sys/is-linux*))
   :init
   (setq calendar-location-name "Prague, CR"
@@ -126,8 +152,9 @@
     (let ((dpi (my-dpi)))
       (message "DPI: %d" dpi)
       (cond
-       ((< dpi 110) 14)
-       ((< dpi 130) 15)
+       ((< dpi 110) 13)
+       ((< dpi 130) 14)
+       ((< dpi 150) 15)
        ((< dpi 160) 16)
        ((> dpi 160) 13)
        (t 14))))
@@ -139,7 +166,7 @@
   (defvar --font-name
     "Fira Code")
   (defvar --default-font
-    (font-spec :family --font-name :size my-preferred-font-size :weight 'medium))
+    (font-spec :family --font-name :size my-preferred-font-size :weight 'normal))
   :config
 
   (setf (alist-get 'font default-frame-alist)
@@ -153,6 +180,7 @@
 ;; Modeline
 
 (use-package doom-modeline
+  :disabled t
   :hook (after-init-hook . doom-modeline-mode)
   :config
   (setq doom-modeline-height 25
@@ -206,7 +234,7 @@
         doom-modeline-after-update-env-hook nil))
 
 (use-package smart-mode-line
-  :disabled t
+  ;; :disabled t
   :straight (:host github :repo "vzarytovskii/smart-mode-line" :branch "master")
   :config
   (setq sml/theme 'respectful
@@ -217,9 +245,9 @@
   (sml/setup))
 
 (use-package mini-modeline
-  :disabled t
+  ;; :disabled t
   :delight
-  :straight (:host github :repo "kiennq/emacs-mini-modeline" :branch "master")
+  :straight (:host github :repo "andersjohansson/emacs-mini-modeline" :branch "29-mode-line-faces")
   :after smart-mode-line
   :config
   (setq mini-modeline-enhance-visual nil
@@ -286,6 +314,7 @@
          (prog-mode-hook . global-hl-line-mode)))
 
 (use-package highlight-indent-guides
+  :disabled t
   :delight
   :hook (prog-mode-hook . highlight-indent-guides-mode)
   :config
@@ -330,7 +359,7 @@
 
 (use-package whitespace
   :delight
-  :disabled nil
+  :disabled t
   :hook (prog-mode-hook . whitespace-mode)
   :config
 
