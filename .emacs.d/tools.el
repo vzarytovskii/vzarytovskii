@@ -178,7 +178,7 @@ If ALL is non-nil, `swiper-all' is run."
   :after dired
   :config
   (dirvish-override-dired-mode)
-  (dirvish-peek-mode)
+  ;;(dirvish-peek-mode)
   (setq dirvish-header-style 'normal)
   :bind (:map dired-mode-map
               ("SPC" . dirvish-show-history)

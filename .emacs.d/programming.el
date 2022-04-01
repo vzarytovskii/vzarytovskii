@@ -221,8 +221,6 @@
 
 ;; LSP Configuration:
 
-(use-package lsp-treemacs)
-
 (use-package lsp-mode
   :delight
   :commands (lsp lsp-deferred)
@@ -257,6 +255,8 @@
         lsp-signature-render-all nil
         lsp-headerline-breadcrumb-segments '(file symbols)))
 
+(use-package lsp-treemacs :after lsp)
+
 (use-package lsp-ui
   :delight
   :after lsp-mode
@@ -265,6 +265,9 @@
   :hook (lsp-after-open-hook . lsp-signature-mode)
   :hook (lsp-after-open-hook . lsp-ui-sideline-mode)
   :hook (lsp-after-open-hook . lsp-headerline-breadcrumb-mode)
+  :bind (:map lsp-ui-mode-map
+              ("C-;" . lsp-ui-imenu)
+              ("C-." . lsp-ui-imenu))
   :commands lsp-ui-mode
   :config
   (setq lsp-ui-doc-enable nil
