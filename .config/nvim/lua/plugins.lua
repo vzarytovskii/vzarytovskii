@@ -59,6 +59,8 @@ packer.startup({function(use)
 
   use 'ray-x/lsp_signature.nvim'
 
+  use 'jubnzv/virtual-types.nvim'
+
   use 'hrsh7th/nvim-cmp'
   use 'hrsh7th/cmp-nvim-lsp'
   use 'saadparwaiz1/cmp_luasnip'

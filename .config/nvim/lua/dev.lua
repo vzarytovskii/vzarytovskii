@@ -93,11 +93,16 @@ local function lsp_highlight_document(client)
   end
 end
 
+local virtualtypes = require 'virtualtypes'
+
 local on_attach = function(client, bufnr)
   lsp_signature.on_attach({
         bind = true,
         floating_window = true,
   })
+
+  virtualtypes.on_attach(client, bufnr)
+
   -- local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 

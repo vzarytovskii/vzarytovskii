@@ -11,7 +11,7 @@ provides=('emacs' 'emacs-seq')
 conflicts=('emacs' 'emacs-git' 'emacs26-git' 'emacs-27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq' )
 replaces=('emacs-git' 'emacs26-git' 'emacs27-git' 'emacs-28-git' 'emacs-29-git' 'emacs-seq')
 #source=("emacs-git-custom::git://git.savannah.gnu.org/emacs.git")
-source=("emacs-git-custom::git://github.com/emacs-mirror/emacs.git")
+source=("emacs-git-custom::https://github.com/emacs-mirror/emacs.git")
 options=(!strip)
 md5sums=('SKIP')
 
