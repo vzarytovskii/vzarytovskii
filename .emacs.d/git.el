@@ -40,7 +40,47 @@
               '(lambda ()
                  (auto-fill-mode)
                  (flyspell-mode)
-                 (set-fill-column 120)))))
+                 (set-fill-column 120))))
+
+  (defvar magit--modified-files nil)
+
+  (defun magit-maybe-cache-modified-files ()
+    "Maybe save a list of modified files.
+ That list is later used by `magit-update-uncommitted-buffers',
+ provided it is a member of `magit-post-refresh-hook'.  If it is
+ not, then don't save anything here."
+    (when (memq 'magit-update-uncommitted-buffers magit-post-refresh-hook)
+      (setq magit--modified-files (magit-unstaged-files t))))
+
+  (add-hook 'magit-pre-refresh-hook #'magit-maybe-cache-modified-files)
+  (add-hook 'magit-pre-call-git-hook #'magit-maybe-cache-modified-files)
+  (add-hook 'magit-pre-start-git-hook #'magit-maybe-cache-modified-files)
+
+  (defun magit-update-uncommitted-buffers ()
+    "Update some file-visiting buffers belonging to the current repository.
+ Run `magit-update-uncommitted-buffer-hook' for each buffer
+ which visits a file inside the current repository that had
+ uncommitted changes before running the current Magit command
+ and/or that does so now."
+    (let ((topdir (magit-toplevel)))
+      (dolist (file (delete-consecutive-dups
+		     (sort (nconc (magit-unstaged-files t)
+				  magit--modified-files)
+			   #'string<)))
+	(--when-let (find-buffer-visiting (expand-file-name file topdir))
+	  (with-current-buffer it
+	    (run-hooks 'magit-update-uncommitted-buffer-hook))))))
+
+  (add-hook 'magit-post-refresh-hook #'magit-update-uncommitted-buffers)
+
+  (define-advice magit-push-current-to-upstream (:before (args) query-yes-or-no)
+    "Prompt for confirmation before permitting a push to upstream."
+    (when-let ((branch (magit-get-current-branch)))
+      (unless (yes-or-no-p (format "Push %s branch upstream to %s? "
+				   branch
+				   (or (magit-get-upstream-branch branch)
+				       (magit-get "branch" branch "remote"))))
+	(user-error "Push to upstream aborted by user")))))
 
 (use-package libgit)
 
@@ -71,17 +111,24 @@
   :config
   (setq forge-topic-list-limit '(100 . -10)))
 
+
 (use-package git-commit-insert-issue
   :config
   (add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode))
 
 (use-package graphql)
 
-(use-package gh-notify)
+(use-package gh-notify
+  :after (:all magit forge transient)
+  :config
+  (transient-insert-suffix 'forge-dispatch '(1)
+    ["GitHub"
+     ("g n" "notifications" gh-notify)]))
 
 (use-package ghub)
 
 (use-package magithub
+  :disabled t
   :after (:all magit ghub)
   :config
   (magithub-feature-autoinject t)
@@ -93,14 +140,22 @@
 ;; Have multiple packages for PR handling, just to test them out.
 (use-package github-review
   ;; :disabled t
-  :straight (:host github :repo "charignon/github-review" :files ("github-review.el")))
+  :after (:all magit forge transient)
+  :straight (:host github :repo "charignon/github-review" :files ("github-review.el"))
+  :config
+  (transient-insert-suffix 'forge-dispatch '(1)
+    ["GitHub Review"
+     ("p g" "github-review at point" github-review-forge-pr-at-point)]))
 
 (use-package code-review
   ;; :disabled t
   ;;:straight (:host github :repo "vzarytovskii/code-review")
-  :after (:all magit forge)
+  :after (:all magit forge transient)
   :config
-  (setq code-review-new-buffer-window-strategy #'switch-to-buffer))
+  (setq code-review-new-buffer-window-strategy #'switch-to-buffer)
+  (transient-insert-suffix 'forge-dispatch '(1)
+    ["Code Review"
+     ("p c" "code-review at point" code-review-forge-pr-at-point)]))
 
 (use-package pr-review
   ;; :disabled t

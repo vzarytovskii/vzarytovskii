@@ -7,6 +7,10 @@
 (use-package frame
   :straight nil
   :config
+  (setq max-mini-window-height 1.0
+        input-method-use-echo-area nil
+        echo-keystrokes 0
+        resize-mini-windows nil)
   (blink-cursor-mode -1)
   (column-number-mode t)
   (global-subword-mode t)
