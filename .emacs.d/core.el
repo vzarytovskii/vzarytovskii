@@ -577,6 +577,7 @@
 
 ;; Spelling
 (use-package flyspell
+  :defer t
   :delight
   :ensure nil
   :if (executable-find "aspell")

@@ -189,6 +189,7 @@
   (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
 
 (use-package yasnippet-snippets
+  :defer t
   :after yasnippet)
 
 ;; Tree-sitter config

@@ -11,10 +11,7 @@
   :defer t
   :commands (magit magit-status magit-blame magit-mode magit-file-popup)
   :bind (("C-x g" . magit-status)
-         ("C-x C-g r" . magit-run)
-         ("C-x C-g l" . magit-file-log)
-         ("C-x C-g c" . magit-commit)
-         ("C-x C-g g" . magit-grep))
+         ("C-c g" . magit-dispatch-popup))
   :config
   (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)
         magit-diff-refine-hunk t
@@ -187,7 +184,33 @@
   (global-blamer-mode 1))
 
 (use-package git-timemachine
-  :bind ("C-x v t" . git-timemachine-toggle))
+  :after magit
+  :commands my/git-timemachine-on
+  :bind ("C-x v t" . git-timemachine-toggle)
+  :config
+  (defhydra my/git-timemachine
+    (:color pink :hint nil)
+    ("n" git-timemachine-show-next-revision "Next Revision" :column "Go to")
+    ("p" git-timemachine-show-previous-revision "Next Revision")
+    ("c" git-timemachine-show-current-revision "Current Revision")
+    ("g" git-timemachine-show-nth-revision "Nth Revision")
+    ("t" git-timemachine-show-revision-fuzzy "Search")
+    ("W" git-timemachine-kill-revision "Copy full revision" :column "Actions")
+    ("w" git-timemachine-kill-abbreviated-revision "Copy abbreviated revision" :column "Actions")
+    ("C" git-timemachine-show-commit "Show commit")
+    ("b" git-timemachine-blame "Blame")
+    ("q" git-timemachine-quit "cancel" :color blue :column nil))
+  (defun my/git-timemachine-on ()
+    (interactive)
+    (git-timemachine)
+    (my/git-timemachine/body))
+
+  ;; (define-advice git-timemachine-mode (:after (_args) open-timemachine-hydra)
+  ;; (my/git-timemachine-on))
+
+  (transient-insert-suffix 'magit-dispatch '(1)
+    ["Git Time Machine"
+     ("T" "Toggle time machine" my/git-timemachine-on)]))
 
 (use-package git-messenger
   :init (setq git-messenger:show-detail t)
