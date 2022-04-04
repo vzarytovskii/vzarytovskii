@@ -79,6 +79,14 @@
 
 (use-package gh-notify)
 
+(use-package ghub)
+
+(use-package magithub
+  :after (:all magit ghub)
+  :config
+  (magithub-feature-autoinject t)
+  (setq magithub-clone-default-directory "~/code"))
+
 (use-package github-explorer
   :after graphql)
 
