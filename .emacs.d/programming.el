@@ -194,6 +194,7 @@
 
 ;; Tree-sitter config
 (use-package tsc
+  :defer t
   :straight (tsc :host github :repo "ubolonton/emacs-tree-sitter" :files ("core/*.el")))
 
 (use-package tree-sitter
