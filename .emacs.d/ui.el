@@ -7,7 +7,8 @@
 (use-package frame
   :straight nil
   :config
-  (setq max-mini-window-height 1.0
+  (setq mode-line-compact t
+        max-mini-window-height 1.0
         input-method-use-echo-area nil
         echo-keystrokes 0
         resize-mini-windows nil)
@@ -357,6 +358,8 @@
 (use-package digit-groups
   :config
   (digit-groups-global-mode t))
+
+(use-package visual-fill-column)
 
 (use-package highlight-escape-sequences
   :hook (after-init-hook . hes-mode))
