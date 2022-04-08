@@ -26,6 +26,10 @@
           (stashes . show)
           (todos . show)
           (recent . show)))
+
+  (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-assigned-pullreqs nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-assigned-issues nil t)
+
   (progn
     (setq magit-post-display-buffer-hook
           #'(lambda ()
