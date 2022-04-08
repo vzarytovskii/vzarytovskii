@@ -111,6 +111,10 @@ If ALL is non-nil, `swiper-all' is run."
            ((counsel-M-x-transformer (:width 40))
             (ivy-rich-counsel-function-docstring (:face font-lock-doc-face)))))))
 
+(use-package all-the-icons-ivy-rich
+  :after ivy-rich
+  :init (all-the-icons-ivy-rich-mode 1))
+
 (use-package ivy-xref
   :after ivy
   :init

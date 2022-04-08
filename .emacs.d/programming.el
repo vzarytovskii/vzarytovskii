@@ -16,7 +16,7 @@
 
 (use-package xref
   :ensure nil
-  :bind (;; ("C-." . xref-find-definitions)
+  :bind (;;("C-." . xref-find-definitions)
          ("C-;" . 'counsel-imenu)))
 
 (use-package imenu-anywhere
@@ -34,6 +34,8 @@
 
 (use-package smart-jump
   ;; TODO: Use quickpeek for smart-jump-keep.
+  ;; Package wasn't updated for a long time, xref should be used instead.
+  :disabled t
   :after dumb-jump
   :bind (("M-." . smart-jump-go)
          ("M-," . smart-jump-back)
@@ -269,11 +271,14 @@
   :hook (lsp-after-open-hook . lsp-ui-sideline-mode)
   :hook (lsp-after-open-hook . lsp-headerline-breadcrumb-mode)
   :bind (:map lsp-ui-mode-map
+              ;; TODO: move to remap instead of specifying keys,
               ("C-;" . lsp-ui-imenu)
-              ("C-." . lsp-ui-imenu))
+              ("C-." . lsp-ui-imenu)
+              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+              ([remap xref-find-references] . lsp-ui-peek-find-references))
   :commands lsp-ui-mode
   :config
-  (setq lsp-ui-doc-enable nil
+  (setq lsp-ui-doc-enable t
         lsp-ui-doc-header nil
         lsp-ui-doc-border "green"
         lsp-ui-doc-max-height 50
@@ -303,11 +308,11 @@
   :straight (:host github :repo "kzkn/ruled-switch-buffer" :branch "main")
   :config
   (ruled-switch-buffer-define fs-to-fsi
-                              :matcher (lambda (fn) (string-match ".fs$" fn))
-                              :mappers (lambda (fn) (replace-regexp-in-string "\\.fs$" ".fsi" fn)))
+    :matcher (lambda (fn) (string-match ".fs$" fn))
+    :mappers (lambda (fn) (replace-regexp-in-string "\\.fs$" ".fsi" fn)))
   (ruled-switch-buffer-define fsi-to-fs
-                              :matcher (lambda (fn) (string-match ".fsi$" fn))
-                              :mappers (lambda (fn) (replace-regexp-in-string "\\.fsi$" ".fs" fn))));; Language-specific configs:
+    :matcher (lambda (fn) (string-match ".fsi$" fn))
+    :mappers (lambda (fn) (replace-regexp-in-string "\\.fsi$" ".fs" fn))));; Language-specific configs:
 ;; .NET
 (use-package dotnet
   :config
