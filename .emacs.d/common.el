@@ -18,5 +18,10 @@
 (defconst *sys/is-cygwin* (eq system-type 'cygwin))
 (defconst *sys/is-wsl* (and *sys/is-linux* (getenv "WSLENV")))
 
+(when *sys/is-wsl*
+  (setq browse-url-generic-program  "/mnt/c/Windows/System32/cmd.exe"
+        browse-url-generic-args     '("/c" "start")
+        browse-url-browser-function #'browse-url-generic))
+
 (provide 'common)
 ;;; common.el ends here

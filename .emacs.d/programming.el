@@ -169,6 +169,22 @@
   :config
   (company-posframe-mode 1))
 
+(use-package copilot
+  :after company
+  :straight (:host github :repo "zerolfx/copilot.el"
+                   :files ("dist" "copilot.el"))
+  :hook (prog-mode-hook . copilot-mode)
+  :config
+  (defun my-tab ()
+    (interactive)
+    (or (copilot-accept-completion)
+        (company-indent-or-complete-common nil)))
+
+  (delq 'company-preview-if-just-one-frontend company-frontends)
+  (define-key company-mode-map (kbd "<tab>") 'my-tab)
+  (define-key company-mode-map (kbd "TAB") 'my-tab)
+  (define-key company-active-map (kbd "<tab>") 'my-tab)
+  (define-key company-active-map (kbd "TAB") 'my-tab))
 
 ;; Snippets config
 (use-package yasnippet
