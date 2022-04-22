@@ -4,5 +4,7 @@
 
 ;;; Code:
 
+(use-package telega)
+
 (provide 'misc)
 ;;; misc.el ends here
