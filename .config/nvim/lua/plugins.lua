@@ -87,10 +87,18 @@ packer.startup({function(use)
   use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' } 
 
   -- Testing
-  use { "rcarriga/vim-ultest", requires = {"vim-test/vim-test"}, run = ":UpdateRemotePlugins" }
-
+  use {
+    "nvim-neotest/neotest",
+    requires = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+      "antoinemadec/FixCursorHold.nvim"
+    }
+  }
   -- Misc
-  use 'anuvyklack/pretty-fold.nvim'
+  use{ 'anuvyklack/pretty-fold.nvim',
+    requires = 'anuvyklack/nvim-keymap-amend', -- only for preview
+  }
   use { 'danymat/neogen', requires = { 'nvim-treesitter/nvim-treesitter' } }
 end,
 config = {
