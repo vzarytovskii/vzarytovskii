@@ -139,7 +139,7 @@ local servers = {
         grammarly = {},
         sumneko_lua = {},
         fsautocomplete = {
-          cmd = { "fsautocomplete", "--background-service-enabled" },
+          cmd = { "fsautocomplete" },
           filetypes = { "fsharp" },
           init_options = {
              AutomaticWorkspaceInit = true
@@ -262,13 +262,25 @@ require "lsp_signature".setup()
 
 -- require("trouble").setup()
 
-local dap_install = require("dap-install")
-local dbg_list = require("dap-install.api.debuggers").get_installed_debuggers()
-for _, debugger in ipairs(dbg_list) do
-        dap_install.config(debugger)
-end
-
 local dap, dapui = require("dap"), require("dapui")
+
+dap.adapters.coreclr = {
+  type = 'executable',
+  command = '/path/to/dotnet/netcoredbg/netcoredbg',
+  args = {'--interpreter=vscode'}
+}
+
+dap.configurations.cs = {
+  {
+    type = "coreclr",
+    name = "launch - netcoredbg",
+    request = "launch",
+    program = function()
+        return vim.fn.input('Path to dll', vim.fn.getcwd() .. '/bin/Debug/', 'file')
+    end,
+  },
+}
+
 dap.listeners.after.event_initialized["dapui_config"] = function()
   dapui.open()
 end
