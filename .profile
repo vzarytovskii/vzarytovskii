@@ -21,9 +21,13 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
-# set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.dotnet" ] ; then
     PATH="$HOME/.dotnet:$PATH"
+fi
+
+
+if [ -d "$HOME/.dotnet/tools" ] ; then
+    PATH="$HOME/.dotnet/tools:$PATH"
 fi
 
 [ -f "/home/u/.ghcup/env" ] && source "/home/u/.ghcup/env"
