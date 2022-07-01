@@ -25,3 +25,5 @@ fi
 if [ -d "$HOME/.dotnet" ] ; then
     PATH="$HOME/.dotnet:$PATH"
 fi
+
+[ -f "/home/u/.ghcup/env" ] && source "/home/u/.ghcup/env"
