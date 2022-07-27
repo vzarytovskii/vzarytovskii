@@ -61,14 +61,37 @@ packer.startup({function(use)
 
   use 'jubnzv/virtual-types.nvim'
 
-  use 'hrsh7th/nvim-cmp'
-  use 'hrsh7th/cmp-nvim-lsp'
-  use 'saadparwaiz1/cmp_luasnip'
-  use 'L3MON4D3/LuaSnip'
+  use {
+    'hrsh7th/nvim-cmp',
+    requires = {
+      'hrsh7th/cmp-nvim-lsp',
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      'saadparwaiz1/cmp_luasnip',
+      "hrsh7th/cmp-nvim-lsp-signature-help",
+      "hrsh7th/cmp-nvim-lua"
+    }
+  }
+  use {
+    'L3MON4D3/LuaSnip',
+    requires = {
+      "rafamadriz/friendly-snippets"
+    }
+  }
 
   use 'github/copilot.vim'
 
-  use { 'nvim-treesitter/nvim-treesitter', config = 'vim.cmd [[TSUpdate]]' }
+  use {
+    'nvim-treesitter/nvim-treesitter',
+    requires = {
+      'nvim-treesitter/playground'
+    },
+    config = 'vim.cmd [[TSUpdate]]' 
+  }
+
+  use 'onsails/lspkind-nvim'
+
+  use "smjonas/inc-rename.nvim"
 
   use { "folke/trouble.nvim", requires = "kyazdani42/nvim-web-devicons" }
 
@@ -85,13 +108,36 @@ packer.startup({function(use)
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'pwntester/octo.nvim', requires = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim', 'kyazdani42/nvim-web-devicons' } }
   use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' } 
+  use {
+    'ldelossa/gh.nvim',
+    requires = { { 'ldelossa/litee.nvim' } }
+  }
 
+  use {
+    'ruifm/gitlinker.nvim',
+    requires = 'nvim-lua/plenary.nvim',
+  }
   -- Testing
-  use { "rcarriga/vim-ultest", requires = {"vim-test/vim-test"}, run = ":UpdateRemotePlugins" }
-
+  use {
+    "nvim-neotest/neotest",
+    requires = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+      "antoinemadec/FixCursorHold.nvim"
+    }
+  }
   -- Misc
-  use 'anuvyklack/pretty-fold.nvim'
+  use{ 'anuvyklack/pretty-fold.nvim',
+    requires = 'anuvyklack/nvim-keymap-amend', -- only for preview
+  }
   use { 'danymat/neogen', requires = { 'nvim-treesitter/nvim-treesitter' } }
+  use "b0o/schemastore.nvim"
+  use "folke/which-key.nvim"
+  use {
+    'esensar/nvim-dev-container',
+    requires = { 'nvim-treesitter/nvim-treesitter' }
+  }
+
 end,
 config = {
   auto_clean = true,

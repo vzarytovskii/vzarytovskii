@@ -15,6 +15,53 @@ require('gitsigns').setup()
 require('octo').setup()
 require('neogit').setup()
 
+require"gitlinker".setup()
+
+require('litee.lib').setup()
+require('litee.gh').setup({
+  -- deprecated, around for compatability for now.
+  jump_mode   = "invoking",
+  -- remap the arrow keys to resize any litee.nvim windows.
+  map_resize_keys = false,
+  -- do not map any keys inside any gh.nvim buffers.
+  disable_keymaps = false,
+  -- the icon set to use.
+  icon_set = "default",
+  -- any custom icons to use.
+  icon_set_custom = nil,
+  -- whether to register the @username and #issue_number omnifunc completion
+  -- in buffers which start with .git/
+  git_buffer_completion = true,
+  -- defines keymaps in gh.nvim buffers.
+  keymaps = {
+      -- when inside a gh.nvim panel, this key will open a node if it has
+      -- any futher functionality. for example, hitting <CR> on a commit node
+      -- will open the commit's changed files in a new gh.nvim panel.
+      open = "<CR>",
+      -- when inside a gh.nvim panel, expand a collapsed node
+      expand = "zo",
+      -- when inside a gh.nvim panel, collpased and expanded node
+      collapse = "zc",
+      -- when cursor is over a "#1234" formatted issue or PR, open its details
+      -- and comments in a new tab.
+      goto_issue = "gd",
+      -- show any details about a node, typically, this reveals commit messages
+      -- and submitted review bodys.
+      details = "d",
+      -- inside a convo buffer, submit a comment
+      submit_comment = "<C-s>",
+      -- inside a convo buffer, when your cursor is ontop of a comment, open
+      -- up a set of actions that can be performed.
+      actions = "<C-a>",
+      -- inside a thread convo buffer, resolve the thread.
+      resolve_thread = "<C-r>",
+      -- inside a gh.nvim panel, if possible, open the node's web URL in your
+      -- browser. useful particularily for digging into external failed CI
+      -- checks.
+      goto_web = "gx"
+  }
+})
+
 treesitter.setup {
   ensure_installed = "all",
   sync_install = false,
@@ -79,7 +126,7 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 local function lsp_highlight_document(client)
-  if client.resolved_capabilities.document_highlight then
+  if client.server_capabilities.document_highlight then
     vim.api.nvim_exec(
       [[
       augroup lsp_document_highlight
@@ -135,17 +182,28 @@ end
 local nvim_lsp = require('lspconfig')
 local lsp_installer_servers = require('nvim-lsp-installer.servers')
 local servers = {
-        hls = {},
-        grammarly = {},
-        sumneko_lua = {},
-        fsautocomplete = {
-          cmd = { "fsautocomplete", "--background-service-enabled" },
-          filetypes = { "fsharp" },
-          init_options = {
-             AutomaticWorkspaceInit = true
-          },
-        },
-        csharp_ls = {}
+  bashls = {},
+  diagnosticls = {},
+  hls = {},
+  jsonls = {
+    settings = {
+      json = {
+        schemas = require('schemastore').json.schemas(),
+        validate = { enable = true },
+      },
+    },
+  },
+  grammarly = {},
+  marksman = {},
+  sumneko_lua = {},
+  fsautocomplete = {
+    cmd = { "fsautocomplete" },
+    filetypes = { "fsharp" },
+    init_options = {
+       AutomaticWorkspaceInit = true
+    },
+  },
+  csharp_ls = {}
 }
 
 local function merge(t1, t2)
@@ -260,15 +318,29 @@ cmp.setup {
 
 require "lsp_signature".setup()
 
+require("inc_rename").setup()
+
 -- require("trouble").setup()
 
-local dap_install = require("dap-install")
-local dbg_list = require("dap-install.api.debuggers").get_installed_debuggers()
-for _, debugger in ipairs(dbg_list) do
-        dap_install.config(debugger)
-end
-
 local dap, dapui = require("dap"), require("dapui")
+
+dap.adapters.coreclr = {
+  type = 'executable',
+  command = '/path/to/dotnet/netcoredbg/netcoredbg',
+  args = {'--interpreter=vscode'}
+}
+
+dap.configurations.cs = {
+  {
+    type = "coreclr",
+    name = "launch - netcoredbg",
+    request = "launch",
+    program = function()
+        return vim.fn.input('Path to dll', vim.fn.getcwd() .. '/bin/Debug/', 'file')
+    end,
+  },
+}
+
 dap.listeners.after.event_initialized["dapui_config"] = function()
   dapui.open()
 end
@@ -279,6 +351,8 @@ dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
 require("nvim-dap-virtual-text").setup()
+
+require("neotest").setup({})
 
 local comment = require('Comment')
 comment.setup()
@@ -294,3 +368,58 @@ require("pretty-fold").setup()
 require("pretty-fold.preview").setup()
 
 require("neogen").setup()
+
+require("devcontainer").setup{}
+
+local wk = require("which-key")
+wk.setup({})
+wk.register({
+    g = {
+        name = "+Git",
+        h = {
+            name = "+Github",
+            c = {
+                name = "+Commits",
+                c = { "<cmd>GHCloseCommit<cr>", "Close" },
+                e = { "<cmd>GHExpandCommit<cr>", "Expand" },
+                o = { "<cmd>GHOpenToCommit<cr>", "Open To" },
+                p = { "<cmd>GHPopOutCommit<cr>", "Pop Out" },
+                z = { "<cmd>GHCollapseCommit<cr>", "Collapse" },
+            },
+            i = {
+                name = "+Issues",
+                p = { "<cmd>GHPreviewIssue<cr>", "Preview" },
+            },
+            l = {
+                name = "+Litee",
+                t = { "<cmd>LTPanel<cr>", "Toggle Panel" },
+            },
+            r = {
+                name = "+Review",
+                b = { "<cmd>GHStartReview<cr>", "Begin" },
+                c = { "<cmd>GHCloseReview<cr>", "Close" },
+                d = { "<cmd>GHDeleteReview<cr>", "Delete" },
+                e = { "<cmd>GHExpandReview<cr>", "Expand" },
+                s = { "<cmd>GHSubmitReview<cr>", "Submit" },
+                z = { "<cmd>GHCollapseReview<cr>", "Collapse" },
+            },
+            p = {
+                name = "+Pull Request",
+                c = { "<cmd>GHClosePR<cr>", "Close" },
+                d = { "<cmd>GHPRDetails<cr>", "Details" },
+                e = { "<cmd>GHExpandPR<cr>", "Expand" },
+                o = { "<cmd>GHOpenPR<cr>", "Open" },
+                p = { "<cmd>GHPopOutPR<cr>", "PopOut" },
+                r = { "<cmd>GHRefreshPR<cr>", "Refresh" },
+                t = { "<cmd>GHOpenToPR<cr>", "Open To" },
+                z = { "<cmd>GHCollapsePR<cr>", "Collapse" },
+            },
+            t = {
+                name = "+Threads",
+                c = { "<cmd>GHCreateThread<cr>", "Create" },
+                n = { "<cmd>GHNextThread<cr>", "Next" },
+                t = { "<cmd>GHToggleThread<cr>", "Toggle" },
+            },
+        },
+    },
+}, { prefix = "<leader>" })
