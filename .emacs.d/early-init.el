@@ -15,6 +15,14 @@
     (message "Native JSON is available")
   (message "Native JSON is *not* available"))
 
+(defadvice display-warning
+    (around no-warn-.emacs.d-in-load-path (type message &rest unused) activate)
+  "Ignore the warning about the `.emacs.d' directory being in `load-path'."
+  (unless (and (eq type 'initialization)
+               (string-prefix-p "Your `load-path' seems to contain\nyour `.emacs.d' directory"
+                                message t))
+    ad-do-it))
+
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "*** Emacs loaded in %s seconds with %d garbage collections."
