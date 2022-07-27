@@ -1,5 +1,3 @@
-
-
 local ok, impatient = pcall(require, 'impatient')
 if ok then
 	impatient.enable_profile()
@@ -135,7 +133,10 @@ packer.startup({function(use)
   }
   -- Misc
   use{ 'anuvyklack/pretty-fold.nvim',
-    requires = 'anuvyklack/nvim-keymap-amend', -- only for preview
+    requires = 'anuvyklack/keymap-amend.nvim', -- only for preview
+  }
+  use { 'anuvyklack/fold-preview.nvim',
+   requires = 'anuvyklack/keymap-amend.nvim'
   }
   use { 'danymat/neogen', requires = { 'nvim-treesitter/nvim-treesitter' } }
   use "b0o/schemastore.nvim"
@@ -539,7 +540,7 @@ commentft.set('yaml', '# %s')
          .set('csharp', {'// %s', '/* %s */'})
 
 require("pretty-fold").setup()
-require("pretty-fold.preview").setup()
+require("fold-preview").setup()
 
 require("neogen").setup()
 
