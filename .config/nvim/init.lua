@@ -1,6 +1,6 @@
 local ok, impatient = pcall(require, 'impatient')
 if ok then
-	impatient.enable_profile()
+  impatient.enable_profile()
 end
 
 local fn = vim.fn
@@ -145,6 +145,7 @@ packer.startup({function(use)
     'esensar/nvim-dev-container',
     requires = { 'nvim-treesitter/nvim-treesitter' }
   }
+  use { 'RRethy/vim-illuminate' }
 
 end,
 config = {
@@ -315,9 +316,11 @@ local function lsp_highlight_document(client)
   end
 end
 
+local illuminate = require 'illuminate'
 local virtualtypes = require 'virtualtypes'
 
 local on_attach = function(client, bufnr)
+  illuminate.on_attach(client)
   lsp_signature.on_attach({
         bind = true,
         floating_window = true,
@@ -445,6 +448,7 @@ vim.o.completeopt = 'menuone,noselect'
 
 local luasnip = require('luasnip')
 
+local lspkind = require('lspkind')
 local cmp = require('cmp')
 cmp.setup {
   snippet = {
@@ -489,7 +493,21 @@ cmp.setup {
     { name = "buffer" },
     { name = "path" },
   },
+  formatting = {
+    format = lspkind.cmp_format({
+      mode = 'symbol', -- show only symbol annotations
+      maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
+
+      -- The function below will be called before any actual modifications from lspkind
+      -- so that you can provide more controls on popup customization. (See [#30](https://github.com/onsails/lspkind-nvim/pull/30))
+      before = function (entry, vim_item)
+        return vim_item
+      end
+    })
+  }
 }
+
+
 
 require "lsp_signature".setup()
 

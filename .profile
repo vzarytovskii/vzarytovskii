@@ -39,4 +39,4 @@ if [ -d "$HOME/.dotnet/tools" ] ; then
 fi
 
 export DOTNET_ROOT=$HOME/.dotnet
-[ -f "/home/u/.ghcup/env" ] && source "/home/u/.ghcup/env"
+[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
