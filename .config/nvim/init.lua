@@ -3,6 +3,8 @@ if ok then
   impatient.enable_profile()
 end
 
+require('impatient')
+
 local fn = vim.fn
 
 local ok, packer = pcall(require, "packer")
@@ -64,6 +66,8 @@ packer.startup({function(use)
 
   use 'ray-x/lsp_signature.nvim'
 
+  use 'j-hui/fidget.nvim'
+
   use 'jubnzv/virtual-types.nvim'
 
   use {
@@ -112,7 +116,7 @@ packer.startup({function(use)
   -- Git
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'pwntester/octo.nvim', requires = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim', 'kyazdani42/nvim-web-devicons' } }
-  use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' } 
+  use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }
   use {
     'ldelossa/gh.nvim',
     requires = { { 'ldelossa/litee.nvim' } }
@@ -277,10 +281,10 @@ local config = {
     },
 }
 
-vim.diagnostic.config(config)
+--vim.diagnostic.config(config)
 
 local lsp_signature = require 'lsp_signature'
-
+local handlers = vim.lsp.handlers
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = true
 capabilities.textDocument.completion.completionItem.preselectSupport = true
@@ -296,6 +300,24 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
       "additionalTextEdits",
    },
 }
+
+handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+  vim.lsp.diagnostic.on_publish_diagnostics,
+  {
+    underline = true,
+    signs = true,
+    update_in_insert = true,
+    virtual_text = {
+      true,
+      spacing = 6,
+      -- severity_limit='Error'  -- Only show virtual text on error
+    },
+  }
+)
+
+handlers["textDocument/hover"] = vim.lsp.with(handlers.hover, {border = "rounded"})
+handlers["textDocument/signatureHelp"] = vim.lsp.with(handlers.signature_help, {border = "rounded"})
+
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 local function lsp_highlight_document(client)
@@ -316,12 +338,19 @@ end
 local illuminate = require 'illuminate'
 local virtualtypes = require 'virtualtypes'
 
+require"fidget".setup{}
+
 local on_attach = function(client, bufnr)
-  -- illuminate.on_attach(client)
+  client.server_capabilities.documentFormattingProvider = false
+  client.server_capabilities.documentRangeFormattingProvider = false
+
+  illuminate.on_attach(client)
   lsp_signature.on_attach({
         bind = true,
         floating_window = true,
-  })
+        hint_enable = true,
+        use_lspsaga = true
+  }, bufnr)
 
   virtualtypes.on_attach(client, bufnr)
 
@@ -329,27 +358,6 @@ local on_attach = function(client, bufnr)
 
   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
   --lsp_highlight_document(client)
-
-  -- local opts = { noremap=true, silent=true }
---[[
-  buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-  buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-  buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
-  buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-  buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
-  buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-  buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-  buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-  buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-  buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
-  buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-  buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
-  buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
-  buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
-]]--
 end
 
 local runtime_path = vim.split(package.path, ';')
@@ -358,7 +366,7 @@ table.insert(runtime_path, 'lua/?/init.lua')
 
 local nvim_lsp = require('lspconfig')
 
-require('nvim-lsp-installer').setup()
+require('nvim-lsp-installer').setup({})
 
 local lsp_installer_servers = require('nvim-lsp-installer.servers')
 
@@ -400,14 +408,6 @@ local servers = {
   },
   omnisharp = { use_mono = false }
 }
-
-local function get_keys(t)
-  local keys={}
-  for key,_ in pairs(t) do
-    table.insert(keys, key)
-  end
-  return keys
-end
 
 local function merge(t1, t2)
     for k, v in pairs(t2) do
@@ -457,11 +457,10 @@ set_keymap("n", "gj", "<cmd>Lspsaga diagnostic_jump_next<cr>", {silent = true, n
 set_keymap("n", "gk", "<cmd>Lspsaga diagnostic_jump_prev<cr>", {silent = true, noremap = true})
 --buf_set_keymap("n", "<C-u>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<cr>", nil)
 --buf_set_keymap("n", "<C-d>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<cr>", nil)
-
 local null_ls = require("null-ls")
 null_ls.setup({
     sources = {
-        -- null_ls.builtins.completion.spell,
+        null_ls.builtins.completion.spell,
         null_ls.builtins.code_actions.gitsigns,
     },
 })
@@ -469,8 +468,12 @@ null_ls.setup({
 vim.o.completeopt = 'menuone,noselect'
 
 local luasnip = require('luasnip')
-
 local lspkind = require('lspkind')
+
+lspkind.init({
+  mode = true,
+  preset = 'default'
+})
 
 local function border(hl_name)
   return {
@@ -487,15 +490,6 @@ end
 
 vim.opt.completeopt = "menuone,noselect"
 local cmp = require('cmp')
-
-local cmp_window = require "cmp.utils.window"
-
-cmp_window.info_ = cmp_window.info
-cmp_window.info = function(self)
-  local info = self:info_()
-  info.scrollable = false
-  return info
-end
 
 cmp.setup {
   window = {
@@ -544,6 +538,7 @@ cmp.setup {
   },
   sources = {
     { name = 'nvim_lsp' },
+    { name = 'nvim_lsp_signature_help' },
     { name = 'luasnip' },
     { name = "nvim_lua" },
 --    { name = "buffer" },
