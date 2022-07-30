@@ -53,7 +53,7 @@ packer.startup({function(use)
   use { 'marko-cerovac/material.nvim' }
 
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
-  use 'vzarytovskii/neofsharp.vim'
+  use 'adelarsq/neofsharp.vim'
 
   use 'neovim/nvim-lspconfig'
   use 'williamboman/nvim-lsp-installer'
@@ -161,18 +161,43 @@ config = {
   }
 }})
 
-vim.cmd([[
-  augroup packer_user_config
-    autocmd!
-    autocmd BufWritePost */nvim/lua/*.lua source <afile> | PackerCompile
-  augroup end
-]])
-
-
 if packer_bootstrap then
   packer.sync()
   vim.api.nvim_command "PackerCompile"
 end
+
+local packer_group = vim.api.nvim_create_augroup('Packer', { clear = true })
+vim.api.nvim_create_autocmd('BufWritePost', {
+  command = 'source <afile> | PackerCompile',
+  group = packer_group,
+  pattern = vim.fn.expand '$MYVIMRC',
+})
+
+
+vim.cmd 'colorscheme material'
+
+require('lualine').setup {
+  options = {
+    theme = 'auto'
+  }
+}
+
+require('material').setup {
+  lualine_style = 'stealth'
+}
+
+require('telescope').setup {
+  defaults = {
+    mappings = {
+      i = {
+        ['<C-u>'] = false,
+        ['<C-d>'] = false,
+      },
+    },
+  },
+}
+
+pcall(require('telescope').load_extension, 'fzf')
 
 vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
 
@@ -356,6 +381,9 @@ local on_attach = function(client, bufnr)
 ]]--
 end
 
+local runtime_path = vim.split(package.path, ';')
+table.insert(runtime_path, 'lua/?.lua')
+table.insert(runtime_path, 'lua/?/init.lua')
 
 local nvim_lsp = require('lspconfig')
 local lsp_installer_servers = require('nvim-lsp-installer.servers')
@@ -373,7 +401,24 @@ local servers = {
   },
   grammarly = {},
   marksman = {},
-  sumneko_lua = {},
+  sumneko_lua = {
+    settings = {
+      Lua = {
+        runtime = {
+          -- Tell the language server which version of Lua you're using (most likely LuaJIT)
+          version = 'LuaJIT',
+          -- Setup your lua path
+          path = runtime_path,
+        },
+        diagnostics = {
+          globals = { 'vim' },
+        },
+        workspace = { library = vim.api.nvim_get_runtime_file('', true) },
+        -- Do not send telemetry data containing a randomized but unique identifier
+        telemetry = { enable = false, },
+      },
+    },
+  },
   fsautocomplete = {
     cmd = { "fsautocomplete" },
     filetypes = { "fsharp" },
@@ -463,10 +508,10 @@ cmp.setup {
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>'] = cmp.mapping.close(),
-    ['<CR>'] = cmp.mapping.confirm {
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = true,
-    },
+--    ['<CR>'] = cmp.mapping.confirm {
+--      behavior = cmp.ConfirmBehavior.Replace,
+--      select = true,
+--    },
     ['<Tab>'] = function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
@@ -490,8 +535,8 @@ cmp.setup {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
     { name = "nvim_lua" },
-    { name = "buffer" },
-    { name = "path" },
+--    { name = "buffer" },
+--    { name = "path" },
   },
   formatting = {
     format = lspkind.cmp_format({
