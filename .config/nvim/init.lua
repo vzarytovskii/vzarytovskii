@@ -50,7 +50,7 @@ packer.startup({function(use)
   use 'nvim-telescope/telescope.nvim'
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
-  use { 'marko-cerovac/material.nvim' }
+  use 'folke/tokyonight.nvim'
 
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
@@ -173,17 +173,13 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = vim.fn.expand '$MYVIMRC',
 })
 
-
-vim.cmd 'colorscheme material'
+vim.g.tokyonight_style = "night"
+vim.cmd[[colorscheme tokyonight]]
 
 require('lualine').setup {
   options = {
-    theme = 'auto'
+    theme = 'tokyonight'
   }
-}
-
-require('material').setup {
-  lualine_style = 'stealth'
 }
 
 require('telescope').setup {
@@ -220,45 +216,21 @@ require"gitlinker".setup()
 
 require('litee.lib').setup()
 require('litee.gh').setup({
-  -- deprecated, around for compatability for now.
   jump_mode   = "invoking",
-  -- remap the arrow keys to resize any litee.nvim windows.
   map_resize_keys = false,
-  -- do not map any keys inside any gh.nvim buffers.
   disable_keymaps = false,
-  -- the icon set to use.
   icon_set = "default",
-  -- any custom icons to use.
   icon_set_custom = nil,
-  -- whether to register the @username and #issue_number omnifunc completion
-  -- in buffers which start with .git/
   git_buffer_completion = true,
-  -- defines keymaps in gh.nvim buffers.
   keymaps = {
-      -- when inside a gh.nvim panel, this key will open a node if it has
-      -- any futher functionality. for example, hitting <CR> on a commit node
-      -- will open the commit's changed files in a new gh.nvim panel.
       open = "<CR>",
-      -- when inside a gh.nvim panel, expand a collapsed node
       expand = "zo",
-      -- when inside a gh.nvim panel, collpased and expanded node
       collapse = "zc",
-      -- when cursor is over a "#1234" formatted issue or PR, open its details
-      -- and comments in a new tab.
       goto_issue = "gd",
-      -- show any details about a node, typically, this reveals commit messages
-      -- and submitted review bodys.
       details = "d",
-      -- inside a convo buffer, submit a comment
       submit_comment = "<C-s>",
-      -- inside a convo buffer, when your cursor is ontop of a comment, open
-      -- up a set of actions that can be performed.
       actions = "<C-a>",
-      -- inside a thread convo buffer, resolve the thread.
       resolve_thread = "<C-r>",
-      -- inside a gh.nvim panel, if possible, open the node's web URL in your
-      -- browser. useful particularily for digging into external failed CI
-      -- checks.
       goto_web = "gx"
   }
 })
@@ -267,7 +239,7 @@ treesitter.setup {
   ensure_installed = "all",
   sync_install = false,
   highlight = {
-    enable = true,
+    enable = false,
   },
   indent = {
     enable = true
@@ -305,7 +277,7 @@ local config = {
     },
 }
 
--- vim.diagnostic.config(config)
+vim.diagnostic.config(config)
 
 local lsp_signature = require 'lsp_signature'
 
@@ -345,7 +317,7 @@ local illuminate = require 'illuminate'
 local virtualtypes = require 'virtualtypes'
 
 local on_attach = function(client, bufnr)
-  illuminate.on_attach(client)
+  -- illuminate.on_attach(client)
   lsp_signature.on_attach({
         bind = true,
         floating_window = true,
@@ -353,11 +325,10 @@ local on_attach = function(client, bufnr)
 
   virtualtypes.on_attach(client, bufnr)
 
-  -- local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-  lsp_highlight_document(client)
+  --lsp_highlight_document(client)
 
   -- local opts = { noremap=true, silent=true }
 --[[
@@ -386,7 +357,11 @@ table.insert(runtime_path, 'lua/?.lua')
 table.insert(runtime_path, 'lua/?/init.lua')
 
 local nvim_lsp = require('lspconfig')
+
+require('nvim-lsp-installer').setup()
+
 local lsp_installer_servers = require('nvim-lsp-installer.servers')
+
 local servers = {
   bashls = {},
   diagnosticls = {},
@@ -405,16 +380,13 @@ local servers = {
     settings = {
       Lua = {
         runtime = {
-          -- Tell the language server which version of Lua you're using (most likely LuaJIT)
           version = 'LuaJIT',
-          -- Setup your lua path
           path = runtime_path,
         },
         diagnostics = {
           globals = { 'vim' },
         },
         workspace = { library = vim.api.nvim_get_runtime_file('', true) },
-        -- Do not send telemetry data containing a randomized but unique identifier
         telemetry = { enable = false, },
       },
     },
@@ -426,8 +398,16 @@ local servers = {
        AutomaticWorkspaceInit = true
     },
   },
-  csharp_ls = {}
+  omnisharp = { use_mono = false }
 }
+
+local function get_keys(t)
+  local keys={}
+  for key,_ in pairs(t) do
+    table.insert(keys, key)
+  end
+  return keys
+end
 
 local function merge(t1, t2)
     for k, v in pairs(t2) do
@@ -447,19 +427,16 @@ for server_name, server_opts in pairs(servers) do
             print("Server ", server_name, " is not installed. Installing...")
             server:install()
         end
-        server:on_ready(function ()
-            local opts = {
-                on_attach = on_attach,
-                capabilities = capabilities,
-                flags = {
-                        debounce_text_changes = 150,
-                }
-            }
+        local opts = {
+          on_attach = on_attach,
+          capabilities = capabilities,
+          flags = {
+            debounce_text_changes = 150,
+          }
+        }
 
-            merge(opts, server_opts)
-            nvim_lsp[server_name].setup(opts)
-            server:setup(opts)
-        end)
+        merge(opts, server_opts)
+        nvim_lsp[server_name].setup(opts)
     else
         error("No server available for: " .. server_name .. "\n")
     end
