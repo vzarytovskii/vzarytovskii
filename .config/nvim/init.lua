@@ -1,9 +1,9 @@
 local ok, impatient = pcall(require, 'impatient')
 if ok then
   impatient.enable_profile()
+  require('impatient')
 end
 
-require('impatient')
 
 local fn = vim.fn
 
@@ -11,6 +11,11 @@ local ok, packer = pcall(require, "packer")
 local packer_bootstrap = false
 
 if not ok then
+
+  if fn.input("Packer seems to be missing. Download? (y for yes): ") ~= "y" then
+    return
+  end
+
   local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
 
   print "Cloning packer..."
@@ -167,7 +172,10 @@ config = {
 
 if packer_bootstrap then
   packer.sync()
-  vim.api.nvim_command "PackerCompile"
+  vim.cmd 'autocmd User PackerComplete ++once lua require("packer").compile()'
+  --packer.compile()
+  --vim.api.nvim_command "PackerCompile"
+  return
 end
 
 local packer_group = vim.api.nvim_create_augroup('Packer', { clear = true })
