@@ -64,16 +64,13 @@ packer.startup({function(use)
 
   use 'neovim/nvim-lspconfig'
   use 'williamboman/nvim-lsp-installer'
-
   use 'jose-elias-alvarez/null-ls.nvim'
-
-  use 'tami5/lspsaga.nvim'
-
+  use { 'glepnir/lspsaga.nvim', branch = "main"}
   use 'ray-x/lsp_signature.nvim'
-
-  use 'j-hui/fidget.nvim'
-
   use 'jubnzv/virtual-types.nvim'
+  use 'onsails/lspkind-nvim'
+  use 'j-hui/fidget.nvim'
+  use 'github/copilot.vim'
 
   use {
     'hrsh7th/nvim-cmp',
@@ -83,7 +80,8 @@ packer.startup({function(use)
       "hrsh7th/cmp-path",
       'saadparwaiz1/cmp_luasnip',
       "hrsh7th/cmp-nvim-lsp-signature-help",
-      "hrsh7th/cmp-nvim-lua"
+      "hrsh7th/cmp-nvim-lua",
+      "hrsh7th/cmp-copilot"
     }
   }
   use {
@@ -93,8 +91,6 @@ packer.startup({function(use)
     }
   }
 
-  use 'github/copilot.vim'
-
   use {
     'nvim-treesitter/nvim-treesitter',
     requires = {
@@ -102,8 +98,6 @@ packer.startup({function(use)
     },
     config = 'vim.cmd [[TSUpdate]]' 
   }
-
-  use 'onsails/lspkind-nvim'
 
   use "smjonas/inc-rename.nvim"
 
@@ -154,7 +148,7 @@ packer.startup({function(use)
     'esensar/nvim-dev-container',
     requires = { 'nvim-treesitter/nvim-treesitter' }
   }
-  use { 'RRethy/vim-illuminate' }
+  use { 'antoinemadec/FixCursorHold.nvim' }
 
 end,
 config = {
@@ -185,6 +179,10 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = vim.fn.expand '$MYVIMRC',
 })
 
+local function set_keymap(...) vim.api.nvim_set_keymap(...) end
+
+vim.g.cursorhold_updatetime = 100
+
 vim.g.tokyonight_style = "night"
 vim.cmd[[colorscheme tokyonight]]
 
@@ -200,7 +198,11 @@ require('telescope').setup {
       i = {
         ['<C-u>'] = false,
         ['<C-d>'] = false,
+        ["<esc>"] = require('telescope.actions').close
       },
+      n = {
+        ['/'] = require('telescope.builtin').current_buffer_fuzzy_find
+      }
     },
   },
 }
@@ -219,33 +221,6 @@ local ok, treesitter = pcall(require, "nvim-treesitter.configs")
 if not ok then
   return
 end
-
-require('gitsigns').setup()
-require('octo').setup()
-require('neogit').setup()
-
-require"gitlinker".setup()
-
-require('litee.lib').setup()
-require('litee.gh').setup({
-  jump_mode   = "invoking",
-  map_resize_keys = false,
-  disable_keymaps = false,
-  icon_set = "default",
-  icon_set_custom = nil,
-  git_buffer_completion = true,
-  keymaps = {
-      open = "<CR>",
-      expand = "zo",
-      collapse = "zc",
-      goto_issue = "gd",
-      details = "d",
-      submit_comment = "<C-s>",
-      actions = "<C-a>",
-      resolve_thread = "<C-r>",
-      goto_web = "gx"
-  }
-})
 
 treesitter.setup {
   ensure_installed = "all",
@@ -271,6 +246,18 @@ treesitter.setup {
   },
 }
 
+require('gitsigns').setup()
+require('octo').setup()
+require('neogit').setup()
+require"gitlinker".setup()
+
+require('litee.lib').setup()
+require('litee.gh').setup()
+
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+
+--[[
+-- TODO: Review and enable or delete:
 local config = {
     virtual_text = true,
     signs = {
@@ -289,11 +276,9 @@ local config = {
     },
 }
 
---vim.diagnostic.config(config)
+vim.diagnostic.config(config)
 
-local lsp_signature = require 'lsp_signature'
 local handlers = vim.lsp.handlers
-local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = true
 capabilities.textDocument.completion.completionItem.preselectSupport = true
 capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
@@ -337,47 +322,33 @@ local function lsp_highlight_document(client)
         autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
         autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
       augroup END
-    ]],
+    ]]--[[,
       false
     )
   end
 end
+]]
 
-local illuminate = require 'illuminate'
-local virtualtypes = require 'virtualtypes'
-
-require"fidget".setup{}
+local virtualtypes = require('virtualtypes')
 
 local on_attach = function(client, bufnr)
-  client.server_capabilities.documentFormattingProvider = false
-  client.server_capabilities.documentRangeFormattingProvider = false
+    if client.supports_method("textDocument/codeLens") then
+      virtualtypes.on_attach(client, bufnr)
+    end
 
-  illuminate.on_attach(client)
-  lsp_signature.on_attach({
-        bind = true,
-        floating_window = true,
-        hint_enable = true,
-        use_lspsaga = true
-  }, bufnr)
+--  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
-  virtualtypes.on_attach(client, bufnr)
-
-  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-
-  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+--  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
   --lsp_highlight_document(client)
 end
+
+local nvim_lsp = require('lspconfig')
+require('nvim-lsp-installer').setup({})
+local lsp_installer_servers = require('nvim-lsp-installer.servers')
 
 local runtime_path = vim.split(package.path, ';')
 table.insert(runtime_path, 'lua/?.lua')
 table.insert(runtime_path, 'lua/?/init.lua')
-
-local nvim_lsp = require('lspconfig')
-
-require('nvim-lsp-installer').setup({})
-
-local lsp_installer_servers = require('nvim-lsp-installer.servers')
-
 local servers = {
   bashls = {},
   diagnosticls = {},
@@ -450,64 +421,68 @@ for server_name, server_opts in pairs(servers) do
     end
 end
 
-require('lspsaga').init_lsp_saga()
-local function set_keymap(...) vim.api.nvim_set_keymap(...) end
-set_keymap('n', 'K', ':Lspsaga hover_doc<CR>', { noremap = true, silent = true })
-set_keymap('n', 'gh', ':Lspsaga lsp_finder<CR>', { noremap = true, silent = true })
-set_keymap('n', 'gd', ':Lspsaga preview_definition<CR>', { noremap = true, silent = true })
-set_keymap('n', '<leader>ca', ':Lspsaga code_action<CR>', { noremap = true, silent= true })
-set_keymap('v', '<leader>ca', ':<C-U>Lspsaga range_code_action<CR>', { noremap = true, silent= true })
-set_keymap("n", "gx", "<cmd>Lspsaga code_action<cr>", {silent = true, noremap = true})
-set_keymap("x", "gx", ":<c-u>Lspsaga range_code_action<cr>", {silent = true, noremap = true})
-set_keymap("n", "K",  "<cmd>Lspsaga hover_doc<cr>", {silent = true, noremap = true})
-set_keymap("n", "go", "<cmd>Lspsaga show_line_diagnostics<cr>", {silent = true, noremap = true})
-set_keymap("n", "gj", "<cmd>Lspsaga diagnostic_jump_next<cr>", {silent = true, noremap = true})
-set_keymap("n", "gk", "<cmd>Lspsaga diagnostic_jump_prev<cr>", {silent = true, noremap = true})
---buf_set_keymap("n", "<C-u>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<cr>", nil)
---buf_set_keymap("n", "<C-d>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<cr>", nil)
+require"fidget".setup{}
+
 local null_ls = require("null-ls")
 null_ls.setup({
     sources = {
         null_ls.builtins.completion.spell,
         null_ls.builtins.code_actions.gitsigns,
+        --null_ls.builtins.code_actions.refactoring,
+        null_ls.builtins.completion.luasnip,
+        --null_ls.builtins.completion.vsnip,
+        --null_ls.builtins.diagnostics.actionlint,
+        --null_ls.builtins.diagnostics.checkmake,
+        null_ls.builtins.diagnostics.codespell,
+        -- null_ls.builtins.diagnostics.cspell,
+        --null_ls.builtins.diagnostics.editorconfig_checker,
+        --null_ls.builtins.diagnostics.luacheck,
+        --null_ls.builtins.diagnostics.markdownlint,
+        --null_ls.builtins.code_actions.shellcheck
     },
 })
 
-vim.o.completeopt = 'menuone,noselect'
+require('lsp_signature').setup({
+        bind = true,
+        floating_window = true,
+        hint_enable = false,
+})
 
+require('lspsaga').init_lsp_saga({
+  code_action_lightbulb = {
+    enable = true,
+    sign = true,
+    enable_in_insert = true,
+    sign_priority = 20,
+    virtual_text = false,
+  },
+})
+
+vim.api.nvim_command('autocmd CursorHold * lua require("lspsaga.diagnostic").show_line_diagnostics({silent = true})')
+--vim.api.nvim_command('autocmd CursorHoldI * silent! lua require("lspsaga.signaturehelp").signature_help()')
+
+set_keymap('n', '<leader>ca', ':Lspsaga code_action<CR>', { noremap = true, silent= true })
+set_keymap("n", "gx", "<cmd>Lspsaga code_action<cr>", {silent = true, noremap = true})
+set_keymap("n", "gh", "<cmd>Lspsaga lsp_finder<CR>", { silent = true })
+
+-- Completion:
 local luasnip = require('luasnip')
 local lspkind = require('lspkind')
 
-lspkind.init({
-  mode = true,
-  preset = 'default'
-})
-
-local function border(hl_name)
-  return {
-    { "╭", hl_name },
-    { "─", hl_name },
-    { "╮", hl_name },
-    { "│", hl_name },
-    { "╯", hl_name },
-    { "─", hl_name },
-    { "╰", hl_name },
-    { "│", hl_name },
-  }
-end
+lspkind.init({ mode = true, preset = 'default' })
 
 vim.opt.completeopt = "menuone,noselect"
 local cmp = require('cmp')
-
 cmp.setup {
   window = {
     completion = {
-      border = border "CmpBorder",
-      winhighlight = "Normal:CmpPmenu,CursorLine:PmenuSel,Search:None",
+      winhighlight = "Normal:Pmenu,FloatBorder:Pmenu,Search:None",
+      col_offset = -3,
+      side_padding = 0,
     },
-    documentation = {
-      border = border "CmpDocBorder",
-    },
+  },
+  view = {
+    entries = {name = 'custom', selection_order = 'near_cursor' }
   },
   snippet = {
     expand = function(args)
@@ -515,17 +490,15 @@ cmp.setup {
     end,
   },
   mapping = {
-    ['<C-p>'] = cmp.mapping.select_prev_item(),
-    ['<C-n>'] = cmp.mapping.select_next_item(),
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-p>']     = cmp.mapping.select_prev_item(),
+    ['<C-n>']     = cmp.mapping.select_next_item(),
+    ['<Up>']      = cmp.mapping.select_prev_item(),
+    ['<Down>']    = cmp.mapping.select_next_item(),
+    ['<C-d>']     = cmp.mapping.scroll_docs(-4),
+    ['<C-f>']     = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>'] = cmp.mapping.close(),
---    ['<CR>'] = cmp.mapping.confirm {
---      behavior = cmp.ConfirmBehavior.Replace,
---      select = true,
---    },
-    ['<Tab>'] = function(fallback)
+    ['<C-e>']     = cmp.mapping.close(),
+    ['<Tab>']      = function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
       elseif luasnip.expand_or_jumpable() then
@@ -546,30 +519,24 @@ cmp.setup {
   },
   sources = {
     { name = 'nvim_lsp' },
-    { name = 'nvim_lsp_signature_help' },
     { name = 'luasnip' },
+    { name = "copilot" },
     { name = "nvim_lua" },
 --    { name = "buffer" },
---    { name = "path" },
+    { name = "path" },
   },
   formatting = {
-    format = lspkind.cmp_format({
-      mode = 'symbol', -- show only symbol annotations
-      maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
-      before = function (entry, vim_item)
-        return vim_item
-      end
-    })
-  }
+    fields = { "kind", "abbr", "menu" },
+    format = function(entry, vim_item)
+      local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50 })(entry, vim_item)
+      local strings = vim.split(kind.kind, "%s", { trimempty = true })
+      kind.kind = " " .. strings[1] .. " "
+      kind.menu = "    (" .. strings[2] .. ")"
+
+      return kind
+    end,
+  },
 }
-
-
-
-require "lsp_signature".setup()
-
-require("inc_rename").setup()
-
--- require("trouble").setup()
 
 local dap, dapui = require("dap"), require("dapui")
 
@@ -599,6 +566,7 @@ end
 dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
+
 require("nvim-dap-virtual-text").setup()
 
 require("neotest").setup({})
