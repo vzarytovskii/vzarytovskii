@@ -1,9 +1,7 @@
 local ok, impatient = pcall(require, 'impatient')
 if ok then
   impatient.enable_profile()
-  require('impatient')
 end
-
 
 local fn = vim.fn
 
@@ -191,21 +189,35 @@ require('lualine').setup {
     theme = 'tokyonight'
   }
 }
-
-require('telescope').setup {
+local telescope = require('telescope')
+local telescope_actions = require('telescope.actions')
+local telescope_builtin = require('telescope.builtin')
+telescope.setup {
   defaults = {
+    layout_config = {
+      vertical = { width = 0.5 }
+    },
     mappings = {
       i = {
         ['<C-u>'] = false,
         ['<C-d>'] = false,
-        ["<esc>"] = require('telescope.actions').close
-      },
-      n = {
-        ['/'] = require('telescope.builtin').current_buffer_fuzzy_find
+        ["<esc>"] = telescope_actions.close,
+        ["<C-g>"] = telescope_actions.close
       }
     },
   },
+  pickers = {
+    find_files = {
+      theme = "dropdown",
+      find_command = { 'rg', '--files' },
+    }
+  },
 }
+
+set_keymap('n', '<leader>/', ':Telescope current_buffer_fuzzy_find<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-s>', ':Telescope current_buffer_fuzzy_find<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-f>', ':Telescope find_files<CR>', { noremap = true, silent= true })
+set_keymap('n', '<M-s>', ':Telescope live_grep<CR>', { noremap = true, silent= true })
 
 pcall(require('telescope').load_extension, 'fzf')
 
@@ -253,6 +265,8 @@ require"gitlinker".setup()
 
 require('litee.lib').setup()
 require('litee.gh').setup()
+
+set_keymap('n', '<leader>gs', ':Neogit<CR>', { noremap = true, silent= true })
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 
@@ -458,10 +472,12 @@ require('lspsaga').init_lsp_saga({
   },
 })
 
-vim.api.nvim_command('autocmd CursorHold * lua require("lspsaga.diagnostic").show_line_diagnostics({silent = true})')
+vim.cmd [[autocmd CursorHold,CursorHoldI * :Lspsaga show_line_diagnostics ]]
+--vim.cmd [[autocmd CursorHold,CursorHoldI * :Lspsaga hover_doc ]]
 --vim.api.nvim_command('autocmd CursorHoldI * silent! lua require("lspsaga.signaturehelp").signature_help()')
 
 set_keymap('n', '<leader>ca', ':Lspsaga code_action<CR>', { noremap = true, silent= true })
+set_keymap('n', '<leader>sd', ':Lspsaga hover_doc<CR>', { noremap = true, silent= true })
 set_keymap("n", "gx", "<cmd>Lspsaga code_action<cr>", {silent = true, noremap = true})
 set_keymap("n", "gh", "<cmd>Lspsaga lsp_finder<CR>", { silent = true })
 
