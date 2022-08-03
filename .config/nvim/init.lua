@@ -53,6 +53,8 @@ packer.startup({function(use)
   use 'lewis6991/impatient.nvim'
 
   use 'nvim-telescope/telescope.nvim'
+  use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
+
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
   use 'folke/tokyonight.nvim'
@@ -194,6 +196,19 @@ local telescope_actions = require('telescope.actions')
 local telescope_builtin = require('telescope.builtin')
 telescope.setup {
   defaults = {
+    file_sorter = require("telescope.sorters").get_fuzzy_file,
+    file_ignore_patterns = { "node_modules" },
+    generic_sorter = require("telescope.sorters").get_generic_fuzzy_sorter,
+    vimgrep_arguments = {
+      "rg",
+      "--color=never",
+      "--no-heading",
+      "--with-filename",
+      "--line-number",
+      "--column",
+      "--smart-case",
+      "--trim" -- add this value
+    },
     layout_config = {
       vertical = { width = 0.5 }
     },
@@ -208,16 +223,35 @@ telescope.setup {
   },
   pickers = {
     find_files = {
-      theme = "dropdown",
-      find_command = { 'rg', '--files' },
+      --theme = "dropdown",
+      --find_command = { 'rg', '--files' },
+      find_command = { "fdfind", "--type", "f", "--strip-cwd-prefix" },
     }
   },
+  extensions = {
+    fzf = {
+      fuzzy = true,                    -- false will only do exact matching
+      override_generic_sorter = true,  -- override the generic sorter
+      override_file_sorter = true,     -- override the file sorter
+      case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
+                                       -- the default case_mode is "smart_case"
+    }
+  }
 }
+
+project_files = function()
+  local opts = {} -- define here if you want to define something
+  local ok = pcall(telescope_builtin.git_files, opts)
+  if not ok then
+    telescope_builtin.find_files(opts)
+  end
+end
 
 set_keymap('n', '<leader>/', ':Telescope current_buffer_fuzzy_find<CR>', { noremap = true, silent= true })
 set_keymap('n', '<C-s>', ':Telescope current_buffer_fuzzy_find<CR>', { noremap = true, silent= true })
-set_keymap('n', '<C-f>', ':Telescope find_files<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-f>', '<CMD>lua project_files()<CR>', { noremap = true, silent= true })
 set_keymap('n', '<M-s>', ':Telescope live_grep<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-b>', ':Telescope buffers<CR>', { noremap = true, silent= true })
 
 pcall(require('telescope').load_extension, 'fzf')
 
@@ -269,6 +303,25 @@ require('litee.gh').setup()
 set_keymap('n', '<leader>gs', ':Neogit<CR>', { noremap = true, silent= true })
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem = {
+  documentationFormat = { "markdown", "plaintext" },
+  snippetSupport = true,
+  preselectSupport = true,
+  insertReplaceSupport = true,
+  labelDetailsSupport = true,
+  deprecatedSupport = true,
+  commitCharactersSupport = true,
+  tagSupport = { valueSet = { 1 } },
+  resolveSupport = {
+    properties = {
+      "documentation",
+      "detail",
+      "additionalTextEdits",
+    },
+  },
+}
+
+capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 --[[
 -- TODO: Review and enable or delete:
@@ -293,20 +346,6 @@ local config = {
 vim.diagnostic.config(config)
 
 local handlers = vim.lsp.handlers
-capabilities.textDocument.completion.completionItem.snippetSupport = true
-capabilities.textDocument.completion.completionItem.preselectSupport = true
-capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
-capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
-capabilities.textDocument.completion.completionItem.deprecatedSupport = true
-capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
-capabilities.textDocument.completion.completionItem.tagSupport = { valueSet = { 1 } }
-capabilities.textDocument.completion.completionItem.resolveSupport = {
-   properties = {
-      "documentation",
-      "detail",
-      "additionalTextEdits",
-   },
-}
 
 handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
   vim.lsp.diagnostic.on_publish_diagnostics,
@@ -325,7 +364,6 @@ handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
 handlers["textDocument/hover"] = vim.lsp.with(handlers.hover, {border = "rounded"})
 handlers["textDocument/signatureHelp"] = vim.lsp.with(handlers.signature_help, {border = "rounded"})
 
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 local function lsp_highlight_document(client)
   if client.server_capabilities.document_highlight then
@@ -350,6 +388,8 @@ local on_attach = function(client, bufnr)
       virtualtypes.on_attach(client, bufnr)
     end
 
+    client.server_capabilities.documentFormattingProvider = false
+    client.server_capabilities.documentRangeFormattingProvider = false
 --  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
 --  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
