@@ -457,7 +457,7 @@ require('lspsaga').init_lsp_saga({
   },
 })
 
-vim.cmd [[autocmd CursorHold,CursorHoldI * :Lspsaga show_line_diagnostics ]]
+vim.cmd [[autocmd CursorHold,CursorHoldI * :Lspsaga show_cursor_diagnostics ]]
 --vim.cmd [[autocmd CursorHold,CursorHoldI * :Lspsaga hover_doc ]]
 --vim.api.nvim_command('autocmd CursorHoldI * silent! lua require("lspsaga.signaturehelp").signature_help()')
 
