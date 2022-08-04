@@ -149,6 +149,8 @@ packer.startup({function(use)
     requires = { 'nvim-treesitter/nvim-treesitter' }
   }
   use { 'antoinemadec/FixCursorHold.nvim' }
+  use { 'kensyo/nvim-scrlbkun' }
+  use 'karb94/neoscroll.nvim'
 
 end,
 config = {
@@ -261,6 +263,7 @@ vim.opt.tabstop=8
 vim.opt.shiftwidth=2
 vim.opt.expandtab=true
 vim.opt.smartindent=true
+vim.opt.hlsearch=true
 
 local ok, treesitter = pcall(require, "nvim-treesitter.configs")
 
@@ -303,6 +306,7 @@ require('litee.gh').setup()
 set_keymap('n', '<leader>gs', ':Neogit<CR>', { noremap = true, silent= true })
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
+
 capabilities.textDocument.completion.completionItem = {
   documentationFormat = { "markdown", "plaintext" },
   snippetSupport = true,
@@ -323,64 +327,6 @@ capabilities.textDocument.completion.completionItem = {
 
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
---[[
--- TODO: Review and enable or delete:
-local config = {
-    virtual_text = true,
-    signs = {
-      active = signs,
-    },
-    update_in_insert = true,
-    underline = true,
-    severity_sort = true,
-    float = {
-      focusable = false,
-      style = "minimal",
-      border = "rounded",
-      source = "always",
-      header = "",
-      prefix = "",
-    },
-}
-
-vim.diagnostic.config(config)
-
-local handlers = vim.lsp.handlers
-
-handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-  vim.lsp.diagnostic.on_publish_diagnostics,
-  {
-    underline = true,
-    signs = true,
-    update_in_insert = true,
-    virtual_text = {
-      true,
-      spacing = 6,
-      -- severity_limit='Error'  -- Only show virtual text on error
-    },
-  }
-)
-
-handlers["textDocument/hover"] = vim.lsp.with(handlers.hover, {border = "rounded"})
-handlers["textDocument/signatureHelp"] = vim.lsp.with(handlers.signature_help, {border = "rounded"})
-
-
-local function lsp_highlight_document(client)
-  if client.server_capabilities.document_highlight then
-    vim.api.nvim_exec(
-      [[
-      augroup lsp_document_highlight
-        autocmd! * <buffer>
-        autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
-        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
-      augroup END
-    ]]--[[,
-      false
-    )
-  end
-end
-]]
-
 local virtualtypes = require('virtualtypes')
 
 local on_attach = function(client, bufnr)
@@ -393,7 +339,6 @@ local on_attach = function(client, bufnr)
 --  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
 --  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-  --lsp_highlight_document(client)
 end
 
 local nvim_lsp = require('lspconfig')
@@ -639,10 +584,12 @@ commentft.set('yaml', '# %s')
 
 require("pretty-fold").setup()
 require("fold-preview").setup()
-
 require("neogen").setup()
-
 require("devcontainer").setup{}
+
+require('scrlbkun').setup()
+
+require('neoscroll').setup()
 
 local wk = require("which-key")
 wk.setup({})
