@@ -35,8 +35,12 @@ if [ -d "$HOME/.dotnet" ] ; then
 fi
 
 if [ -d "$HOME/.dotnet/tools" ] ; then
+    export DOTNET_ROOT=$HOME/.dotnet
     PATH="$HOME/.dotnet/tools:$PATH"
 fi
 
-export DOTNET_ROOT=$HOME/.dotnet
+
 [ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
+
+
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
