@@ -62,8 +62,13 @@ packer.startup({function(use)
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
 
-  use 'neovim/nvim-lspconfig'
-  use 'williamboman/nvim-lsp-installer'
+  use {
+      "williamboman/mason.nvim",
+      "williamboman/mason-lspconfig.nvim",
+      'WhoIsSethDaniel/mason-tool-installer.nvim',
+      "neovim/nvim-lspconfig",
+  }
+
   use 'jose-elias-alvarez/null-ls.nvim'
   use { 'glepnir/lspsaga.nvim', branch = "main"}
   use 'ray-x/lsp_signature.nvim'
@@ -180,6 +185,25 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   group = packer_group,
   pattern = vim.fn.expand '$MYVIMRC',
 })
+
+local function merge(t1, t2)
+    for k, v in pairs(t2) do
+        if (type(v) == "table") and (type(t1[k] or false) == "table") then
+            merge(t1[k], t2[k])
+        else
+            t1[k] = v
+        end
+    end
+    return t1
+end
+
+local function get_keys(t)
+  local keys={}
+  for key,_ in pairs(t) do
+    table.insert(keys, key)
+  end
+  return keys
+end
 
 local function set_keymap(...) vim.api.nvim_set_keymap(...) end
 
@@ -341,17 +365,20 @@ local on_attach = function(client, bufnr)
 --  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
 end
 
-local nvim_lsp = require('lspconfig')
-require('nvim-lsp-installer').setup({})
-local lsp_installer_servers = require('nvim-lsp-installer.servers')
+local tools = {
+  -- Formatters, linters and DAPs:
+  'shellcheck',
+  'prettier',
+  --'codespell'
+  --'fantomas'
+}
 
 local runtime_path = vim.split(package.path, ';')
 table.insert(runtime_path, 'lua/?.lua')
 table.insert(runtime_path, 'lua/?/init.lua')
+
 local servers = {
-  bashls = {},
   diagnosticls = {},
-  hls = {},
   jsonls = {
     settings = {
       json = {
@@ -387,24 +414,20 @@ local servers = {
   omnisharp = { use_mono = false }
 }
 
-local function merge(t1, t2)
-    for k, v in pairs(t2) do
-        if (type(v) == "table") and (type(t1[k] or false) == "table") then
-            merge(t1[k], t2[k])
-        else
-            t1[k] = v
-        end
-    end
-    return t1
-end
+local server_names = get_keys(servers)
 
-for server_name, server_opts in pairs(servers) do
-  local server_available, server = lsp_installer_servers.get_server(server_name)
-  if server_available then
-        if not server:is_installed() then
-            print("Server ", server_name, " is not installed. Installing...")
-            server:install()
-        end
+require("mason").setup()
+local mason_lspconfig = require("mason-lspconfig")
+local nvim_lsp = require('lspconfig')
+
+mason_lspconfig.setup({
+  ensure_installed = server_names,
+  automatic_installation = true
+})
+
+mason_lspconfig.setup_handlers {
+    function (server_name)
+        local server_opts = servers[server_name] or {}
         local opts = {
           on_attach = on_attach,
           capabilities = capabilities,
@@ -414,11 +437,19 @@ for server_name, server_opts in pairs(servers) do
         }
 
         merge(opts, server_opts)
+
         nvim_lsp[server_name].setup(opts)
-    else
-        error("No server available for: " .. server_name .. "\n")
-    end
-end
+    end,
+    --["rust_analyzer"] = function ()
+    --    require("rust-tools").setup {}
+    --end
+}
+
+require('mason-tool-installer').setup {
+  ensure_installed = tools,
+  auto_update = false,
+  run_on_start = true
+}
 
 require"fidget".setup{}
 
@@ -432,7 +463,7 @@ null_ls.setup({
         --null_ls.builtins.completion.vsnip,
         --null_ls.builtins.diagnostics.actionlint,
         --null_ls.builtins.diagnostics.checkmake,
-        null_ls.builtins.diagnostics.codespell,
+        --null_ls.builtins.diagnostics.codespell,
         -- null_ls.builtins.diagnostics.cspell,
         --null_ls.builtins.diagnostics.editorconfig_checker,
         --null_ls.builtins.diagnostics.luacheck,
