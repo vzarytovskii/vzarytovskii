@@ -173,9 +173,7 @@
     (let ((dpi (my-dpi)))
       (message "DPI: %d" dpi)
       (cond
-       ((< dpi 110) 13)
-       ((< dpi 130) 14)
-       ((< dpi 140) 15)
+       ((< dpi 110) 17)
        ((> dpi 160) 18)
        (t 14))))
 
@@ -184,11 +182,11 @@
   (defvar --font-name
     "Fira Code")
   (defvar --default-font
-    (font-spec :family --font-name :size (my-preferred-font-size) :weight 'normal))
+    (font-spec :family --font-name :size (my-preferred-font-size) :dpi (my-dpi) :weight 'normal))
 
   (defun adapt-font-size (&optional frame)
     (message "Adapted preferred font size: %d" (my-preferred-font-size))
-    (set-frame-font (font-spec :family --font-name :size (my-preferred-font-size) :weight 'normal)))
+    (set-frame-font (font-spec :family --font-name :size (my-preferred-font-size) :dpi (my-dpi) :weight 'normal)))
 
   :config
 

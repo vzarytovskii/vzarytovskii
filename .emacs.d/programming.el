@@ -510,6 +510,10 @@
   ;; :bind ("C-x f" . counsel-projectile-find-file)
   :bind ("C-x s". counsel-projectile-rg))
 
+;; Misc programming-related (i.e. tramp, devcontainers, etc)
+(use-package codespaces
+  :ensure-system-package gh
+  :config (codespaces-setup))
 
 (provide 'programming)
 ;;; programming.el ends here

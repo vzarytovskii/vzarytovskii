@@ -83,11 +83,6 @@
 				       (magit-get "branch" branch "remote"))))
 	(user-error "Push to upstream aborted by user")))))
 
-(use-package libgit)
-
-(use-package magit-libgit
-  :after (:all magit libgit))
-
 (use-package magit-lfs
   :after magit)
 
@@ -106,6 +101,10 @@
   :hook (magit-mode-hook . magit-delta-mode)
   :config
   (setq magit-delta-hide-plus-minus-markers nil))
+
+(use-package magit-filenotify
+  :after magit
+  :hook (after-save-hook . magit-filenotify-mode))
 
 (use-package forge
   :after magit
@@ -161,7 +160,11 @@
 (use-package pr-review
   ;; :disabled t
   :straight (:host github :repo "blahgeek/emacs-pr-review" :files (:defaults "graphql"))
-  :after (:all magit forge))
+  :after (:all magit forge transient)
+  :config
+  (transient-insert-suffix 'forge-dispatch '(1)
+    ["PR Review"
+     ("p p" "pr-review at point" pr-review-notification-open)]))
 
 (use-package git-link
   :bind (("C-x C-g i")))

@@ -84,6 +84,8 @@
     (package-install 'use-package))
   (straight-use-package 'use-package))
 
+(use-package use-package-ensure-system-package :ensure t)
+
 (require 'tls)
 
 (setq gnutls-verify-error (not (getenv "INSECURE"))
