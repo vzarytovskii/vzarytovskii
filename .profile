@@ -39,8 +39,6 @@ if [ -d "$HOME/.dotnet/tools" ] ; then
     PATH="$HOME/.dotnet/tools:$PATH"
 fi
 
-
-[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
-
-
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+[ -f "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
+[ -f "$HOME/.ghcup/env" ] && . "$HOME/.ghcup/env"
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"

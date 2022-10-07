@@ -424,6 +424,7 @@
 
 (use-package aggressive-indent
   :delight
+  :straight (:host github :repo "skangas/aggressive-indent-mode" :branch "master")
   :hook (emacs-lisp-mode-hook . aggressive-indent-mode)
   :hook (csharp-mode-hook . aggressive-indent-mode)
   :hook (fsharp-mode-hook . aggressive-indent-mode)
