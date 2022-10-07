@@ -57,8 +57,7 @@ packer.startup({function(use)
 
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
-  use 'folke/tokyonight.nvim'
-
+  use "olimorris/onedarkpro.nvim"
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
 
@@ -209,14 +208,46 @@ local function set_keymap(...) vim.api.nvim_set_keymap(...) end
 
 vim.g.cursorhold_updatetime = 100
 
-vim.g.tokyonight_style = "night"
-vim.cmd[[colorscheme tokyonight]]
-
-require('lualine').setup {
+require("onedarkpro").setup({
+  theme = "onedark_dark",
+  dark_theme = "onedark_dark", -- The default dark theme
+  light_theme = "onelight_vivid", -- The default light theme
+  caching = false, -- Use caching for the theme?
+  cache_path = vim.fn.expand(vim.fn.stdpath("cache") .. "/onedarkpro/"), -- The path to the cache directory
+  colors = {}, -- Override default colors by specifying colors for 'onelight' or 'onedark' themes
+  highlights = {}, -- Override default highlight and/or filetype groups
+  filetypes = { -- Override which filetype highlight groups are loaded
+      markdown = true,
+      python = true,
+      ruby = true,
+      yaml = true,
+  },
+  plugins = { -- Override which plugin highlight groups are loaded
+    all = true
+  },
+  styles = { -- Choose from "bold,italic,underline"
+      strings = "NONE", -- Style that is applied to strings.
+      comments = "NONE", -- Style that is applied to comments
+      keywords = "NONE", -- Style that is applied to keywords
+      functions = "NONE", -- Style that is applied to functions
+      variables = "NONE", -- Style that is applied to variables
+      virtual_text = "NONE", -- Style that is applied to virtual text
+  },
   options = {
-    theme = 'tokyonight'
+      bold = false, -- Use the colorscheme's opinionated bold styles?
+      italic = false, -- Use the colorscheme's opinionated italic styles?
+      underline = false, -- Use the colorscheme's opinionated underline styles?
+      undercurl = false, -- Use the colorscheme's opinionated undercurl styles?
+      cursorline = true, -- Use cursorline highlighting?
+      transparency = false, -- Use a transparent background?
+      terminal_colors = false, -- Use the colorscheme's colors for Neovim's :terminal?
+      window_unfocused_color = false, -- When the window is out of focus, change the normal background?
   }
-}
+})
+
+vim.cmd[[colorscheme onedarkpro]]
+
+require('lualine').setup {}
 local telescope = require('telescope')
 local telescope_actions = require('telescope.actions')
 local telescope_builtin = require('telescope.builtin')
