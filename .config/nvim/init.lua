@@ -209,8 +209,8 @@ local function set_keymap(...) vim.api.nvim_set_keymap(...) end
 vim.g.cursorhold_updatetime = 100
 
 require("onedarkpro").setup({
-  theme = "onedark_dark",
-  dark_theme = "onedark_dark", -- The default dark theme
+  theme = "onedark_vivid",
+  dark_theme = "onedark_vivid", -- The default dark theme
   light_theme = "onelight_vivid", -- The default light theme
   caching = false, -- Use caching for the theme?
   cache_path = vim.fn.expand(vim.fn.stdpath("cache") .. "/onedarkpro/"), -- The path to the cache directory
@@ -361,7 +361,6 @@ require('litee.gh').setup()
 set_keymap('n', '<leader>gs', ':Neogit<CR>', { noremap = true, silent= true })
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-
 capabilities.textDocument.completion.completionItem = {
   documentationFormat = { "markdown", "plaintext" },
   snippetSupport = true,
@@ -380,7 +379,7 @@ capabilities.textDocument.completion.completionItem = {
   },
 }
 
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 local virtualtypes = require('virtualtypes')
 
