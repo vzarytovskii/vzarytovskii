@@ -415,6 +415,12 @@
   (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
   (setq indent-region-function '(lambda (start end &optional indent-offset))))
 
+;; Rust
+(use-package rustic
+  :config
+  (setq rustic-lsp-server 'rust-analyzer
+        rustic-lsp-client 'lsp-mode))
+
 ;; YAML
 (use-package yaml-mode)
 
