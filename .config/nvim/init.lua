@@ -72,9 +72,12 @@ packer.startup({function(use)
   use { 'glepnir/lspsaga.nvim', branch = "main"}
   use 'ray-x/lsp_signature.nvim'
   use 'jubnzv/virtual-types.nvim'
+  use 'lvimuser/lsp-inlayhints.nvim'
   use 'onsails/lspkind-nvim'
   use 'j-hui/fidget.nvim'
   use 'github/copilot.vim'
+
+  use 'simrat39/rust-tools.nvim'
 
   use {
     'hrsh7th/nvim-cmp',
@@ -104,11 +107,11 @@ packer.startup({function(use)
   }
 
   use "smjonas/inc-rename.nvim"
-
   use { "folke/trouble.nvim", requires = "kyazdani42/nvim-web-devicons" }
 
   -- Comments
   use 'numToStr/Comment.nvim'
+  use { "folke/todo-comments.nvim", requires = "nvim-lua/plenary.nvim" }
 
   -- DAP
   use 'mfussenegger/nvim-dap'
@@ -354,7 +357,6 @@ require('gitsigns').setup()
 require('octo').setup()
 require('neogit').setup()
 require"gitlinker".setup()
-
 require('litee.lib').setup()
 require('litee.gh').setup()
 
@@ -379,28 +381,30 @@ capabilities.textDocument.completion.completionItem = {
   },
 }
 
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+local status_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+if status_ok then
+  capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
+end
 
 local virtualtypes = require('virtualtypes')
+
+local inlayhints = require("lsp-inlayhints")
+inlayhints.setup()
 
 local on_attach = function(client, bufnr)
     if client.supports_method("textDocument/codeLens") then
       virtualtypes.on_attach(client, bufnr)
     end
 
+    inlayhints.on_attach(client, bufnr)
+
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
---  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-
---  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
 end
 
 local tools = {
-  -- Formatters, linters and DAPs:
-  'shellcheck',
   'prettier',
-  --'codespell'
-  --'fantomas'
+  'fantomas'
 }
 
 local runtime_path = vim.split(package.path, ';')
@@ -442,7 +446,17 @@ local servers = {
     },
   },
   omnisharp = { use_mono = false },
-  rust_analyzer = {}
+  rust_analyzer = {
+    on_attach = function(client, bufnr)
+      require("rust-tools").setup {
+        tools = {
+          inlay_hints = {
+            auto = false,
+          },
+        },
+      }
+    end
+  }
 }
 
 local server_names = get_keys(servers)
@@ -459,6 +473,13 @@ mason_lspconfig.setup({
 mason_lspconfig.setup_handlers {
     function (server_name)
         local server_opts = servers[server_name] or {}
+        local server_on_attach = server_opts[on_attach] or function(_, _) end
+
+        local on_attach_fn = function(client, bufnr)
+          on_attach(client, bufnr)
+          server_on_attach(client, bufnr)
+        end
+
         local opts = {
           on_attach = on_attach,
           capabilities = capabilities,
@@ -471,14 +492,11 @@ mason_lspconfig.setup_handlers {
 
         nvim_lsp[server_name].setup(opts)
     end,
-    --["rust_analyzer"] = function ()
-    --    require("rust-tools").setup {}
-    --end
 }
 
 require('mason-tool-installer').setup {
   ensure_installed = tools,
-  auto_update = false,
+  auto_update = true,
   run_on_start = true
 }
 
@@ -489,7 +507,7 @@ null_ls.setup({
     sources = {
         null_ls.builtins.completion.spell,
         null_ls.builtins.code_actions.gitsigns,
-        --null_ls.builtins.code_actions.refactoring,
+        null_ls.builtins.code_actions.refactoring,
         null_ls.builtins.completion.luasnip,
         --null_ls.builtins.completion.vsnip,
         --null_ls.builtins.diagnostics.actionlint,
@@ -503,11 +521,11 @@ null_ls.setup({
     },
 })
 
-require('lsp_signature').setup({
-        bind = true,
-        floating_window = true,
-        hint_enable = false,
-})
+-- require('lsp_signature').setup({
+--         bind = true,
+--         floating_window = true,
+--         hint_enable = false,
+-- })
 
 require('lspsaga').init_lsp_saga({
   code_action_lightbulb = {
@@ -583,10 +601,10 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
-    { name = "copilot" },
+    --{ name = "copilot" },
     { name = "nvim_lua" },
 --    { name = "buffer" },
-    { name = "path" },
+    --{ name = "path" },
   },
   formatting = {
     fields = { "kind", "abbr", "menu" },
@@ -643,6 +661,8 @@ commentft.set('yaml', '# %s')
          .set('conf', '# %s')
          .set('fsharp', {'// %s', '(* %s *)'})
          .set('csharp', {'// %s', '/* %s */'})
+
+require("todo-comments").setup { }
 
 require("pretty-fold").setup()
 require("fold-preview").setup()
