@@ -327,7 +327,7 @@ if not ok then
 end
 
 treesitter.setup {
-  ensure_installed = "all",
+  ensure_installed = { "lua", "rust" },
   sync_install = false,
   highlight = {
     enable = false,
@@ -441,7 +441,8 @@ local servers = {
        AutomaticWorkspaceInit = true
     },
   },
-  omnisharp = { use_mono = false }
+  omnisharp = { use_mono = false },
+  rust_analyzer = {}
 }
 
 local server_names = get_keys(servers)
