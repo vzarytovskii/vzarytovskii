@@ -58,8 +58,10 @@ packer.startup({function(use)
   -- UI
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = true } }
   use "olimorris/onedarkpro.nvim"
+
   -- Dev: Autocomplete, TreeSitter, LSP, etc.
   use 'adelarsq/neofsharp.vim'
+  use 'ionide/Ionide-vim'
 
   use {
       "williamboman/mason.nvim",
@@ -145,10 +147,13 @@ packer.startup({function(use)
   use{ 'anuvyklack/pretty-fold.nvim',
     requires = 'anuvyklack/keymap-amend.nvim', -- only for preview
   }
+
   use { 'anuvyklack/fold-preview.nvim',
    requires = 'anuvyklack/keymap-amend.nvim'
   }
+
   use { 'danymat/neogen', requires = { 'nvim-treesitter/nvim-treesitter' } }
+  
   use "b0o/schemastore.nvim"
   use "folke/which-key.nvim"
   use {
@@ -158,7 +163,8 @@ packer.startup({function(use)
   use { 'antoinemadec/FixCursorHold.nvim' }
   use { 'kensyo/nvim-scrlbkun' }
   use 'karb94/neoscroll.nvim'
-
+  use("petertriho/nvim-scrollbar")
+  use {'kevinhwang91/nvim-hlslens', requires = "petertriho/nvim-scrollbar" }
 end,
 config = {
   auto_clean = true,
@@ -176,8 +182,6 @@ config = {
 if packer_bootstrap then
   packer.sync()
   vim.cmd 'autocmd User PackerComplete ++once lua require("packer").compile()'
-  --packer.compile()
-  --vim.api.nvim_command "PackerCompile"
   return
 end
 
@@ -213,13 +217,11 @@ vim.g.cursorhold_updatetime = 100
 
 require("onedarkpro").setup({
   theme = "onedark_vivid",
-  dark_theme = "onedark_vivid", -- The default dark theme
+  dark_theme = "onedark_vivid",
   light_theme = "onelight_vivid", -- The default light theme
   caching = false, -- Use caching for the theme?
-  cache_path = vim.fn.expand(vim.fn.stdpath("cache") .. "/onedarkpro/"), -- The path to the cache directory
-  colors = {}, -- Override default colors by specifying colors for 'onelight' or 'onedark' themes
-  highlights = {}, -- Override default highlight and/or filetype groups
-  filetypes = { -- Override which filetype highlight groups are loaded
+  cache_path = vim.fn.expand(vim.fn.stdpath("cache") .. "/onedarkpro/"),
+  filetypes = {
       markdown = true,
       python = true,
       ruby = true,
@@ -316,6 +318,7 @@ set_keymap('n', '<C-b>', ':Telescope buffers<CR>', { noremap = true, silent= tru
 pcall(require('telescope').load_extension, 'fzf')
 
 vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
+require'ionide'.setup{}
 
 vim.opt.tabstop=8
 vim.opt.shiftwidth=2
@@ -552,7 +555,7 @@ local lspkind = require('lspkind')
 
 lspkind.init({ mode = true, preset = 'default' })
 
-vim.opt.completeopt = "menuone,noselect"
+vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
 local cmp = require('cmp')
 cmp.setup {
   window = {
@@ -571,6 +574,7 @@ cmp.setup {
     end,
   },
   mapping = {
+    ['<CR>']      = cmp.mapping.confirm({select = false}),
     ['<C-p>']     = cmp.mapping.select_prev_item(),
     ['<C-n>']     = cmp.mapping.select_next_item(),
     ['<Up>']      = cmp.mapping.select_prev_item(),
@@ -579,7 +583,7 @@ cmp.setup {
     ['<C-f>']     = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>']     = cmp.mapping.close(),
-    ['<Tab>']      = function(fallback)
+    ['<Tab>']     = function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
       elseif luasnip.expand_or_jumpable() then
@@ -662,16 +666,35 @@ commentft.set('yaml', '# %s')
          .set('fsharp', {'// %s', '(* %s *)'})
          .set('csharp', {'// %s', '/* %s */'})
 
-require("todo-comments").setup { }
-
+require("todo-comments").setup()
 require("pretty-fold").setup()
 require("fold-preview").setup()
 require("neogen").setup()
-require("devcontainer").setup{}
-
+require("devcontainer").setup({})
 require('scrlbkun').setup()
-
 require('neoscroll').setup()
+require("scrollbar").setup()
+
+require('hlslens').setup({
+    build_position_cb = function(plist, _, _, _)
+        require("scrollbar.handlers.search").handler.show(plist.start_pos)
+    end,
+})
+vim.cmd([[
+    augroup scrollbar_search_hide
+        autocmd!
+        autocmd CmdlineLeave : lua require('scrollbar.handlers.search').handler.hide()
+    augroup END
+]])
+local kopts = {noremap = true, silent = true}
+vim.api.nvim_set_keymap('n', 'n', [[<Cmd>execute('normal! ' . v:count1 . 'n')<CR><Cmd>lua require('hlslens').start()<CR>]], kopts)
+vim.api.nvim_set_keymap('n', 'N', [[<Cmd>execute('normal! ' . v:count1 . 'N')<CR><Cmd>lua require('hlslens').start()<CR>]], kopts)
+vim.api.nvim_set_keymap('n', '*', [[*<Cmd>lua require('hlslens').start()<CR>]], kopts)
+vim.api.nvim_set_keymap('n', '#', [[#<Cmd>lua require('hlslens').start()<CR>]], kopts)
+vim.api.nvim_set_keymap('n', 'g*', [[g*<Cmd>lua require('hlslens').start()<CR>]], kopts)
+vim.api.nvim_set_keymap('n', 'g#', [[g#<Cmd>lua require('hlslens').start()<CR>]], kopts)
+vim.api.nvim_set_keymap('n', '<Leader>l', ':noh<CR>', kopts)
+
 
 local wk = require("which-key")
 wk.setup({})
