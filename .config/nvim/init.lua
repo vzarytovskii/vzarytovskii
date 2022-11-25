@@ -107,6 +107,8 @@ packer.startup({function(use)
     },
     config = 'vim.cmd [[TSUpdate]]' 
   }
+  use { 'nvim-treesitter/nvim-treesitter-context', requires = 'nvim-treesitter/nvim-treesitter' }
+  use { 'haringsrob/nvim_context_vt', requires = 'nvim-treesitter/nvim-treesitter' }
 
   use "smjonas/inc-rename.nvim"
   use { "folke/trouble.nvim", requires = "kyazdani42/nvim-web-devicons" }
@@ -356,8 +358,13 @@ treesitter.setup {
   },
 }
 
+require'treesitter-context'.setup{}
+require('nvim_context_vt').setup()
+
 require('gitsigns').setup()
-require('octo').setup()
+require('octo').setup({
+  default_remote = { "upstream", "origin" }
+})
 require('neogit').setup()
 require"gitlinker".setup()
 require('litee.lib').setup()
@@ -454,7 +461,7 @@ local servers = {
       require("rust-tools").setup {
         tools = {
           inlay_hints = {
-            auto = false,
+            auto = true,
           },
         },
       }
