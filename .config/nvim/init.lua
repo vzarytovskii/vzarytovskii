@@ -60,15 +60,24 @@ packer.startup({function(use)
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
 
+  -- Theme & related:
+  use 'olimorris/onedarkpro.nvim'
+
   -- Language specifics, including LSP, DAP, CMP, etc.
   use {
-      "williamboman/mason.nvim",
-      "williamboman/mason-lspconfig.nvim",
+      'williamboman/mason.nvim',
+      'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
-      "neovim/nvim-lspconfig",
-      "mfussenegger/nvim-dap",
-      "jayp0521/mason-nvim-dap.nvim",
+      'neovim/nvim-lspconfig',
+      'mfussenegger/nvim-dap',
+      'jayp0521/mason-nvim-dap.nvim',
   }
+  use {
+    'SmiteshP/nvim-navic',
+    requires = 'neovim/nvim-lspconfig'
+  }
+  use 'j-hui/fidget.nvim'
+
 end,
 config = {
   auto_clean = true,
@@ -133,6 +142,15 @@ local function get_tooling(t)
   return { tools = language_tools, servers = language_servers, debuggers = language_debuggers }
 end
 
+local onedarkpro = require("onedarkpro")
+onedarkpro.setup({
+  theme = "onedark_vivid",
+  dark_theme = "onedark_vivid",
+  light_theme = "onelight_vivid",
+  caching = false
+})
+vim.cmd[[colorscheme onedarkpro]]
+
 local nvim_runtime_path = vim.split(package.path, ';')
 table.insert(nvim_runtime_path, 'lua/?.lua')
 table.insert(nvim_runtime_path, 'lua/?/init.lua')
@@ -176,7 +194,10 @@ local languages = {
             diagnostics = {
               globals = { 'vim' },
             },
-            workspace = { library = vim.api.nvim_get_runtime_file('', true) },
+            workspace = {
+              checkThirdParty = false,
+              library = vim.api.nvim_get_runtime_file('', true)
+              },
             telemetry = { enable = false, },
           }
         }
@@ -197,41 +218,159 @@ local languages = {
   }
 }
 
-local function configure_languages(languages)
-  local tooling = get_tooling(languages)
+local function common_capabilities() 
+  local status_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+  if status_ok then
+    return cmp_nvim_lsp.default_capabilities()
+  end
 
-  local mason = require('mason')
-  local mason_lspconfig = require('mason-lspconfig')
-  local nvim_lsp = require('lspconfig')
-  local mason_tool_installer = require('mason-tool-installer')
-  local mason_nvim_dap = require("mason-nvim-dap")
-
-  mason.setup({
-      PATH = "prepend",
-      max_concurrent_installers = 4,
-      providers = {
-        "mason.providers.registry-api",
-        "mason.providers.client"
+  local capabilities = vim.lsp.protocol.make_client_capabilities()
+  capabilities.textDocument.completion.completionItem = {
+    documentationFormat = { "markdown", "plaintext" },
+    snippetSupport = true,
+    preselectSupport = true,
+    insertReplaceSupport = true,
+    labelDetailsSupport = true,
+    deprecatedSupport = true,
+    commitCharactersSupport = true,
+    tagSupport = { valueSet = { 1 } },
+    resolveSupport = {
+      properties = {
+        "documentation",
+        "detail",
+        "additionalTextEdits",
+      },
     },
-  })
-
-  mason_lspconfig.setup({
-    ensure_installed = vim.tbl_keys(tooling.servers),
-    automatic_installation = true
-  })
-
-  mason_tool_installer.setup {
-    ensure_installed = vim.tbl_keys(tooling.tools),
-    auto_update = true,
-    run_on_start = true
   }
+  return capabilities
+end
 
-  mason_nvim_dap.setup({
-      ensure_installed = vim.tbl_keys(tooling.debuggers),
-      automatic_installation = true,
-      automatic_setup = true
-  })
+local function configure_handlers()
+  local config = {
+    signs = {
+      active = true,
+      values = {
+        { name = "DiagnosticSignError", text = "" },
+        { name = "DiagnosticSignWarn", text = "" },
+        { name = "DiagnosticSignHint", text = "" },
+        { name = "DiagnosticSignInfo", text = "" },
+      },
+    },
+    virtual_text = true,
+    update_in_insert = false,
+    underline = true,
+    severity_sort = true,
+    float = {
+      focusable = false,
+      style = "minimal",
+      border = "rounded",
+      source = "always",
+      header = "",
+      prefix = "",
+      format = function(d)
+        local code = d.code or (d.user_data and d.user_data.lsp.code)
+        if code then
+          return string.format("%s [%s]", d.message, code):gsub("1. ", "")
+        end
+        return d.message
+      end,
+    },
+  },
+  vim.diagnostic.config(config)
+  vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
+  vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
+
+vim.cmd 'autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()'
+vim.cmd 'autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()'
+vim.cmd 'autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()'
 
 end
 
-configure_languages(languages)
+local tooling = get_tooling(languages)
+
+local mason = require('mason')
+local mason_lspconfig = require('mason-lspconfig')
+local nvim_lsp = require('lspconfig')
+local mason_tool_installer = require('mason-tool-installer')
+local mason_nvim_dap = require("mason-nvim-dap")
+local navic = require("nvim-navic")
+
+vim.o.winbar = "%{%v:lua.require'nvim-navic'.get_location()%}"
+
+local fidget = require('fidget')
+
+fidget.setup({
+  text = {
+    spinner = "dots"
+  },  
+  align = {
+    bottom = false,
+    right = true,
+  },
+  fmt = {
+    stack_upwards = false,
+  }
+})
+
+local capabilities = common_capabilities()
+
+mason.setup({
+    PATH = "prepend",
+    max_concurrent_installers = 4,
+    providers = {
+      "mason.providers.registry-api",
+      "mason.providers.client"
+  },
+})
+
+mason_lspconfig.setup({
+  ensure_installed = vim.tbl_keys(tooling.servers),
+  automatic_installation = true
+})
+
+mason_tool_installer.setup {
+  ensure_installed = vim.tbl_keys(tooling.tools),
+  auto_update = true,
+  run_on_start = true
+}
+
+mason_nvim_dap.setup({
+    ensure_installed = vim.tbl_keys(tooling.debuggers),
+    automatic_installation = true,
+    automatic_setup = true
+})
+
+local on_attach = function(client, bufnr)
+    if client.server_capabilities.documentSymbolProvider then
+        navic.attach(client, bufnr)
+    end
+
+    client.server_capabilities.documentFormattingProvider = false
+    client.server_capabilities.documentRangeFormattingProvider = false
+end
+
+mason_lspconfig.setup_handlers {
+    function (server_name)
+        local server_opts = tooling.servers[server_name] or {}
+        local server_on_attach = server_opts[on_attach] or function(_, _) end
+
+        local on_attach_fn = function(client, bufnr)
+          on_attach(client, bufnr)
+          server_on_attach(client, bufnr)
+        end
+
+        local opts = {
+          on_attach = on_attach,
+          capabilities = capabilities,
+          flags = {
+            debounce_text_changes = 150,
+          }
+        }
+
+        merge(opts, server_opts)
+
+        nvim_lsp[server_name].setup(opts)
+    end,
+}
+
+configure_handlers()
