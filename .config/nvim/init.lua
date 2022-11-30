@@ -168,7 +168,7 @@ table.insert(nvim_runtime_path, 'lua/?/init.lua')
 
 local languages = {
   others = {
-    tools = { prettier = {} },
+    tools = { },
     servers = {
       diagnosticls = {},
     }
@@ -462,6 +462,7 @@ mason_lspconfig.setup_handlers {
 }
 
 treesitter.setup {
+  -- TODO: Add this to overall langauges config, per language.
   ensure_installed = { "lua", "rust", "c_sharp", "yaml" },
   sync_install = false,
   indent = {
