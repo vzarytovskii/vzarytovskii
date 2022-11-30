@@ -1,3 +1,4 @@
+
 local ok, impatient = pcall(require, 'impatient')
 if ok then
   impatient.enable_profile()
@@ -70,8 +71,12 @@ packer.startup({function(use)
       'WhoIsSethDaniel/mason-tool-installer.nvim',
       'neovim/nvim-lspconfig',
       'mfussenegger/nvim-dap',
-      'jayp0521/mason-nvim-dap.nvim'
+      'jayp0521/mason-nvim-dap.nvim',
+      'hrsh7th/nvim-cmp',
+      'hrsh7th/cmp-nvim-lsp',
+      'saadparwaiz1/cmp_luasnip'
   }
+  use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
   use { 'SmiteshP/nvim-navic', requires = 'neovim/nvim-lspconfig' }
   use 'j-hui/fidget.nvim'
@@ -217,6 +222,7 @@ local languages = {
 
 local function common_capabilities() 
   local status_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+
   if status_ok then
     return cmp_nvim_lsp.default_capabilities()
   end
@@ -276,11 +282,6 @@ local function configure_handlers()
   vim.diagnostic.config(config)
   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
-
-vim.cmd 'autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()'
-vim.cmd 'autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()'
-vim.cmd 'autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()'
-
 end
 
 local tooling = get_tooling(languages)
@@ -289,9 +290,14 @@ local mason = require('mason')
 local mason_lspconfig = require('mason-lspconfig')
 local nvim_lsp = require('lspconfig')
 local mason_tool_installer = require('mason-tool-installer')
-local mason_nvim_dap = require("mason-nvim-dap")
-local null_ls = require("null-ls")
-local navic = require("nvim-navic")
+local mason_nvim_dap = require('mason-nvim-dap')
+local null_ls = require('null-ls')
+local navic = require('nvim-navic')
+local nvim_cmp = require('cmp')
+local luasnip = require('luasnip')
+
+
+local capabilities = common_capabilities()
 
 vim.o.winbar = "%{%v:lua.require'nvim-navic'.get_location()%}"
 
@@ -313,7 +319,48 @@ fidget.setup({
   }
 })
 
-local capabilities = common_capabilities()
+local luasnip = require('luasnip')
+vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
+nvim_cmp.setup {
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+  mapping = {
+    ['<CR>']      = nvim_cmp.mapping.confirm({select = false}),
+    ['<C-p>']     = nvim_cmp.mapping.select_prev_item(),
+    ['<C-n>']     = nvim_cmp.mapping.select_next_item(),
+    ['<Up>']      = nvim_cmp.mapping.select_prev_item(),
+    ['<Down>']    = nvim_cmp.mapping.select_next_item(),
+    ['<C-d>']     = nvim_cmp.mapping.scroll_docs(-4),
+    ['<C-f>']     = nvim_cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = nvim_cmp.mapping.complete(),
+    ['<C-e>']     = nvim_cmp.mapping.close(),
+    ['<Tab>']     = function(fallback)
+      if nvim_cmp.visible() then
+        nvim_cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      else
+        fallback()
+      end
+    end,
+    ['<S-Tab>'] = function(fallback)
+      if nvim_cmp.visible() then
+        nvim_cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end,
+  },
+  sources = {
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' }
+  }
+}
 
 mason.setup({
     PATH = "prepend",
@@ -345,6 +392,7 @@ null_ls.setup({
     sources = {
         null_ls.builtins.code_actions.gitsigns,
         null_ls.builtins.code_actions.refactoring,
+        null_ls.builtins.completion.luasnip,
     },
 })
 
@@ -375,6 +423,18 @@ local on_attach = function(client, bufnr)
         })
     end
 
+    if client.server_capabilities.documentHighlightProvider then
+      vim.cmd [[
+        augroup lsp_document_highlight
+          autocmd! * <buffer>
+          autocmd! CursorHold <buffer> lua vim.lsp.buf.document_highlight()
+          autocmd! CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
+          autocmd! CursorMoved <buffer> lua vim.lsp.buf.clear_references()
+          autocmd! CursorMovedI <buffer> lua vim.lsp.buf.clear_references()
+        augroup END
+      ]]
+    end
+
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
 end
@@ -402,7 +462,5 @@ mason_lspconfig.setup_handlers {
         nvim_lsp[server_name].setup(opts)
     end,
 }
-
-
 
 configure_handlers()
