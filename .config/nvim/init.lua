@@ -70,14 +70,11 @@ packer.startup({function(use)
       'WhoIsSethDaniel/mason-tool-installer.nvim',
       'neovim/nvim-lspconfig',
       'mfussenegger/nvim-dap',
-      'jayp0521/mason-nvim-dap.nvim',
+      'jayp0521/mason-nvim-dap.nvim'
   }
-  use {
-    'SmiteshP/nvim-navic',
-    requires = 'neovim/nvim-lspconfig'
-  }
+  use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
+  use { 'SmiteshP/nvim-navic', requires = 'neovim/nvim-lspconfig' }
   use 'j-hui/fidget.nvim'
-
 end,
 config = {
   auto_clean = true,
@@ -293,6 +290,7 @@ local mason_lspconfig = require('mason-lspconfig')
 local nvim_lsp = require('lspconfig')
 local mason_tool_installer = require('mason-tool-installer')
 local mason_nvim_dap = require("mason-nvim-dap")
+local null_ls = require("null-ls")
 local navic = require("nvim-navic")
 
 vim.o.winbar = "%{%v:lua.require'nvim-navic'.get_location()%}"
@@ -302,13 +300,16 @@ local fidget = require('fidget')
 fidget.setup({
   text = {
     spinner = "dots"
-  },  
+  },
   align = {
     bottom = false,
     right = true,
   },
   fmt = {
     stack_upwards = false,
+  },
+  window = {
+    relative = "editor"
   }
 })
 
@@ -340,9 +341,38 @@ mason_nvim_dap.setup({
     automatic_setup = true
 })
 
+null_ls.setup({
+    sources = {
+        null_ls.builtins.code_actions.gitsigns,
+        null_ls.builtins.code_actions.refactoring,
+    },
+})
+
+local lsp_formatting = function(bufnr)
+    vim.lsp.buf.format({
+        filter = function(client)
+            return client.name == "null-ls"
+        end,
+        bufnr = bufnr,
+    })
+end
+
+local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
 local on_attach = function(client, bufnr)
     if client.server_capabilities.documentSymbolProvider then
         navic.attach(client, bufnr)
+    end
+
+    if client.supports_method("textDocument/formatting") then
+        vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+        vim.api.nvim_create_autocmd("BufWritePre", {
+            group = augroup,
+            buffer = bufnr,
+            callback = function()
+                lsp_formatting(bufnr)
+            end,
+        })
     end
 
     client.server_capabilities.documentFormattingProvider = false
@@ -372,5 +402,7 @@ mason_lspconfig.setup_handlers {
         nvim_lsp[server_name].setup(opts)
     end,
 }
+
+
 
 configure_handlers()
