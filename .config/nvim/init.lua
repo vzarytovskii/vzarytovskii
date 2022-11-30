@@ -64,7 +64,7 @@ packer.startup({function(use)
   -- Theme & related:
   use 'olimorris/onedarkpro.nvim'
 
-  -- Language specifics, including LSP, DAP, CMP, etc.
+  -- Language specifics, including LSP, DAP, CMP, treesitter etc.
   use {
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
@@ -80,6 +80,15 @@ packer.startup({function(use)
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
   use { 'SmiteshP/nvim-navic', requires = 'neovim/nvim-lspconfig' }
   use 'j-hui/fidget.nvim'
+  use {
+    'nvim-treesitter/nvim-treesitter',
+    requires = {
+      'nvim-treesitter/playground'
+    },
+    config = 'vim.cmd [[TSUpdate]]' 
+  }
+  use 'RRethy/vim-illuminate'
+
 end,
 config = {
   auto_clean = true,
@@ -295,7 +304,8 @@ local null_ls = require('null-ls')
 local navic = require('nvim-navic')
 local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
-
+local treesitter = require('nvim-treesitter.configs')
+local illuminate = require('illuminate')
 
 local capabilities = common_capabilities()
 
@@ -423,18 +433,6 @@ local on_attach = function(client, bufnr)
         })
     end
 
-    if client.server_capabilities.documentHighlightProvider then
-      vim.cmd [[
-        augroup lsp_document_highlight
-          autocmd! * <buffer>
-          autocmd! CursorHold <buffer> lua vim.lsp.buf.document_highlight()
-          autocmd! CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
-          autocmd! CursorMoved <buffer> lua vim.lsp.buf.clear_references()
-          autocmd! CursorMovedI <buffer> lua vim.lsp.buf.clear_references()
-        augroup END
-      ]]
-    end
-
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
 end
@@ -462,5 +460,35 @@ mason_lspconfig.setup_handlers {
         nvim_lsp[server_name].setup(opts)
     end,
 }
+
+treesitter.setup {
+  ensure_installed = { "lua", "rust", "c_sharp", "yaml" },
+  sync_install = false,
+  indent = {
+    enable = true
+  },
+  context_commentstring = {
+    enable = true,
+    enable_autocmd = false,
+  },
+  autopairs = {
+    enable = true,
+  },
+  rainbow = {
+    enable = true,
+    disable = { "html" },
+    extended_mode = false,
+    max_file_lines = nil,
+  },
+}
+
+require('illuminate').configure({
+  providers = {
+        'treesitter',
+        'lsp',
+        'regex',
+    },
+  delay = 50
+})
 
 configure_handlers()
