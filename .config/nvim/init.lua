@@ -61,8 +61,11 @@ packer.startup({function(use)
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
 
-  -- Theme & related:
+  -- UI, theme & related:
   use 'olimorris/onedarkpro.nvim'
+
+  use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
+  use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
 
   -- Language specifics, including LSP, DAP, CMP, treesitter etc.
   use {
@@ -115,6 +118,8 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   group = packer_group,
   pattern = vim.fn.expand '$MYVIMRC',
 })
+
+local function set_keymap(...) vim.api.nvim_set_keymap(...) end
 
 function dump(o)
    if type(o) == 'table' then
@@ -294,6 +299,68 @@ local function configure_handlers()
 end
 
 local tooling = get_tooling(languages)
+
+local telescope = require('telescope')
+local telescope_actions = require('telescope.actions')
+local telescope_builtin = require('telescope.builtin')
+
+telescope.setup {
+  defaults = {
+    file_sorter = require("telescope.sorters").get_fuzzy_file,
+    file_ignore_patterns = { "node_modules" },
+    generic_sorter = require("telescope.sorters").get_generic_fuzzy_sorter,
+    vimgrep_arguments = {
+      "rg",
+      "--color=never",
+      "--no-heading",
+      "--with-filename",
+      "--line-number",
+      "--column",
+      "--smart-case",
+      "--trim" -- add this value
+    },
+    layout_config = {
+      vertical = { width = 0.5 }
+    },
+    mappings = {
+      i = {
+        ['<C-u>'] = false,
+        ['<C-d>'] = false,
+        ["<esc>"] = telescope_actions.close,
+        ["<C-g>"] = telescope_actions.close
+      }
+    },
+  },
+  pickers = {
+    find_files = {
+      --theme = "dropdown",
+      --find_command = { 'rg', '--files' },
+      find_command = { "fdfind", "--type", "f", "--strip-cwd-prefix" },
+    }
+  },
+  extensions = {
+    fzf = {
+      fuzzy = true,
+      override_generic_sorter = true,
+      override_file_sorter = true,
+      case_mode = "smart_case",
+    }
+  }
+}
+
+project_files = function()
+  local opts = {} -- define here if you want to define something
+  local ok = pcall(telescope_builtin.git_files, opts)
+  if not ok then
+    telescope_builtin.find_files(opts)
+  end
+end
+
+set_keymap('n', '<leader>/', ':Telescope current_buffer_fuzzy_find<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-s>', ':Telescope current_buffer_fuzzy_find<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-f>', '<CMD>lua project_files()<CR>', { noremap = true, silent= true })
+set_keymap('n', '<M-s>', ':Telescope live_grep<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-b>', ':Telescope buffers<CR>', { noremap = true, silent= true })
 
 local mason = require('mason')
 local mason_lspconfig = require('mason-lspconfig')
