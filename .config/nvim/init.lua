@@ -77,7 +77,8 @@ packer.startup({function(use)
       'jayp0521/mason-nvim-dap.nvim',
       'hrsh7th/nvim-cmp',
       'hrsh7th/cmp-nvim-lsp',
-      'saadparwaiz1/cmp_luasnip'
+      'saadparwaiz1/cmp_luasnip',
+      'lvimuser/lsp-inlayhints.nvim'
   }
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
@@ -92,6 +93,7 @@ packer.startup({function(use)
   }
   use 'RRethy/vim-illuminate'
 
+  use 'simrat39/rust-tools.nvim'
 end,
 config = {
   auto_clean = true,
@@ -223,7 +225,17 @@ local languages = {
   rust = {
     debuggers = { cppdbg = {}, lldb = {}},
     servers = {
-      rust_analyzer = {}
+      rust_analyzer = {
+        on_attach = function(client, bufnr)
+          require("rust-tools").setup {
+            tools = {
+              inlay_hints = {
+                auto = false,
+              },
+            },
+          }
+        end
+      }
     }
   },
   yaml = {
@@ -262,7 +274,7 @@ local function common_capabilities()
   return capabilities
 end
 
-local function configure_handlers()
+local function configure_handlers(telescope_builtin)
   local config = {
     signs = {
       active = true,
@@ -296,6 +308,16 @@ local function configure_handlers()
   vim.diagnostic.config(config)
   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
+  --vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(telescope.builtins)
+  vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
+  --vim.lsp.handlers['textDocument/implementation'] = location_handler('LSP Implementations', opts.location),
+  --vim.lsp.handlers['textDocument/typeDefinition'] = location_handler('LSP Type Definitions', opts.location),
+  vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
+  --vim.lsp.handlers['textDocument/documentSymbol'] = symbol_handler('LSP Document Symbols', opts.symbol),
+  --vim.lsp.handlers['workspace/symbol'] = symbol_handler('LSP Workspace Symbols', opts.symbol),
+  --vim.lsp.handlers['callHierarchy/incomingCalls'] = call_hierarchy_handler('LSP Incoming Calls', 'from', opts.call_hierarchy),
+  --vim.lsp.handlers['callHierarchy/outgoingCalls'] = call_hierarchy_handler('LSP Outgoing Calls', 'to', opts.call_hierarchy),
+  --vim.lsp.handlers['textDocument/codeAction'] = code_action_handler('LSP Code Actions', opts.code_action),
 end
 
 local tooling = get_tooling(languages)
@@ -317,7 +339,7 @@ telescope.setup {
       "--line-number",
       "--column",
       "--smart-case",
-      "--trim" -- add this value
+      "--trim"
     },
     layout_config = {
       vertical = { width = 0.5 }
@@ -373,6 +395,7 @@ local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
 local illuminate = require('illuminate')
+local inlay_hints = require("lsp-inlayhints")
 
 local capabilities = common_capabilities()
 
@@ -484,10 +507,14 @@ end
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
+inlay_hints.setup()
+
 local on_attach = function(client, bufnr)
     if client.server_capabilities.documentSymbolProvider then
         navic.attach(client, bufnr)
     end
+
+    inlay_hints.on_attach(client, bufnr)
 
     if client.supports_method("textDocument/formatting") then
         vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
@@ -528,6 +555,8 @@ mason_lspconfig.setup_handlers {
     end,
 }
 
+configure_handlers(telescope_builtin)
+
 treesitter.setup {
   -- TODO: Add this to overall langauges config, per language.
   ensure_installed = { "lua", "rust", "c_sharp", "yaml" },
@@ -559,4 +588,3 @@ require('illuminate').configure({
   delay = 50
 })
 
-configure_handlers()
