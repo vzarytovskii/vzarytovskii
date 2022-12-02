@@ -78,7 +78,6 @@ packer.startup({function(use)
       'hrsh7th/nvim-cmp',
       'hrsh7th/cmp-nvim-lsp',
       'saadparwaiz1/cmp_luasnip',
-      'lvimuser/lsp-inlayhints.nvim'
   }
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
@@ -230,7 +229,7 @@ local languages = {
           require("rust-tools").setup {
             tools = {
               inlay_hints = {
-                auto = false,
+                auto = true,
               },
             },
           }
@@ -328,6 +327,11 @@ local telescope_builtin = require('telescope.builtin')
 
 telescope.setup {
   defaults = {
+    layout_strategy = 'flex',
+    layout_config = { 
+      width = 0.75,
+      height = 0.95
+    },
     file_sorter = require("telescope.sorters").get_fuzzy_file,
     file_ignore_patterns = { "node_modules" },
     generic_sorter = require("telescope.sorters").get_generic_fuzzy_sorter,
@@ -341,8 +345,11 @@ telescope.setup {
       "--smart-case",
       "--trim"
     },
-    layout_config = {
-      vertical = { width = 0.5 }
+    find_command = { "fdfind", "--type", "f", "--strip-cwd-prefix" },
+    file_ignore_patterns = {
+        ".git/",
+        ".vscode/",
+        "node_modules",
     },
     mappings = {
       i = {
@@ -354,10 +361,19 @@ telescope.setup {
     },
   },
   pickers = {
-    find_files = {
-      --theme = "dropdown",
-      --find_command = { 'rg', '--files' },
-      find_command = { "fdfind", "--type", "f", "--strip-cwd-prefix" },
+    buffers = {
+      preview = true,
+      only_cwd = false,
+      show_all_buffers = false,
+      ignore_current_buffer = true,
+      sort_lastused = true,
+      theme = "dropdown",
+      sorter = require("telescope.sorters").get_substr_matcher(),
+      selection_strategy = "closest",
+      path_display = {"smart"},
+      layout_strategy = "center",
+      winblend = 0,
+      layout_config = {width = 70},
     }
   },
   extensions = {
@@ -395,7 +411,6 @@ local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
 local illuminate = require('illuminate')
-local inlay_hints = require("lsp-inlayhints")
 
 local capabilities = common_capabilities()
 
@@ -507,14 +522,11 @@ end
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
-inlay_hints.setup()
 
 local on_attach = function(client, bufnr)
     if client.server_capabilities.documentSymbolProvider then
         navic.attach(client, bufnr)
     end
-
-    inlay_hints.on_attach(client, bufnr)
 
     if client.supports_method("textDocument/formatting") then
         vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
@@ -581,8 +593,8 @@ treesitter.setup {
 
 require('illuminate').configure({
   providers = {
-        'treesitter',
         'lsp',
+        'treesitter',
         'regex',
     },
   delay = 50
