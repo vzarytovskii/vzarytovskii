@@ -66,6 +66,7 @@ packer.startup({function(use)
 
   use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
+  use {'nvim-telescope/telescope-ui-select.nvim', requires = { 'nvim-telescope/telescope.nvim' } }
 
   -- Language specifics, including LSP, DAP, CMP, treesitter etc.
   use {
@@ -79,6 +80,9 @@ packer.startup({function(use)
       'hrsh7th/cmp-nvim-lsp',
       'saadparwaiz1/cmp_luasnip',
   }
+  use 'https://git.sr.ht/~whynothugo/lsp_lines.nvim'
+  use 'lvimuser/lsp-inlayhints.nvim'
+
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
   use { 'SmiteshP/nvim-navic', requires = 'neovim/nvim-lspconfig' }
@@ -91,6 +95,8 @@ packer.startup({function(use)
     config = 'vim.cmd [[TSUpdate]]'
   }
   use 'RRethy/vim-illuminate'
+
+  use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
 
   use 'simrat39/rust-tools.nvim'
 end,
@@ -139,7 +145,7 @@ local function get_tooling(t)
   local language_servers = {}
   local language_tools = {}
   local language_debuggers = {}
-  for language, val in pairs(t) do
+  for _, val in pairs(t) do
     if type(val.servers) == "table" then
       for server, v in pairs(val.servers) do
         language_servers[server] = v
@@ -161,10 +167,9 @@ end
 
 local onedarkpro = require("onedarkpro")
 onedarkpro.setup({
-  theme = "onedark_vivid",
   caching = false
 })
-vim.cmd[[colorscheme onedark_vivid]]
+vim.cmd[[colorscheme onelight]]
 
 local nvim_runtime_path = vim.split(package.path, ';')
 table.insert(nvim_runtime_path, 'lua/?.lua')
@@ -225,7 +230,7 @@ local languages = {
           require("rust-tools").setup {
             tools = {
               inlay_hints = {
-                auto = true,
+                auto = false,
               },
             },
           }
@@ -243,10 +248,6 @@ local languages = {
 
 local function common_capabilities() 
   local status_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
-
-  if status_ok then
-    return cmp_nvim_lsp.default_capabilities()
-  end
 
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   capabilities.textDocument.completion.completionItem = {
@@ -266,6 +267,11 @@ local function common_capabilities()
       },
     },
   }
+
+  if status_ok then
+    return cmp_nvim_lsp.default_capabilities(capabilities)
+  end
+
   return capabilities
 end
 
@@ -280,7 +286,8 @@ local function configure_handlers(telescope_builtin)
         { name = "DiagnosticSignInfo", text = "" },
       },
     },
-    virtual_text = true,
+    virtual_text = false,
+    virtual_lines = true,
     update_in_insert = false,
     underline = true,
     severity_sort = true,
@@ -299,20 +306,21 @@ local function configure_handlers(telescope_builtin)
         return d.message
       end,
     },
-  },
+  }
+
   vim.diagnostic.config(config)
   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
-  --vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(telescope.builtins)
+  vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
   vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
+  vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
   --vim.lsp.handlers['textDocument/implementation'] = location_handler('LSP Implementations', opts.location),
   --vim.lsp.handlers['textDocument/typeDefinition'] = location_handler('LSP Type Definitions', opts.location),
-  vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
   --vim.lsp.handlers['textDocument/documentSymbol'] = symbol_handler('LSP Document Symbols', opts.symbol),
   --vim.lsp.handlers['workspace/symbol'] = symbol_handler('LSP Workspace Symbols', opts.symbol),
   --vim.lsp.handlers['callHierarchy/incomingCalls'] = call_hierarchy_handler('LSP Incoming Calls', 'from', opts.call_hierarchy),
   --vim.lsp.handlers['callHierarchy/outgoingCalls'] = call_hierarchy_handler('LSP Outgoing Calls', 'to', opts.call_hierarchy),
-  --vim.lsp.handlers['textDocument/codeAction'] = code_action_handler('LSP Code Actions', opts.code_action),
+  --vim.lsp.handlers['textDocument/codeAction'] = code_action_handler('LSP Code Actions', opts.code_action)
 end
 
 local tooling = get_tooling(languages)
@@ -329,7 +337,6 @@ telescope.setup {
       height = 0.95
     },
     file_sorter = require("telescope.sorters").get_fuzzy_file,
-    file_ignore_patterns = { "node_modules" },
     generic_sorter = require("telescope.sorters").get_generic_fuzzy_sorter,
     vimgrep_arguments = {
       "rg",
@@ -378,9 +385,17 @@ telescope.setup {
       override_generic_sorter = true,
       override_file_sorter = true,
       case_mode = "smart_case",
+    },
+    ["ui-select"] = {
+      require("telescope.themes").get_dropdown {
+        layout_strategy = "cursor",
+      }
     }
   }
 }
+
+telescope.load_extension("fzf")
+telescope.load_extension("ui-select")
 
 project_files = function()
   local opts = {} -- define here if you want to define something
@@ -407,6 +422,34 @@ local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
 local illuminate = require('illuminate')
+local inlay_hints = require('lsp-inlayhints')
+local lsp_lines = require("lsp_lines")
+
+treesitter.setup {
+  -- TODO: Add this to overall langauges config, per language.
+  ensure_installed = { "lua", "rust", "c_sharp", "yaml" },
+  sync_install = false,
+  indent = {
+    enable = true
+  },
+  context_commentstring = {
+    enable = true,
+    enable_autocmd = false,
+  },
+  highlight = {
+    enable = true,
+    disable = { "markdown" },
+  },
+  autopairs = {
+    enable = true,
+  },
+  rainbow = {
+    enable = true,
+    disable = { "html" },
+    extended_mode = false,
+    max_file_lines = nil,
+  },
+}
 
 local capabilities = common_capabilities()
 
@@ -515,10 +558,23 @@ local lsp_formatting = function(bufnr)
     })
 end
 
+local lsp_keybinds = function(bufnr)
+  local opts = { noremap = true, silent = true }
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gl", "<cmd>lua vim.diagnostic.open_float()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<space>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-.>", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+end
+
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
+configure_handlers(telescope_builtin)
 
-local on_attach = function(client, bufnr)
+local global_on_attach = function(client, bufnr)
     if client.server_capabilities.documentSymbolProvider then
         navic.attach(client, bufnr)
     end
@@ -536,55 +592,12 @@ local on_attach = function(client, bufnr)
 
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
+
+    inlay_hints.on_attach(client, bufnr)
+    lsp_keybinds(bufnr)
 end
 
-mason_lspconfig.setup_handlers {
-    function (server_name)
-        local server_opts = tooling.servers[server_name] or {}
-        local server_on_attach = server_opts[on_attach] or function(_, _) end
-
-        local on_attach_fn = function(client, bufnr)
-          on_attach(client, bufnr)
-          server_on_attach(client, bufnr)
-        end
-
-        local opts = {
-          on_attach = on_attach_fn,
-          capabilities = capabilities,
-          flags = {
-            debounce_text_changes = 150,
-          }
-        }
-
-        merge(opts, server_opts)
-
-        nvim_lsp[server_name].setup(opts)
-    end,
-}
-
-configure_handlers(telescope_builtin)
-
-treesitter.setup {
-  -- TODO: Add this to overall langauges config, per language.
-  ensure_installed = { "lua", "rust", "c_sharp", "yaml" },
-  sync_install = false,
-  indent = {
-    enable = true
-  },
-  context_commentstring = {
-    enable = true,
-    enable_autocmd = false,
-  },
-  autopairs = {
-    enable = true,
-  },
-  rainbow = {
-    enable = true,
-    disable = { "html" },
-    extended_mode = false,
-    max_file_lines = nil,
-  },
-}
+lsp_lines.setup()
 
 illuminate.configure({
   providers = {
@@ -595,3 +608,28 @@ illuminate.configure({
   delay = 50
 })
 
+mason_lspconfig.setup_handlers {
+    function (server_name)
+        local server_opts = tooling.servers[server_name] or {}
+
+        local server_on_attach = server_opts["on_attach"] or function(_, _) end
+        local server_settings = server_opts["settings"] or {}
+        local server_capabilities = server_opts["capabilities"] or {}
+
+        local composed_on_attach_fn = function(client, bufnr)
+          server_on_attach(client, bufnr)
+          global_on_attach(client, bufnr)
+        end
+
+        local opts = {
+          on_attach = composed_on_attach_fn,
+          capabilities = merge(capabilities, server_capabilities),
+	        settings = server_settings,
+          flags = {
+            debounce_text_changes = 150,
+          }
+        }
+
+        nvim_lsp[server_name].setup(opts)
+    end,
+}
