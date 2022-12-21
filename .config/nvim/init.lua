@@ -67,6 +67,7 @@ packer.startup({function(use)
   use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
   use {'nvim-telescope/telescope-ui-select.nvim', requires = { 'nvim-telescope/telescope.nvim' } }
+  use {'debugloop/telescope-undo.nvim', requires = { 'nvim-telescope/telescope.nvim' } }
 
   -- Language specifics, including LSP, DAP, CMP, treesitter etc.
   use {
@@ -314,6 +315,13 @@ local function configure_handlers(telescope_builtin)
   vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
   vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
   vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
+  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, {
+      virtual_text = false,
+      update_in_insert = true,
+      show_diagnostic_autocmds = { 'InsertLeave', 'TextChanged', "TextYankPost", "CursorHold" },
+    }
+  )
   --vim.lsp.handlers['textDocument/implementation'] = location_handler('LSP Implementations', opts.location),
   --vim.lsp.handlers['textDocument/typeDefinition'] = location_handler('LSP Type Definitions', opts.location),
   --vim.lsp.handlers['textDocument/documentSymbol'] = symbol_handler('LSP Document Symbols', opts.symbol),
@@ -396,6 +404,7 @@ telescope.setup {
 
 telescope.load_extension("fzf")
 telescope.load_extension("ui-select")
+telescope.load_extension("undo")
 
 project_files = function()
   local opts = {} -- define here if you want to define something
@@ -410,6 +419,7 @@ set_keymap('n', '<C-s>', ':Telescope current_buffer_fuzzy_find<CR>', { noremap =
 set_keymap('n', '<C-f>', '<CMD>lua project_files()<CR>', { noremap = true, silent= true })
 set_keymap('n', '<M-s>', ':Telescope live_grep<CR>', { noremap = true, silent= true })
 set_keymap('n', '<C-b>', ':Telescope buffers<CR>', { noremap = true, silent= true })
+set_keymap('n', '<C-u>', ':Telescope undo<CR>', { noremap = true, silent= true })
 
 local mason = require('mason')
 local mason_lspconfig = require('mason-lspconfig')
