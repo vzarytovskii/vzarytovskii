@@ -88,7 +88,7 @@ packer.startup({function(use)
     requires = {
       'nvim-treesitter/playground'
     },
-    config = 'vim.cmd [[TSUpdate]]' 
+    config = 'vim.cmd [[TSUpdate]]'
   }
   use 'RRethy/vim-illuminate'
 
@@ -122,7 +122,7 @@ vim.api.nvim_create_autocmd('BufWritePost', {
 
 local function set_keymap(...) vim.api.nvim_set_keymap(...) end
 
-function dump(o)
+local function dump(o)
    if type(o) == 'table' then
       local s = '{ '
       for k,v in pairs(o) do
@@ -162,11 +162,9 @@ end
 local onedarkpro = require("onedarkpro")
 onedarkpro.setup({
   theme = "onedark_vivid",
-  dark_theme = "onedark_vivid",
-  light_theme = "onelight_vivid",
   caching = false
 })
-vim.cmd[[colorscheme onedarkpro]]
+vim.cmd[[colorscheme onedark_vivid]]
 
 local nvim_runtime_path = vim.split(package.path, ';')
 table.insert(nvim_runtime_path, 'lua/?.lua')
@@ -175,9 +173,7 @@ table.insert(nvim_runtime_path, 'lua/?/init.lua')
 local languages = {
   others = {
     tools = { },
-    servers = {
-      diagnosticls = {},
-    }
+    servers = {}
   },
   csharp = {
     tools = {},
@@ -434,7 +430,6 @@ fidget.setup({
   }
 })
 
-local luasnip = require('luasnip')
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
 nvim_cmp.setup {
   snippet = {
@@ -554,7 +549,7 @@ mason_lspconfig.setup_handlers {
         end
 
         local opts = {
-          on_attach = on_attach,
+          on_attach = on_attach_fn,
           capabilities = capabilities,
           flags = {
             debounce_text_changes = 150,
@@ -591,7 +586,7 @@ treesitter.setup {
   },
 }
 
-require('illuminate').configure({
+illuminate.configure({
   providers = {
         'lsp',
         'treesitter',
