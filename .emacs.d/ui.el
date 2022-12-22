@@ -414,6 +414,7 @@
 
 (use-package whitespace-cleanup-mode
   :delight
+  :disabled t
   :hook (write-file-hooks . delete-trailing-whitespace)
   :hook (prog-mode-hook . whitespace-cleanup-mode)
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
@@ -426,7 +427,6 @@
   :delight
   :straight (:host github :repo "skangas/aggressive-indent-mode" :branch "important-fix")
   :hook (emacs-lisp-mode-hook . aggressive-indent-mode)
-  :hook (csharp-mode-hook . aggressive-indent-mode)
   :hook (fsharp-mode-hook . aggressive-indent-mode)
   :hook (css-mode-hook . aggressive-indent-mode))
 
@@ -604,7 +604,7 @@ FACE defaults to inheriting from default and highlight."
   :disabled t
   :straight (prism :host github :repo "alphapapa/prism.el" :branch "master")
   :hook (fsharp-mode-hook . prism-whitespace-mode)
-  :hook ((elisp-mode-hook csharp-mode-hook) . prism-mode)
+  :hook ((elisp-mode-hook) . prism-mode)
   :config
   (prism-set-colors :num 16
     :desaturations (cl-loop for i from 0 below 16
