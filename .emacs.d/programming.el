@@ -51,13 +51,6 @@
                        :should-jump t
                        :heuristic 'point
                        :async 500)
-  (smart-jump-register :modes 'csharp-mode
-                       :jump-fn 'omnisharp-go-to-definition
-                       :pop-fn 'pop-tag-mark
-                       :refs-fn 'omnisharp-find-usages
-                       :should-jump t
-                       :heuristic 'point
-                       :async 500)
   (smart-jump-register :modes '(emacs-lisp-mode lisp-interaction-mode)
                        :jump-fn 'elisp-slime-nav-find-elisp-thing-at-point
                        :pop-fn 'pop-tag-mark
@@ -339,42 +332,6 @@
   :straight (:host github :repo "sebasmonia/sharper" :branch "master")
   :bind ("C-x n" . sharper-main-transient))
 
-(use-package csharp-mode
-  :after (:all lsp-mode company flycheck dotnet omnisharp tree-sitter)
-  :hook (csharp-mode-hook . lsp-deferred)
-  :hook (csharp-mode-hook . omnisharp-mode)
-  :hook (csharp-mode-hook . dotnet-mode)
-  :hook (csharp-mode-hook . company-mode)
-  :hook (csharp-mode-hook . flycheck-mode)
-  :hook (csharp-mode-hook . tree-sitter-alist-mode)
-  :hook (csharp-mode-hook . (lambda ()
-                              (subword-mode)
-                              (setq-local fill-function-arguments-first-argument-same-line t)
-                              (setq-local fill-function-arguments-second-argument-same-line nil)
-                              (setq-local fill-function-arguments-last-argument-same-line t)
-                              (define-key csharp-mode-map [remap c-fill-paragraph] 'fill-function-arguments-dwim)))
-  :config
-  ;; (setq lsp-csharp-server-path "~/code/csharp/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio")
-  (setq indent-tabs-mode nil
-        c-syntactic-indentation t
-        c-set-style "ellemtel"
-        c-basic-offset 4
-        truncate-lines t
-        tab-width 4)
-  (electric-pair-local-mode 1))
-
-(use-package omnisharp
-  :after (:all company flycheck)
-  :hook (omnisharp-mode-hook . company-mode)
-  ;;:hook (kill-buffer-hook #'+csharp-cleanup-omnisharp-server-h nil t)
-  :preface
-  (setq omnisharp-auto-complete-want-documentation nil
-        omnisharp-eldoc-support t
-        omnisharp-imenu-support t
-        omnisharp-company-ignore-case t)
-  :config
-  (add-to-list 'company-backends #'company-omnisharp))
-
 (use-package fsharp-mode
   ;; :straight (:host github :repo "vzarytovskii/emacs-fsharp-mode" :branch "master")
   :after (:all sharper dotnet lsp-mode)
@@ -393,7 +350,7 @@
         inferior-fsharp-program "dotnet fsi"
         lsp-fsharp-server-runtime 'net-core
         ;;lsp-fsharp-server-install-dir "~/code/fsautocomplete/bin/release_netcore"
-        lsp-fsharp-server-args '("--verbose")
+        lsp-fsharp-server-args '("--adaptive-lsp-server-enabled")
         lsp-fsharp-keywords-autocomplete t
         lsp-fsharp-external-autocomplete t
         lsp-fsharp-linter t
