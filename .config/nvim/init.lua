@@ -27,6 +27,7 @@ local function get_keys(t)
   return keys
 end
 
+---@diagnostic disable-next-line: redefined-local
 local ok, packer = pcall(require, "packer")
 local packer_bootstrap = false
 
@@ -171,6 +172,47 @@ local function get_tooling(t)
   return { tools = language_tools, servers = language_servers, debuggers = language_debuggers }
 end
 
+local function set_common_settings()
+  vim.g.mapleader = " "
+  vim.g.netrw_browse_split = 0
+  vim.g.netrw_banner = 0
+  vim.g.netrw_winsize = 25
+  vim.opt.guicursor = ""
+
+  vim.opt.nu = true
+  vim.opt.relativenumber = false
+
+  vim.opt.tabstop = 4
+  vim.opt.softtabstop = 4
+  vim.opt.shiftwidth = 2
+  vim.opt.expandtab = true
+
+  vim.opt.smartindent = true
+
+  vim.opt.wrap = false
+
+  vim.opt.swapfile = false
+  vim.opt.backup = false
+  vim.opt.undodir = os.getenv("HOME") .. "/.vim/undodir"
+  vim.opt.undofile = true
+
+  vim.opt.hlsearch = false
+  vim.opt.incsearch = true
+
+  vim.opt.termguicolors = true
+
+  vim.opt.scrolloff = 8
+  vim.opt.signcolumn = "yes"
+  vim.opt.isfname:append("@-@")
+
+  vim.opt.updatetime = 50
+
+  vim.opt.colorcolumn = "80"
+
+end
+
+set_common_settings()
+
 local onedarkpro = require("onedarkpro")
 onedarkpro.setup({
   caching = false
@@ -242,7 +284,7 @@ local languages = {
   }
 }
 
-local function common_capabilities() 
+local function common_capabilities()
   local status_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
 
   local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -339,7 +381,7 @@ local lsp_keybinds = function(bufnr)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gl", "<cmd>lua vim.diagnostic.open_float()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "<space>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-.>", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
 end
 
@@ -352,7 +394,7 @@ local telescope_builtin = require('telescope.builtin')
 telescope.setup {
   defaults = {
     layout_strategy = 'flex',
-    layout_config = { 
+    layout_config = {
       width = 0.75,
       height = 0.95
     },
@@ -510,7 +552,7 @@ nvim_cmp.setup {
     if vim.api.nvim_get_mode().mode == 'c' then
       return true
     else
-      return not context.in_treesitter_capture("comment") 
+      return not context.in_treesitter_capture("comment")
         and not context.in_syntax_group("Comment")
     end
   end,
