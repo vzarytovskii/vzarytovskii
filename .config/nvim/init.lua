@@ -77,12 +77,16 @@ packer.startup({function(use)
       'neovim/nvim-lspconfig',
       'mfussenegger/nvim-dap',
       'jayp0521/mason-nvim-dap.nvim',
+  }
+
+  use {
       'hrsh7th/nvim-cmp',
       'hrsh7th/cmp-nvim-lsp',
       'saadparwaiz1/cmp_luasnip',
   }
-  use 'https://git.sr.ht/~whynothugo/lsp_lines.nvim'
-  use 'lvimuser/lsp-inlayhints.nvim'
+
+  use { "onsails/lspkind.nvim" }
+  use { "lvimuser/lsp-inlayhints.nvim" }
 
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
@@ -99,7 +103,8 @@ packer.startup({function(use)
 
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
 
-  use 'simrat39/rust-tools.nvim'
+  use { 'antoinemadec/FixCursorHold.nvim' }
+
 end,
 config = {
   auto_clean = true,
@@ -226,17 +231,7 @@ local languages = {
   rust = {
     debuggers = { cppdbg = {}, lldb = {}},
     servers = {
-      rust_analyzer = {
-        on_attach = function(client, bufnr)
-          require("rust-tools").setup {
-            tools = {
-              inlay_hints = {
-                auto = false,
-              },
-            },
-          }
-        end
-      }
+      rust_analyzer = {}
     }
   },
   yaml = {
@@ -287,7 +282,7 @@ local function configure_handlers(telescope_builtin)
         { name = "DiagnosticSignInfo", text = "" },
       },
     },
-    virtual_text = false,
+    virtual_text = true,
     virtual_lines = true,
     update_in_insert = false,
     underline = true,
@@ -317,7 +312,7 @@ local function configure_handlers(telescope_builtin)
   vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
     vim.lsp.diagnostic.on_publish_diagnostics, {
-      virtual_text = false,
+      virtual_text = config.virtual_text,
       update_in_insert = true,
       show_diagnostic_autocmds = { 'InsertLeave', 'TextChanged', "TextYankPost", "CursorHold" },
     }
@@ -329,6 +324,23 @@ local function configure_handlers(telescope_builtin)
   --vim.lsp.handlers['callHierarchy/incomingCalls'] = call_hierarchy_handler('LSP Incoming Calls', 'from', opts.call_hierarchy),
   --vim.lsp.handlers['callHierarchy/outgoingCalls'] = call_hierarchy_handler('LSP Outgoing Calls', 'to', opts.call_hierarchy),
   --vim.lsp.handlers['textDocument/codeAction'] = code_action_handler('LSP Code Actions', opts.code_action)
+  vim.g.cursorhold_updatetime = 100
+  vim.cmd [[autocmd CursorHold,CursorHoldI * :lua vim.diagnostic.open_float() ]]
+
+end
+
+local lsp_keybinds = function(bufnr)
+  local opts = { noremap = true, silent = true }
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gl", "<cmd>lua vim.diagnostic.open_float()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<space>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-.>", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
 end
 
 local tooling = get_tooling(languages)
@@ -432,8 +444,14 @@ local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
 local illuminate = require('illuminate')
-local inlay_hints = require('lsp-inlayhints')
-local lsp_lines = require("lsp_lines")
+local inlay_hints = require("lsp-inlayhints")
+
+navic.setup({
+  highlight = true,
+  separator = " > "
+})
+
+inlay_hints.setup()
 
 treesitter.setup {
   -- TODO: Add this to overall langauges config, per language.
@@ -485,6 +503,17 @@ fidget.setup({
 
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
 nvim_cmp.setup {
+  enabled = function()
+    -- disable completion in comments
+    local context = require 'cmp.config.context'
+    -- keep command mode completion enabled when cursor is in a comment
+    if vim.api.nvim_get_mode().mode == 'c' then
+      return true
+    else
+      return not context.in_treesitter_capture("comment") 
+        and not context.in_syntax_group("Comment")
+    end
+  end,
   snippet = {
     expand = function(args)
       luasnip.lsp_expand(args.body)
@@ -522,7 +551,25 @@ nvim_cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' }
-  }
+  },
+  window = {
+    completion = {
+      winhighlight = "Normal:Pmenu,FloatBorder:Pmenu,Search:None",
+      col_offset = -3,
+      side_padding = 0,
+    },
+  },
+  formatting = {
+    fields = { "kind", "abbr", "menu" },
+    format = function(entry, vim_item)
+      local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50 })(entry, vim_item)
+      local strings = vim.split(kind.kind, "%s", { trimempty = true })
+      kind.kind = " " .. strings[1] .. " "
+      kind.menu = "    (" .. strings[2] .. ")"
+
+      return kind
+    end,
+  },
 }
 
 mason.setup({
@@ -568,18 +615,6 @@ local lsp_formatting = function(bufnr)
     })
 end
 
-local lsp_keybinds = function(bufnr)
-  local opts = { noremap = true, silent = true }
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gl", "<cmd>lua vim.diagnostic.open_float()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "<space>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-.>", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
-end
-
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 configure_handlers(telescope_builtin)
@@ -600,14 +635,35 @@ local global_on_attach = function(client, bufnr)
         })
     end
 
+    if client.server_capabilities.code_lens then
+      local codelens = vim.api.nvim_create_augroup(
+        'LSPCodeLens',
+        { clear = true }
+      )
+      vim.api.nvim_create_autocmd({ 'BufEnter' }, {
+        group = codelens,
+        callback = function()
+          vim.lsp.codelens.refresh()
+        end,
+        buffer = bufnr,
+        once = true,
+      })
+      vim.api.nvim_create_autocmd({ 'BufWritePost', 'CursorHold' }, {
+        group = codelens,
+        callback = function()
+          vim.lsp.codelens.refresh()
+        end,
+        buffer = bufnr,
+      })
+    end
+
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
 
     inlay_hints.on_attach(client, bufnr)
+
     lsp_keybinds(bufnr)
 end
-
-lsp_lines.setup()
 
 illuminate.configure({
   providers = {
@@ -621,7 +677,6 @@ illuminate.configure({
 mason_lspconfig.setup_handlers {
     function (server_name)
         local server_opts = tooling.servers[server_name] or {}
-
         local server_on_attach = server_opts["on_attach"] or function(_, _) end
         local server_settings = server_opts["settings"] or {}
         local server_capabilities = server_opts["capabilities"] or {}
