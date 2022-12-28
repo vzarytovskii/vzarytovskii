@@ -61,9 +61,11 @@ packer.startup({function(use)
   -- General
   use 'wbthomason/packer.nvim'
   use 'lewis6991/impatient.nvim'
+  use 'nvim-lua/plenary.nvim'
 
   -- UI, theme & related:
   use 'olimorris/onedarkpro.nvim'
+  use 'kyazdani42/nvim-web-devicons'
 
   use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
@@ -75,9 +77,13 @@ packer.startup({function(use)
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
-      'neovim/nvim-lspconfig',
+      'neovim/nvim-lspconfig'
+  }
+
+  use {
       'mfussenegger/nvim-dap',
       'jayp0521/mason-nvim-dap.nvim',
+      'rcarriga/nvim-dap-ui'
   }
 
   use {
@@ -91,7 +97,14 @@ packer.startup({function(use)
 
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
-  use { 'SmiteshP/nvim-navic', requires = 'neovim/nvim-lspconfig' }
+  use { "utilyre/barbecue.nvim",
+        branch = "dev",
+        requires = {
+        "neovim/nvim-lspconfig",
+        "smiteshp/nvim-navic",
+        "kyazdani42/nvim-web-devicons",
+      }
+  }
   use 'j-hui/fidget.nvim'
   use {
     'nvim-treesitter/nvim-treesitter',
@@ -151,7 +164,8 @@ end
 local function get_tooling(t)
   local language_servers = {}
   local language_tools = {}
-  local language_debuggers = {}
+  local language_debuggers_adapters = {}
+  local language_debuggers_settings = {}
   for _, val in pairs(t) do
     if type(val.servers) == "table" then
       for server, v in pairs(val.servers) do
@@ -163,13 +177,18 @@ local function get_tooling(t)
         language_tools[tool] = v
       end
     end
-    if type(val.debuggers) == "table" then
-      for k, v in pairs(val.debuggers) do
-        language_debuggers[k] = v
+    if type(val["debuggers"]) == "table" then
+      if type(val["debuggers"]["adapters"]) == "table" then
+        for k, v in pairs(val.debuggers.adapters) do
+          language_debuggers_adapters[k] = v
+        end
+      end
+      if type(val["debuggers"]["settings"]) == "function" then
+        table.insert(language_debuggers_settings, val.debuggers.settings)
       end
     end
   end
-  return { tools = language_tools, servers = language_servers, debuggers = language_debuggers }
+  return { tools = language_tools, servers = language_servers, debuggers_adapters = language_debuggers_adapters, debuggers_settings = language_debuggers_settings }
 end
 
 local function set_common_settings()
@@ -209,6 +228,7 @@ local function set_common_settings()
 
   vim.opt.colorcolumn = "80"
 
+  vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
 end
 
 set_common_settings()
@@ -230,14 +250,58 @@ local languages = {
   },
   csharp = {
     tools = {},
-    debuggers = { coreclr = {} },
+    debuggers = {
+      adapters = {
+        coreclr = function (dap)
+          dap.adapters.coreclr = {
+            type = 'executable',
+            command = 'netcoredbg',
+            args = {'--interpreter=vscode'}
+          }
+        end,
+      },
+      settings = function (dap)
+        dap.configurations.cs = {
+          {
+            type = "coreclr",
+            name = "launch - netcoredbg",
+            request = "launch",
+            program = function()
+                return vim.fn.input('Path to dll', vim.fn.getcwd(), 'file')
+            end,
+          },
+        }
+      end,
+    },
     servers = {
       omnisharp = { use_mono = false }
     }
   },
   fsharp = {
     tools = { fantomas = {} },
-    debuggers = { coreclr = {} },
+    debuggers = {
+      adapters = {
+        coreclr = function (dap)
+          dap.adapters.coreclr = {
+            type = 'executable',
+            command = 'netcoredbg',
+            args = {'--interpreter=vscode'}
+          }
+        end,
+      },
+      settings = function (dap)
+        dap.configurations.fs = {
+          {
+            type = "coreclr",
+            name = "launch - netcoredbg",
+            request = "launch",
+            program = function()
+                return vim.fn.input('Path to dll', vim.fn.getcwd(), 'file')
+            end,
+          },
+        }
+      end,
+    },
     servers = {
       fsautocomplete = {
         cmd = { "fsautocomplete" },
@@ -271,7 +335,34 @@ local languages = {
     }
   },
   rust = {
-    debuggers = { cppdbg = {}, lldb = {}},
+    debuggers = {
+      adapters = {
+        codelldb = function (dap)
+          dap.adapters.codelldb = {
+            type = 'server',
+            port = "${port}",
+            executable = {
+              command = 'codelldb',
+              args = {"--port", "${port}"},
+            }
+          }
+        end,
+      },
+      settings = function (dap)
+        dap.configurations.rust = {
+          {
+            name = "Launch...",
+            type = "codelldb",
+            request = "launch",
+            program = function()
+              return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+            end,
+            cwd = '${workspaceFolder}',
+            stopOnEntry = false,
+          },
+        }
+      end,
+    },
     servers = {
       rust_analyzer = {}
     }
@@ -351,6 +442,7 @@ local function configure_handlers(telescope_builtin)
   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
   vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
   vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
+  vim.lsp.handlers['textDocument/documentSymbol'] = telescope_builtin.lsp_document_symbols
   vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
     vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -361,7 +453,6 @@ local function configure_handlers(telescope_builtin)
   )
   --vim.lsp.handlers['textDocument/implementation'] = location_handler('LSP Implementations', opts.location),
   --vim.lsp.handlers['textDocument/typeDefinition'] = location_handler('LSP Type Definitions', opts.location),
-  --vim.lsp.handlers['textDocument/documentSymbol'] = symbol_handler('LSP Document Symbols', opts.symbol),
   --vim.lsp.handlers['workspace/symbol'] = symbol_handler('LSP Workspace Symbols', opts.symbol),
   --vim.lsp.handlers['callHierarchy/incomingCalls'] = call_hierarchy_handler('LSP Incoming Calls', 'from', opts.call_hierarchy),
   --vim.lsp.handlers['callHierarchy/outgoingCalls'] = call_hierarchy_handler('LSP Outgoing Calls', 'to', opts.call_hierarchy),
@@ -375,6 +466,8 @@ local lsp_keybinds = function(bufnr)
   local opts = { noremap = true, silent = true }
   vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ws", "<cmd>lua vim.lsp.buf.workspace_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
@@ -481,16 +574,37 @@ local nvim_lsp = require('lspconfig')
 local mason_tool_installer = require('mason-tool-installer')
 local mason_nvim_dap = require('mason-nvim-dap')
 local null_ls = require('null-ls')
+local barbecue = require('barbecue')
+local barbecue_ui = require("barbecue.ui")
 local navic = require('nvim-navic')
 local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
 local illuminate = require('illuminate')
 local inlay_hints = require("lsp-inlayhints")
+local dap = require('dap')
+local dapui = require('dapui')
 
-navic.setup({
-  highlight = true,
-  separator = " > "
+dapui.setup()
+
+barbecue.setup({
+  create_autocmd = false,
+  show_modified = true,
+  attach_navic = false
+})
+vim.api.nvim_create_autocmd({
+  "WinScrolled",
+  "BufWinEnter",
+  "CursorHold",
+  "InsertLeave",
+  "BufWritePost",
+  "TextChanged",
+  "TextChangedI",
+}, {
+  group = vim.api.nvim_create_augroup("barbecue", {}),
+  callback = function()
+    barbecue_ui.update()
+  end,
 })
 
 inlay_hints.setup()
@@ -523,8 +637,6 @@ treesitter.setup {
 
 local capabilities = common_capabilities()
 
-vim.o.winbar = "%{%v:lua.require'nvim-navic'.get_location()%}"
-
 local fidget = require('fidget')
 
 fidget.setup({
@@ -539,7 +651,7 @@ fidget.setup({
     stack_upwards = false,
   },
   window = {
-    relative = "editor"
+    relative = "win" -- win or editor
   }
 })
 
@@ -635,15 +747,29 @@ mason_tool_installer.setup {
 }
 
 mason_nvim_dap.setup({
-    ensure_installed = vim.tbl_keys(tooling.debuggers),
+    ensure_installed = vim.tbl_keys(tooling.debuggers_adapters),
     automatic_installation = true,
     automatic_setup = true
 })
 
+local setup_dap = function(dap)
+  for _, cb in pairs(tooling.debuggers_adapters) do
+    if type(cb) == "function" then
+      cb(dap)
+    end
+  end
+  for _, cb in pairs(tooling.debuggers_settings) do
+    if type(cb) == "function" then
+      cb(dap)
+    end
+  end
+end
+
+setup_dap(dap)
+
 null_ls.setup({
     sources = {
         null_ls.builtins.code_actions.gitsigns,
-        null_ls.builtins.code_actions.refactoring,
         null_ls.builtins.completion.luasnip,
     },
 })
@@ -739,4 +865,19 @@ mason_lspconfig.setup_handlers {
 
         nvim_lsp[server_name].setup(opts)
     end,
+}
+
+local gitsigns = require('gitsigns')
+gitsigns.setup {
+  signcolumn = true,
+  numhl      = true,
+  linehl     = false,
+  word_diff  = true,
+  current_line_blame = false,
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = 'right_align', -- 'eol' | 'overlay' | 'right_align'
+    delay = 1000,
+    ignore_whitespace = false,
+  },
 }
