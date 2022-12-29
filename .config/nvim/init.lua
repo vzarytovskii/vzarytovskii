@@ -124,6 +124,7 @@ packer.startup({function(use)
   use { 'antoinemadec/FixCursorHold.nvim' }
   use { 'stevearc/aerial.nvim' }
   use { 'saecki/crates.nvim', requires = { 'nvim-lua/plenary.nvim' } }
+  use 'adelarsq/neofsharp.vim'
 end,
 config = {
   auto_clean = true,
@@ -234,6 +235,7 @@ local function set_common_settings()
   vim.opt.colorcolumn = "80"
 
   vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
+  vim.api.nvim_command('autocmd BufNewFile,BufRead *.fsproj,*.csproj,*.vbproj,*.cproj,*.proj set filetype=xml')
 end
 
 set_common_settings()
@@ -606,6 +608,7 @@ barbecue.setup({
   show_modified = true,
   attach_navic = false
 })
+
 vim.api.nvim_create_autocmd({
   "WinScrolled",
   "BufWinEnter",
