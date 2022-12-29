@@ -1,4 +1,3 @@
-
 local ok, impatient = pcall(require, 'impatient')
 if ok then
   impatient.enable_profile()
@@ -93,7 +92,8 @@ packer.startup({function(use)
   }
 
   use { "onsails/lspkind.nvim" }
-  use { "lvimuser/lsp-inlayhints.nvim" }
+  use 'https://git.sr.ht/~whynothugo/lsp_lines.nvim'
+  use 'lvimuser/lsp-inlayhints.nvim'
 
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
@@ -114,11 +114,11 @@ packer.startup({function(use)
     config = 'vim.cmd [[TSUpdate]]'
   }
   use 'RRethy/vim-illuminate'
-
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
 
   use { 'antoinemadec/FixCursorHold.nvim' }
 
+  use { 'stevearc/aerial.nvim' }
 end,
 config = {
   auto_clean = true,
@@ -421,6 +421,7 @@ local function configure_handlers(telescope_builtin)
     underline = true,
     severity_sort = true,
     float = {
+      focus = false,
       focusable = false,
       style = "minimal",
       border = "rounded",
@@ -463,10 +464,11 @@ local function configure_handlers(telescope_builtin)
 end
 
 local lsp_keybinds = function(bufnr)
-  local opts = { noremap = true, silent = true }
+  local opts = { noremap = false, silent = true }
   vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-;>", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ws", "<cmd>lua vim.lsp.buf.workspace_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
@@ -545,6 +547,13 @@ telescope.setup {
       require("telescope.themes").get_dropdown {
         layout_strategy = "cursor",
       }
+    },
+    aerial = {
+      show_nesting = {
+        ['_'] = false, -- This key will be the default
+        json = true,
+        yaml = true,
+      }
     }
   }
 }
@@ -552,6 +561,7 @@ telescope.setup {
 telescope.load_extension("fzf")
 telescope.load_extension("ui-select")
 telescope.load_extension("undo")
+telescope.load_extension('aerial')
 
 project_files = function()
   local opts = {} -- define here if you want to define something
@@ -644,7 +654,7 @@ fidget.setup({
     spinner = "dots"
   },
   align = {
-    bottom = false,
+    bottom = true,
     right = true,
   },
   fmt = {
@@ -771,6 +781,7 @@ null_ls.setup({
     sources = {
         null_ls.builtins.code_actions.gitsigns,
         null_ls.builtins.completion.luasnip,
+        null_ls.builtins.completion.tags,
     },
 })
 
@@ -881,3 +892,42 @@ gitsigns.setup {
     ignore_whitespace = false,
   },
 }
+
+local aerial = require('aerial')
+aerial.setup({
+  on_attach = function(bufnr)
+    aerial.open_all()
+  end,
+  backends = { "treesitter", "lsp", "markdown", "man" },
+  -- close_automatic_events = { "unfocus", "switch_buffer", "unsupported" },
+  open_automatic = true,
+  show_guides = true,
+  attach_mode = "window",
+  layout = {
+    max_width = { 50, 0.5 },
+    width = nil,
+    min_width = 10,
+    win_opts = {},
+    default_direction = "float",
+    placement = "window",
+
+    preserve_equality = false,
+  },
+  guides = {
+    mid_item = "├─",
+    last_item = "└─",
+    nested_top = "│",
+    whitespace = "  ",
+  },
+  float = {
+    max_height = 0.9,
+    relative = "editor",
+    override = function(conf, source_winid)
+      local padding = 1
+      conf.anchor = 'NE'
+      conf.row = padding
+      conf.col = vim.o.columns - padding
+      return conf
+    end,
+  }
+})
