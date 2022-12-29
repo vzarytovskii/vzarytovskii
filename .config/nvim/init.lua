@@ -85,6 +85,8 @@ packer.startup({function(use)
       'rcarriga/nvim-dap-ui'
   }
 
+  use 'github/copilot.vim'
+
   use {
       'hrsh7th/nvim-cmp',
       'hrsh7th/cmp-nvim-lsp',
@@ -92,6 +94,7 @@ packer.startup({function(use)
       'hrsh7th/cmp-nvim-lsp-signature-help',
       'hrsh7th/cmp-calc',
       'saadparwaiz1/cmp_luasnip',
+      'hrsh7th/cmp-copilot'
   }
 
   use { "onsails/lspkind.nvim" }
@@ -718,6 +721,7 @@ nvim_cmp.setup {
     end,
   },
   sources = nvim_cmp.config.sources({
+    { name = 'copilot' },
     { name = 'nvim_lsp_signature_help' },
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
