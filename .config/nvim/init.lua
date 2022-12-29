@@ -118,10 +118,9 @@ packer.startup({function(use)
   }
   use 'RRethy/vim-illuminate'
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
-
   use { 'antoinemadec/FixCursorHold.nvim' }
-
   use { 'stevearc/aerial.nvim' }
+  use { 'saecki/crates.nvim', requires = { 'nvim-lua/plenary.nvim' } }
 end,
 config = {
   auto_clean = true,
@@ -463,15 +462,6 @@ local function configure_handlers(telescope_builtin)
   --vim.lsp.handlers['callHierarchy/incomingCalls'] = call_hierarchy_handler('LSP Incoming Calls', 'from', opts.call_hierarchy),
   --vim.lsp.handlers['callHierarchy/outgoingCalls'] = call_hierarchy_handler('LSP Outgoing Calls', 'to', opts.call_hierarchy),
   --vim.lsp.handlers['textDocument/codeAction'] = code_action_handler('LSP Code Actions', opts.code_action)
-  vim.g.cursorhold_updatetime = 1500
-  vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
-    buffer = bufnr,
-    callback = function()
-      local opts = { focus=false, scope="cursor" }
-      --vim.diagnostic.open_float(nil, opts)
-      vim.lsp.buf.hover(nil, opts)
-    end
-  })
 end
 
 local lsp_keybinds = function(bufnr)
@@ -733,7 +723,8 @@ nvim_cmp.setup {
     { name = 'luasnip' },
   },{
     { name = 'buffer' },
-    { name = 'calc' }
+    { name = 'calc' },
+    { name = "crates" },
   }),
   window = {
     completion = {
@@ -884,6 +875,17 @@ local global_on_attach = function(client, bufnr)
         buffer = bufnr,
       })
     end
+    if client.supports_method("textDocument/hover") then
+      vim.g.cursorhold_updatetime = 1500
+      vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
+        buffer = bufnr,
+        callback = function()
+          local opts = { focus=false, scope="cursor" }
+          --vim.diagnostic.open_float(nil, opts)
+          vim.lsp.buf.hover(nil, opts)
+        end
+      })
+    end
 
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
@@ -979,4 +981,11 @@ aerial.setup({
       return conf
     end,
   }
+})
+
+require('crates').setup({
+  null_ls = {
+        enabled = true,
+        name = "crates.nvim",
+    },
 })
