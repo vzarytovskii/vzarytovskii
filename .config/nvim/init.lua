@@ -88,6 +88,9 @@ packer.startup({function(use)
   use {
       'hrsh7th/nvim-cmp',
       'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-nvim-lsp-document-symbol',
+      'hrsh7th/cmp-nvim-lsp-signature-help',
+      'hrsh7th/cmp-calc',
       'saadparwaiz1/cmp_luasnip',
   }
 
@@ -246,7 +249,8 @@ table.insert(nvim_runtime_path, 'lua/?/init.lua')
 local languages = {
   others = {
     tools = { },
-    servers = {}
+    debuggers = { },
+    servers = { }
   },
   csharp = {
     tools = {},
@@ -421,6 +425,7 @@ local function configure_handlers(telescope_builtin)
     underline = true,
     severity_sort = true,
     float = {
+      max_width = 120,
       focus = false,
       focusable = false,
       style = "minimal",
@@ -458,9 +463,15 @@ local function configure_handlers(telescope_builtin)
   --vim.lsp.handlers['callHierarchy/incomingCalls'] = call_hierarchy_handler('LSP Incoming Calls', 'from', opts.call_hierarchy),
   --vim.lsp.handlers['callHierarchy/outgoingCalls'] = call_hierarchy_handler('LSP Outgoing Calls', 'to', opts.call_hierarchy),
   --vim.lsp.handlers['textDocument/codeAction'] = code_action_handler('LSP Code Actions', opts.code_action)
-  vim.g.cursorhold_updatetime = 100
-  vim.cmd [[autocmd CursorHold,CursorHoldI * :lua vim.diagnostic.open_float() ]]
-
+  vim.g.cursorhold_updatetime = 1500
+  vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
+    buffer = bufnr,
+    callback = function()
+      local opts = { focus=false, scope="cursor" }
+      --vim.diagnostic.open_float(nil, opts)
+      vim.lsp.buf.hover(nil, opts)
+    end
+  })
 end
 
 local lsp_keybinds = function(bufnr)
@@ -667,6 +678,10 @@ fidget.setup({
 
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
 nvim_cmp.setup {
+  view = {
+    entries = "custom",
+    selection_order = 'near_cursor'
+  },
   enabled = function()
     -- disable completion in comments
     local context = require 'cmp.config.context'
@@ -712,10 +727,14 @@ nvim_cmp.setup {
       end
     end,
   },
-  sources = {
+  sources = nvim_cmp.config.sources({
+    { name = 'nvim_lsp_signature_help' },
     { name = 'nvim_lsp' },
-    { name = 'luasnip' }
-  },
+    { name = 'luasnip' },
+  },{
+    { name = 'buffer' },
+    { name = 'calc' }
+  }),
   window = {
     completion = {
       winhighlight = "Normal:Pmenu,FloatBorder:Pmenu,Search:None",
@@ -735,6 +754,34 @@ nvim_cmp.setup {
     end,
   },
 }
+
+nvim_cmp.setup.filetype('gitcommit', {
+  sources = nvim_cmp.config.sources({
+    { name = 'cmp_git' },
+  }, {
+    { name = 'buffer' },
+  })
+})
+
+nvim_cmp.setup.cmdline({ '/', '?' }, {
+  mapping = nvim_cmp.mapping.preset.cmdline(),
+  sources = nvim_cmp.config.sources({
+    { name = 'nvim_lsp_document_symbol' }
+  }, {
+    { name = 'buffer' }
+  }),
+  view = { entries = "native" },
+})
+
+nvim_cmp.setup.cmdline(':', {
+  mapping = nvim_cmp.mapping.preset.cmdline(),
+  sources = nvim_cmp.config.sources({
+    { name = 'path' }
+  }, {
+    { name = 'cmdline' }
+  }),
+  view = { entries = "native" },
+})
 
 mason.setup({
     PATH = "prepend",
@@ -762,6 +809,25 @@ mason_nvim_dap.setup({
     automatic_setup = true
 })
 
+null_ls.setup({
+    sources = {
+        null_ls.builtins.code_actions.gitsigns,
+        null_ls.builtins.completion.luasnip,
+        null_ls.builtins.completion.tags,
+        null_ls.builtins.hover.dictionary,
+        null_ls.builtins.hover.printenv,
+    },
+})
+
+local lsp_formatting = function(bufnr)
+    vim.lsp.buf.format({
+        filter = function(client)
+            return client.name == "null-ls"
+        end,
+        bufnr = bufnr,
+    })
+end
+
 local setup_dap = function(dap)
   for _, cb in pairs(tooling.debuggers_adapters) do
     if type(cb) == "function" then
@@ -776,23 +842,6 @@ local setup_dap = function(dap)
 end
 
 setup_dap(dap)
-
-null_ls.setup({
-    sources = {
-        null_ls.builtins.code_actions.gitsigns,
-        null_ls.builtins.completion.luasnip,
-        null_ls.builtins.completion.tags,
-    },
-})
-
-local lsp_formatting = function(bufnr)
-    vim.lsp.buf.format({
-        filter = function(client)
-            return client.name == "null-ls"
-        end,
-        bufnr = bufnr,
-    })
-end
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
