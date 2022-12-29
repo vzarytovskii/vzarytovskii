@@ -100,6 +100,7 @@ packer.startup({function(use)
   use { "onsails/lspkind.nvim" }
   use 'https://git.sr.ht/~whynothugo/lsp_lines.nvim'
   use 'lvimuser/lsp-inlayhints.nvim'
+  use { 'weilbith/nvim-code-action-menu' }
 
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
@@ -453,6 +454,7 @@ local function configure_handlers(telescope_builtin)
   vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
   vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
   vim.lsp.handlers['textDocument/documentSymbol'] = telescope_builtin.lsp_document_symbols
+  vim.lsp.handlers['workspace/symbol'] = telescope_builtin.lsp_workspace_symbols
   vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
     vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -475,7 +477,7 @@ local lsp_keybinds = function(bufnr)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-;>", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ws", "<cmd>lua vim.lsp.buf.workspace_symbol()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ws", "<cmd>lua vim.lsp.buf.workspace_symbol('')<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
