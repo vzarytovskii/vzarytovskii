@@ -999,8 +999,7 @@ hover_handler = function(bufnr)
       local diagnostic_under_cursor =
         vim.tbl_filter(in_range(line_nr, column_nr), vim.diagnostic.get(bufnr, client_id))
 
-
-      if diagnostic_under_cursor then
+      if rawequal(next(diagnostic_under_cursor), nil) then
         vim.lsp.buf.hover(nil, opts)
       else
         vim.diagnostic.open_float(nil, opts)
