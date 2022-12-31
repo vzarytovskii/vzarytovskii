@@ -63,8 +63,10 @@ packer.startup({function(use)
   use 'nvim-lua/plenary.nvim'
 
   -- UI, theme & related:
-  use 'olimorris/onedarkpro.nvim'
+  use 'folke/tokyonight.nvim'
   use 'kyazdani42/nvim-web-devicons'
+  use {"shortcuts/no-neck-pain.nvim"}
+  use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = false } }
 
   use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
@@ -107,10 +109,10 @@ packer.startup({function(use)
   use { "utilyre/barbecue.nvim",
         branch = "dev",
         requires = {
-        "neovim/nvim-lspconfig",
-        "smiteshp/nvim-navic",
-        "kyazdani42/nvim-web-devicons",
-      }
+          "neovim/nvim-lspconfig",
+          "smiteshp/nvim-navic",
+          "kyazdani42/nvim-web-devicons",
+        }
   }
   use 'j-hui/fidget.nvim'
   use {
@@ -126,6 +128,7 @@ packer.startup({function(use)
   use { 'stevearc/aerial.nvim' }
   use { 'saecki/crates.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use 'adelarsq/neofsharp.vim'
+  use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
 end,
 config = {
   auto_clean = true,
@@ -203,6 +206,12 @@ local function set_common_settings()
   vim.g.netrw_browse_split = 0
   vim.g.netrw_banner = 0
   vim.g.netrw_winsize = 25
+
+  vim.o.foldcolumn = '1'
+  vim.o.foldlevel = 99
+  vim.o.foldlevelstart = 99
+  vim.o.foldenable = true
+
   vim.opt.guicursor = ""
 
   vim.opt.nu = true
@@ -241,11 +250,37 @@ end
 
 set_common_settings()
 
-local onedarkpro = require("onedarkpro")
-onedarkpro.setup({
-  caching = false
+require'nvim-web-devicons'.setup { }
+
+local tokyonight = require("tokyonight")
+tokyonight.setup({
+  style = "storm",
+  light_style = "day",
+  styles = {
+    comments = { italic = false },
+    keywords = { italic = false },
+    functions = {},
+    variables = {},
+    sidebars = "dark",
+    floats = "dark",
+  },
 })
-vim.cmd[[colorscheme onelight]]
+
+vim.cmd[[colorscheme tokyonight]]
+
+require('lualine').setup {
+  options = {
+    theme = 'tokyonight'
+  }
+}
+
+require("no-neck-pain").setup({
+    enableOnVimEnter = true,
+    width = 100,
+    buffers = {
+        blend = -0.2,
+    },
+})
 
 local nvim_runtime_path = vim.split(package.path, ';')
 table.insert(nvim_runtime_path, 'lua/?.lua')
@@ -313,6 +348,15 @@ local languages = {
     },
     servers = {
       fsautocomplete = {
+        on_attach = function(client, bufnr)
+          vim.cmd [[
+            setl fdm=syntax
+            setl formatoptions=croql
+            setl commentstring=(*%s*)
+            setl comments=s0:*\ -,m0:*\ \ ,ex0:*),s1:(*,mb:*,ex:*),:\/\/\/,:\/\/
+            setl indentkeys+=0=and,0=class,0=constraint,0=done,0=else,0=end,0=exception,0=external,0=if,0=in,0=include,0=inherit,0=let,0=method,0=open,0=then,0=type,0=val,0=with,0;;,0>\],0\|\],0>},0\|,0},0\],0)
+          ]]
+        end,
         cmd = { "fsautocomplete" },
         filetypes = { "fsharp" },
         init_options = {
@@ -406,6 +450,11 @@ local function common_capabilities()
     },
   }
 
+  capabilities.textDocument.foldingRange = {
+    dynamicRegistration = false,
+    lineFoldingOnly = true
+  }
+
   if status_ok then
     return cmp_nvim_lsp.default_capabilities(capabilities)
   end
@@ -473,7 +522,7 @@ end
 
 local lsp_keybinds = function(bufnr)
   local opts = { noremap = false, silent = true }
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>ufoPeekOrHover()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-;>", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
@@ -598,6 +647,7 @@ local navic = require('nvim-navic')
 local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
+local treesitter_highlighter = require('vim.treesitter.highlighter')
 local illuminate = require('illuminate')
 local inlay_hints = require("lsp-inlayhints")
 local dap = require('dap')
@@ -606,6 +656,7 @@ local dapui = require('dapui')
 dapui.setup()
 
 barbecue.setup({
+  theme = 'tokyonight',
   create_autocmd = false,
   show_modified = true,
   attach_navic = false
@@ -630,7 +681,10 @@ inlay_hints.setup()
 
 treesitter.setup {
   -- TODO: Add this to overall langauges config, per language.
-  ensure_installed = { "lua", "rust", "c_sharp", "yaml" },
+  ensure_installed = { 
+    "lua", "rust", "c_sharp", "comment", "diff", "yaml",
+    "git_rebase", "gitattributes", "gitcommit",
+    "json", "markdown", "markdown_inline" },
   sync_install = false,
   indent = {
     enable = true
@@ -670,7 +724,7 @@ fidget.setup({
     stack_upwards = false,
   },
   window = {
-    relative = "win" -- win or editor
+    relative = "editor" -- win or editor
   }
 })
 
@@ -847,6 +901,42 @@ local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 configure_handlers(telescope_builtin)
 
+ufoPeekOrHover = function()
+  local opts = { focus=false, scope="cursor" }
+  local winid = require('ufo').peekFoldedLinesUnderCursor()
+  if not winid then
+      vim.lsp.buf.hover(nil, opts)
+  end
+end
+
+local ufo_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
+    local newVirtText = {}
+    local suffix = ('  %d '):format(endLnum - lnum)
+    local sufWidth = vim.fn.strdisplaywidth(suffix)
+    local targetWidth = width - sufWidth
+    local curWidth = 0
+    for _, chunk in ipairs(virtText) do
+        local chunkText = chunk[1]
+        local chunkWidth = vim.fn.strdisplaywidth(chunkText)
+        if targetWidth > curWidth + chunkWidth then
+            table.insert(newVirtText, chunk)
+        else
+            chunkText = truncate(chunkText, targetWidth - curWidth)
+            local hlGroup = chunk[2]
+            table.insert(newVirtText, {chunkText, hlGroup})
+            chunkWidth = vim.fn.strdisplaywidth(chunkText)
+            -- str width returned from truncate() may less than 2nd argument, need padding
+            if curWidth + chunkWidth < targetWidth then
+                suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
+            end
+            break
+        end
+        curWidth = curWidth + chunkWidth
+    end
+    table.insert(newVirtText, {suffix, 'MoreMsg'})
+    return newVirtText
+end
+
 local global_on_attach = function(client, bufnr)
     if client.server_capabilities.documentSymbolProvider then
         navic.attach(client, bufnr)
@@ -888,11 +978,7 @@ local global_on_attach = function(client, bufnr)
       vim.g.cursorhold_updatetime = 1500
       vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
         buffer = bufnr,
-        callback = function()
-          local opts = { focus=false, scope="cursor" }
-          --vim.diagnostic.open_float(nil, opts)
-          vim.lsp.buf.hover(nil, opts)
-        end
+        callback = ufoPeekOrHover
       })
     end
 
@@ -964,9 +1050,9 @@ aerial.setup({
   show_guides = true,
   attach_mode = "window",
   layout = {
-    max_width = { 50, 0.5 },
+    max_width = { 70, 0.5 },
     width = nil,
-    min_width = 10,
+    min_width = 30,
     win_opts = {},
     default_direction = "float",
     placement = "window",
@@ -998,3 +1084,31 @@ require('crates').setup({
         name = "crates.nvim",
     },
 })
+
+require('ufo').setup({
+  open_fold_hl_timeout = 150,
+  close_fold_kinds = {'imports', 'comment'},
+  preview = {
+      win_config = {
+          border = {'', '─', '', '', '', '─', '', ''},
+          winhighlight = 'Normal:Folded',
+          winblend = 0
+      },
+      mappings = {
+          scrollU = '<C-u>',
+          scrollD = '<C-d>'
+      }
+  },
+  fold_virt_text_handler = ufo_virt_text_handler,
+  provider_selector = function(bufnr, filetype, buftype)
+        if treesitter_highlighter.active[bufnr] then
+          return {'treesitter', 'indent'}
+        else
+          return {'lsp', 'indent'}
+        end
+    end
+})
+vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
+vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
+vim.keymap.set('n', 'zr', require('ufo').openFoldsExceptKinds)
+vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
