@@ -122,6 +122,8 @@ packer.startup({function(use)
     },
     config = 'vim.cmd [[TSUpdate]]'
   }
+  use 'nvim-treesitter/nvim-treesitter-context'
+
   use 'RRethy/vim-illuminate'
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'antoinemadec/FixCursorHold.nvim' }
@@ -129,6 +131,8 @@ packer.startup({function(use)
   use { 'saecki/crates.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use 'adelarsq/neofsharp.vim'
   use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
+  use 'haringsrob/nvim_context_vt'
+
 end,
 config = {
   auto_clean = true,
@@ -254,7 +258,7 @@ require'nvim-web-devicons'.setup { }
 
 local tokyonight = require("tokyonight")
 tokyonight.setup({
-  style = "storm",
+  style = "day",
   light_style = "day",
   styles = {
     comments = { italic = false },
@@ -417,7 +421,28 @@ local languages = {
       end,
     },
     servers = {
-      rust_analyzer = {}
+      rust_analyzer = {
+        imports = {
+            granularity = {
+                group = "module",
+            },
+            prefix = "self",
+        },
+        cargo = {
+            buildScripts = {
+                enable = true,
+            },
+        },
+        procMacro = {
+            enable = true,
+        },
+        inlayHints = {
+            enabled = true,
+            typeHints = {
+                enable = true,
+            },
+        },
+      }
     }
   },
   yaml = {
@@ -647,6 +672,7 @@ local navic = require('nvim-navic')
 local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
+local treesitter_context = require('treesitter-context')
 local treesitter_highlighter = require('vim.treesitter.highlighter')
 local illuminate = require('illuminate')
 local inlay_hints = require("lsp-inlayhints")
@@ -677,7 +703,26 @@ vim.api.nvim_create_autocmd({
   end,
 })
 
-inlay_hints.setup()
+inlay_hints.setup({
+  inlay_hints = {
+    parameter_hints = {
+      show = true,
+      prefix = "<- ",
+      separator = ", ",
+      remove_colon_start = true,
+      remove_colon_end = true,
+    },
+    type_hints = {
+      -- type and other hints
+      show = true,
+      prefix = "",
+      separator = ", ",
+      remove_colon_start = true,
+      remove_colon_end = true,
+    },
+  },
+  enabled_at_startup = true,
+})
 
 treesitter.setup {
   -- TODO: Add this to overall langauges config, per language.
@@ -707,6 +752,11 @@ treesitter.setup {
     max_file_lines = nil,
   },
 }
+
+treesitter_context.setup({
+  enable = true,
+  max_lines = 0,
+})
 
 local capabilities = common_capabilities()
 
@@ -1112,3 +1162,7 @@ vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
 vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
 vim.keymap.set('n', 'zr', require('ufo').openFoldsExceptKinds)
 vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
+
+require('nvim_context_vt').setup({
+  enabled = true
+})
