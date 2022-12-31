@@ -160,6 +160,43 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = vim.fn.expand '$MYVIMRC',
 })
 
+local function get_diagnostic_start(diagnostic_entry)
+  return diagnostic_entry['lnum'], diagnostic_entry['col']
+end
+
+local function get_diagnostic_end(diagnostic_entry)
+  return diagnostic_entry['end_lnum'], diagnostic_entry['end_col']
+end
+
+
+local function in_range(cursor_line, cursor_char)
+  return function(diagnostic)
+    local start_line, start_char = get_diagnostic_start(diagnostic)
+    local end_line, end_char = get_diagnostic_end(diagnostic)
+
+    local one_line_diag = start_line == end_line
+
+    if one_line_diag and start_line == cursor_line then
+      if cursor_char >= start_char and cursor_char < end_char then
+        return true
+      end
+
+    -- multi line diagnostic
+    else
+      if cursor_line == start_line and cursor_char >= start_char then
+        return true
+      elseif cursor_line == end_line and cursor_char < end_char then
+        return true
+      elseif cursor_line > start_line and cursor_line < end_line then
+        return true
+      end
+    end
+
+    return false
+  end
+end
+
+
 local function set_keymap(...) vim.api.nvim_set_keymap(...) end
 
 local function dump(o)
@@ -523,6 +560,7 @@ local function configure_handlers(telescope_builtin)
   }
 
   vim.diagnostic.config(config)
+  --vim.lsp.handlers["textDocument/hover"] = hover_handler
   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
   vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
@@ -547,7 +585,7 @@ end
 
 local lsp_keybinds = function(bufnr)
   local opts = { noremap = false, silent = true }
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>ufoPeekOrHover()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua hover_handler()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-;>", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
@@ -748,7 +786,7 @@ treesitter.setup {
   rainbow = {
     enable = true,
     disable = { "html" },
-    extended_mode = false,
+    extended_mode = true,
     max_file_lines = nil,
   },
 }
@@ -951,11 +989,22 @@ local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 configure_handlers(telescope_builtin)
 
-ufoPeekOrHover = function()
+hover_handler = function(bufnr)
   local opts = { focus=false, scope="cursor" }
   local winid = require('ufo').peekFoldedLinesUnderCursor()
   if not winid then
-      vim.lsp.buf.hover(nil, opts)
+      local pos = vim.api.nvim_win_get_cursor(0)
+      local line_nr = pos[1] - 1
+      local column_nr = pos[2]
+      local diagnostic_under_cursor =
+        vim.tbl_filter(in_range(line_nr, column_nr), vim.diagnostic.get(bufnr, client_id))
+
+
+      if diagnostic_under_cursor then
+        vim.lsp.buf.hover(nil, opts)
+      else
+        vim.diagnostic.open_float(nil, opts)
+      end
   end
 end
 
@@ -1028,7 +1077,7 @@ local global_on_attach = function(client, bufnr)
       vim.g.cursorhold_updatetime = 1500
       vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
         buffer = bufnr,
-        callback = ufoPeekOrHover
+        callback = function() hover_handler(bufnr) end
       })
     end
 
