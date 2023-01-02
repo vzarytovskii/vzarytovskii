@@ -126,6 +126,14 @@ packer.startup({function(use)
 
   use 'RRethy/vim-illuminate'
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
+  use { 'pwntester/octo.nvim',
+    requires = {
+      'nvim-lua/plenary.nvim',
+      'nvim-telescope/telescope.nvim',
+      'kyazdani42/nvim-web-devicons',
+    },
+  }
+  use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use { 'antoinemadec/FixCursorHold.nvim' }
   use { 'stevearc/aerial.nvim' }
   use { 'saecki/crates.nvim', requires = { 'nvim-lua/plenary.nvim' } }
@@ -711,6 +719,7 @@ local nvim_cmp = require('cmp')
 local luasnip = require('luasnip')
 local treesitter = require('nvim-treesitter.configs')
 local treesitter_context = require('treesitter-context')
+local treesitter_parsers = require('nvim-treesitter.parsers')
 local treesitter_highlighter = require('vim.treesitter.highlighter')
 local illuminate = require('illuminate')
 local inlay_hints = require("lsp-inlayhints")
@@ -795,6 +804,8 @@ treesitter_context.setup({
   enable = true,
   max_lines = 0,
 })
+
+treesitter_parsers.filetype_to_parsername.octo = "markdown"
 
 local capabilities = common_capabilities()
 
@@ -1136,6 +1147,14 @@ gitsigns.setup {
     ignore_whitespace = false,
   },
 }
+
+require"octo".setup({
+  default_remote = {"upstream", "origin"}
+})
+
+require("diffview").setup({
+  enhanced_diff_hl = true
+})
 
 local aerial = require('aerial')
 aerial.setup({
