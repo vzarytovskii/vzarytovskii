@@ -81,6 +81,8 @@ packer.startup({function(use)
       'neovim/nvim-lspconfig'
   }
 
+  use { "windwp/nvim-autopairs" }
+
   use {
       'mfussenegger/nvim-dap',
       'jayp0521/mason-nvim-dap.nvim',
@@ -167,6 +169,456 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   group = packer_group,
   pattern = vim.fn.expand '$MYVIMRC',
 })
+
+-- All of floating windoww for diagnostics are from lspsaga.
+local virt_ns = vim.api.nvim_create_namespace('FloatingDiagnostic')
+local diag_augroup = vim.api.nvim_create_augroup('FloatingDiagnostic', { clear = true })
+
+
+function get_max_float_width()
+  -- current window width
+  local WIN_WIDTH = vim.fn.winwidth(0)
+  local max_width = math.floor(WIN_WIDTH * 0.7)
+  return max_width
+end
+
+local function get_border_style(style, highlight)
+  highlight = highlight or 'FloatBorder'
+  local border_style = {
+    ['none'] = 'none',
+    ['single'] = 'single',
+    ['double'] = 'double',
+    ['rounded'] = 'rounded',
+    ['bold'] = {
+      { '┏', highlight },
+      { '─', highlight },
+      { '┓', highlight },
+      { '│', highlight },
+      { '┛', highlight },
+      { '─', highlight },
+      { '┗', highlight },
+      { '│', highlight },
+    },
+    ['plus'] = {
+      { '+', highlight },
+      { '─', highlight },
+      { '+', highlight },
+      { '│', highlight },
+      { '+', highlight },
+      { '─', highlight },
+      { '+', highlight },
+      { '│', highlight },
+    },
+  }
+
+  return border_style[style]
+end
+
+local function make_floating_popup_options(width, height, opts)
+  local api = vim.api
+  vim.validate({
+    opts = { opts, 't', true },
+  })
+  opts = opts or {}
+  vim.validate({
+    ['opts.offset_x'] = { opts.offset_x, 'n', true },
+    ['opts.offset_y'] = { opts.offset_y, 'n', true },
+  })
+  local new_option = {}
+
+  new_option.style = 'minimal'
+  new_option.width = width
+  new_option.height = height
+  new_option.focusable = true
+  if opts.focusable then
+    new_option.focusable = opts.focusable
+  end
+
+  if opts.noautocmd then
+    new_option.noautocmd = opts.noautocmd
+  end
+
+  if opts.relative ~= nil then
+    new_option.relative = opts.relative
+  else
+    new_option.relative = 'cursor'
+  end
+
+  if opts.anchor ~= nil then
+    new_option.anchor = opts.anchor
+  end
+
+  if opts.row == nil and opts.col == nil then
+    local lines_above = vim.fn.winline() - 1
+    local lines_below = vim.fn.winheight(0) - lines_above
+    new_option.anchor = ''
+
+    local pum_pos = vim.fn.pum_getpos()
+    local pum_vis = not vim.tbl_isempty(pum_pos) -- pumvisible() can be true and pum_pos() returns {}
+    if pum_vis and vim.fn.line('.') >= pum_pos.row or not pum_vis and lines_above < lines_below then
+      new_option.anchor = 'N'
+      new_option.row = 1
+    else
+      new_option.anchor = 'S'
+      new_option.row = 0
+    end
+
+    if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
+      new_option.anchor = new_option.anchor .. 'W'
+      new_option.col = 0
+      if opts.move_col then
+        new_option.col = new_option.col + opts.move_col
+      end
+    else
+      new_option.anchor = new_option.anchor .. 'E'
+      new_option.col = 1
+      if opts.move_col then
+        new_option.col = new_option.col - opts.move_col + 1
+      end
+    end
+  else
+    new_option.row = opts.row
+    new_option.col = opts.col
+  end
+
+  return new_option
+end
+
+local function generate_win_opts(contents, opts)
+  opts = opts or {}
+  local win_width, win_height
+  -- _make_floating_popup_size doesn't allow the window size to be larger than
+  -- the current window. For the finder preview window, this means it won't let the
+  -- preview window be wider than the finder window. To work around this, the
+  -- no_size_override option can be set to indicate that the size shouldn't be changed
+  -- from what was given.
+  if opts.no_size_override and opts.width and opts.height then
+    win_width, win_height = opts.width, opts.height
+  else
+    win_width, win_height = vim.lsp.util._make_floating_popup_size(contents, opts)
+  end
+
+  opts = make_floating_popup_options(win_width, win_height, opts)
+  return opts
+end
+
+function create_win_with_border(content_opts, opts)
+  local api = vim.api
+  vim.validate({
+    content_opts = { content_opts, 't' },
+    contents = { content_opts.content, 't', true },
+    opts = { opts, 't', true },
+  })
+
+  local contents, filetype = content_opts.contents, content_opts.filetype
+  local enter = content_opts.enter or false
+  local highlight = content_opts.highlight or 'LspFloatWinBorder'
+  opts = opts or {}
+  opts = generate_win_opts(contents, opts)
+  -- TODO: Make configurable?
+  opts.border = content_opts.border or get_border_style('rounded', highlight)
+
+  -- create contents buffer
+  local bufnr = content_opts.bufnr or api.nvim_create_buf(false, true)
+  -- buffer settings for contents buffer
+  -- Clean up input: trim empty lines from the end, pad
+  local content = vim.lsp.util._trim(contents)
+
+  if filetype then
+    api.nvim_buf_set_option(bufnr, 'filetype', filetype)
+  end
+
+  content = vim.tbl_flatten(vim.tbl_map(function(line)
+    if string.find(line, '\n') then
+      return vim.split(line, '\n')
+    end
+    return line
+  end, content))
+
+  if not vim.tbl_isempty(content) then
+    api.nvim_buf_set_lines(bufnr, 0, -1, true, content)
+  end
+
+  if api.nvim_buf_is_valid(bufnr) then
+    api.nvim_buf_set_option(bufnr, 'modifiable', false)
+    api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
+  end
+
+  local winid = api.nvim_open_win(bufnr, enter, opts)
+  api.nvim_win_set_option(winid, 'winhl', 'Normal:LspFloatWinNormal,FloatBorder:' .. highlight)
+  api.nvim_win_set_option(winid, 'winblend', content_opts.winblend or 0)
+
+  -- disable winbar in some saga's floatwindow
+  -- if config.symbol_in_winbar.enable or false then
+  api.nvim_win_set_option(winid, 'winbar', '')
+  -- end
+
+  return bufnr, winid
+end
+
+function wrap_diagnostic_msg(msg, width)
+  if msg:find('\n') then
+    local t = vim.tbl_filter(function(s)
+      return string.len(s) ~= 0
+    end, vim.split(msg, '\n'))
+    return t
+  end
+
+  if #msg < width then
+    return { msg }
+  end
+
+  return wrap.wrap_text(msg, width)
+end
+
+function wrap_add_truncate_line(contents)
+  local line_widths = {}
+  local width = 0
+  local char = '─'
+  local truncate_line = char
+
+  for i, line in ipairs(contents) do
+    line_widths[i] = vim.fn.strdisplaywidth(line)
+    width = math.max(line_widths[i], width)
+  end
+
+  for _ = 1, width, 1 do
+    truncate_line = truncate_line .. char
+  end
+
+  return truncate_line
+end
+
+function nvim_close_valid_window(winid)
+  if winid == nil then
+    return
+  end
+
+  local close_win = function(win_id)
+    if not winid or win_id == 0 then
+      return
+    end
+    if vim.api.nvim_win_is_valid(win_id) then
+      vim.api.nvim_win_close(win_id, true)
+    end
+  end
+
+  local _switch = {
+    ['table'] = function()
+      for _, id in ipairs(winid) do
+        close_win(id)
+      end
+    end,
+    ['number'] = function()
+      close_win(winid)
+    end,
+  }
+
+  local _switch_metatable = {
+    __index = function(_, t)
+      error(string.format('Wrong type %s of winid', t))
+    end,
+  }
+
+  setmetatable(_switch, _switch_metatable)
+
+  _switch[type(winid)]()
+end
+
+function close_preview_autocmd(bufnr, winids, events)
+  vim.api.nvim_create_autocmd(events, {
+    group = diag_augroup,
+    buffer = bufnr,
+    once = true,
+    callback = function()
+      nvim_close_valid_window(winids)
+    end,
+  })
+end
+
+function generate_empty_table(length)
+  local empty_tbl = {}
+  if length == 0 then
+    return empty_tbl
+  end
+
+  for _ = 1, length do
+    table.insert(empty_tbl, '   ')
+  end
+  return empty_tbl
+end
+
+function render_diagnostic_window(entry, option)
+  local api = vim.api
+
+  local diag_headers = { ' ', ' ', ' ', ' ' }
+  local diag_types   = { 'Error', 'Warn', 'Info', 'Hint' }
+
+  option = option or {}
+  local current_buffer = api.nvim_get_current_buf()
+  local wrap_message = {}
+  local max_width = get_max_float_width()
+
+  local severity = entry.severity
+
+  local diag_header = diag_headers[severity]
+  local diag_type = diag_types[severity]
+
+  local source = ' '
+
+  -- remove dot in source tail {lua-language-server}
+  if entry.source and entry.source:find('%.$') then
+    entry.source = entry.source:gsub('%.', '')
+  end
+
+  if entry.source then
+    source = source .. entry.source
+  end
+
+  if entry.code ~= nil then
+    source = source .. '(' .. entry.code .. ')'
+  end
+
+  local header_with_type = diag_header .. diag_type
+  local lnum_col = ' in ' .. '❮' .. entry.lnum + 1 .. ':' .. entry.col + 1 .. '❯'
+  wrap_message[1] = header_with_type .. lnum_col .. ' '
+
+  local msgs = wrap_diagnostic_msg(entry.message, max_width)
+  for _, v in pairs(msgs) do
+    table.insert(wrap_message, v)
+  end
+  wrap_message[#wrap_message] = wrap_message[#wrap_message] .. source
+
+  local truncate_line = wrap_add_truncate_line(wrap_message)
+  table.insert(wrap_message, 2, truncate_line)
+
+  local hi_name = 'FloatingDiagnostic' .. diag_type
+  local content_opts = {
+    contents = wrap_message,
+    filetype = 'plaintext',
+    highlight = hi_name,
+  }
+
+  local opts = {
+    relative = 'cursor',
+    style = 'minimal',
+    move_col = 3,
+  }
+
+  local bufnr, winid = create_win_with_border(content_opts, opts)
+  local win_config = api.nvim_win_get_config(winid)
+
+  local above = win_config['row'][false] < vim.fn.winline()
+
+  if win_config['anchor'] == 'NE' then
+    opts.move_col = -1
+  elseif win_config['anchor'] == 'NW' then
+    opts.move_col = nil
+  elseif win_config['anchor'] == 'SE' then
+    opts.move_col = -2
+  elseif win_config['anchor'] == 'SW' then
+    opts.move_col = nil
+  end
+
+  opts.focusable = false
+
+  local virt_bufnr, virt_winid = create_win_with_border({
+    contents = generate_empty_table(#wrap_message),
+    border = 'none',
+  }, opts)
+
+  local title_icon_length = #diag_header + #diag_type + 1
+  api.nvim_buf_add_highlight(bufnr, -1, hi_name, 0, 0, title_icon_length)
+
+  local truncate_line_hl = 'Diagnostic' .. diag_type
+  api.nvim_buf_add_highlight(bufnr, -1, truncate_line_hl, 1, 0, -1)
+
+  local get_pos_with_char = function()
+    if win_config['anchor'] == 'NE' then
+      return { 'right_align', '━', '┛' }
+    end
+
+    if win_config['anchor'] == 'NW' then
+      return { 'overlay', '┗', '━' }
+    end
+
+    if win_config['anchor'] == 'SE' then
+      return { 'right_align', '━', '┓' }
+    end
+
+    if win_config['anchor'] == 'SW' then
+      return { 'overlay', '┏', '━' }
+    end
+  end
+
+  local pos_char = get_pos_with_char()
+
+  for i, _ in pairs(wrap_message) do
+    local virt_tbl = {}
+    if i > 2 then
+      api.nvim_buf_add_highlight(bufnr, -1, hi_name, i - 1, 0, -1)
+    end
+
+    if not above then
+      if i == #wrap_message then
+        table.insert(virt_tbl, { pos_char[2], hi_name })
+        table.insert(virt_tbl, { '━', hi_name })
+        table.insert(virt_tbl, { pos_char[3], hi_name })
+      else
+        table.insert(virt_tbl, { '┃', hi_name })
+      end
+    else
+      if i == 1 then
+        table.insert(virt_tbl, { pos_char[2], hi_name })
+        table.insert(virt_tbl, { '━', hi_name })
+        table.insert(virt_tbl, { pos_char[3], hi_name })
+      else
+        table.insert(virt_tbl, { '┃', hi_name })
+      end
+    end
+
+    api.nvim_buf_set_extmark(virt_bufnr, virt_ns, i - 1, 0, {
+      id = i + 1,
+      virt_text = virt_tbl,
+      virt_text_pos = pos_char[1],
+      virt_lines_above = false,
+    })
+  end
+
+  api.nvim_buf_add_highlight(
+    bufnr,
+    -1,
+    'DiagnosticLineCol',
+    0,
+    #header_with_type,
+    #header_with_type + #lnum_col + 1
+  )
+
+  api.nvim_buf_add_highlight(
+    bufnr,
+    -1,
+    'Comment',
+    #wrap_message - 1,
+    #wrap_message[#wrap_message] - #source,
+    -1
+  )
+
+  api.nvim_buf_add_highlight(
+    bufnr,
+    -1,
+    'DiagnosticMap',
+    0,
+    #wrap_message[1] + 12,
+    -1
+  )
+
+  local close_autocmds = { 'CursorMoved', 'CursorMovedI', 'InsertEnter' }
+  -- magic to solved the window disappear when trigger CusroMoed
+  -- see https://github.com/neovim/neovim/issues/12923
+  vim.defer_fn(function()
+    close_preview_autocmd(current_buffer, { winid, virt_winid }, close_autocmds)
+  end, 0)
+end
 
 local function get_diagnostic_start(diagnostic_entry)
   return diagnostic_entry['lnum'], diagnostic_entry['col']
@@ -827,6 +1279,10 @@ fidget.setup({
   }
 })
 
+require('nvim-autopairs').setup {
+  disable_filetype = { "TelescopePrompt" },
+}
+
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
 nvim_cmp.setup {
   view = {
@@ -936,6 +1392,10 @@ nvim_cmp.setup.cmdline(':', {
   view = { entries = "native" },
 })
 
+if vim.o.ft == 'clap_input' and vim.o.ft == 'guihua' and vim.o.ft == 'guihua_rust' then
+  nvim_cmp.setup.buffer { completion = {enable = false} }
+end
+
 mason.setup({
     PATH = "prepend",
     max_concurrent_installers = 4,
@@ -1013,7 +1473,8 @@ hover_handler = function(bufnr)
       if rawequal(next(diagnostic_under_cursor), nil) then
         vim.lsp.buf.hover(nil, opts)
       else
-        vim.diagnostic.open_float(nil, opts)
+        -- vim.diagnostic.open_float(nil, opts)
+        render_diagnostic_window(diagnostic_under_cursor[0] or diagnostic_under_cursor[1], opts)
       end
   end
 end
@@ -1167,13 +1628,12 @@ aerial.setup({
   show_guides = true,
   attach_mode = "window",
   layout = {
-    max_width = { 70, 0.5 },
+    max_width = { 80, 0.25 },
     width = nil,
     min_width = 30,
     win_opts = {},
     default_direction = "float",
     placement = "window",
-
     preserve_equality = false,
   },
   guides = {
@@ -1186,7 +1646,7 @@ aerial.setup({
     max_height = 0.9,
     relative = "editor",
     override = function(conf, source_winid)
-      local padding = 1
+      local padding = 0
       conf.anchor = 'NE'
       conf.row = padding
       conf.col = vim.o.columns - padding
