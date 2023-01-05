@@ -779,7 +779,7 @@ require("no-neck-pain").setup({
     enableOnVimEnter = true,
     width = 100,
     buffers = {
-        blend = -0.2,
+        blend = -1,
     },
 })
 

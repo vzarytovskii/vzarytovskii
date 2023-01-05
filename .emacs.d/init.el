@@ -1541,6 +1541,9 @@ FACE defaults to inheriting from default and highlight."
     (lambda (color)
       (prism-blend color "white" 0.5))))
 
+;; Org config
+
+
 ;; Git config
 (use-package git-modes
   :defer t)
@@ -2085,7 +2088,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
         lsp-enable-symbol-highlighting t
         lsp-enable-xref t
         lsp-flycheck-live-reporting t
-        lsp-headerline-breadcrumbs-mode nil
+        lsp-headerline-breadcrumbs-mode t
         lsp-idle-delay 1
         lsp-keep-workspace-alive nil
         lsp-lens-debounce-interval 1.5
@@ -2119,7 +2122,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :config
   (setq lsp-ui-doc-enable t
         lsp-ui-doc-header nil
-        lsp-ui-doc-border "green"
+        ;;lsp-ui-doc-border "green"
         lsp-ui-doc-max-height 50
         lsp-ui-doc-max-width 150
         lsp-ui-doc-include-signature t

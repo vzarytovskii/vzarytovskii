@@ -117,11 +117,13 @@
 
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
   (setq native-comp-speed 3
-        native-comp-deferred-compilation nil
+        native-comp-deferred-compilation t
+        native-comp-async-report-warnings-errors nil
         native-comp-async-jobs-number 20
         native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
-        native-comp-always-compile t))
+        native-comp-always-compile t
+        warning-minimum-level :error))
 
 (provide 'early-init)
 ;;; early-init.el ends here
