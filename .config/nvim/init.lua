@@ -67,7 +67,7 @@ packer.startup({function(use)
   use 'kyazdani42/nvim-web-devicons'
   use {"shortcuts/no-neck-pain.nvim"}
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = false } }
-
+  use { 'luukvbaal/statuscol.nvim' }
   use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
   use {'nvim-telescope/telescope-ui-select.nvim', requires = { 'nvim-telescope/telescope.nvim' } }
@@ -775,9 +775,15 @@ require('lualine').setup {
   }
 }
 
+require('statuscol').setup({
+  separator = true,
+  relculright = true,
+  order = "FSNs" -- fold, sign, line number, separator
+})
+
 require("no-neck-pain").setup({
     enableOnVimEnter = true,
-    width = 100,
+    width = 140,
     buffers = {
         blend = -1,
     },
@@ -1225,7 +1231,7 @@ inlay_hints.setup({
 
 treesitter.setup {
   -- TODO: Add this to overall langauges config, per language.
-  ensure_installed = { 
+  ensure_installed = {
     "lua", "rust", "c_sharp", "comment", "diff", "yaml",
     "git_rebase", "gitattributes", "gitcommit",
     "json", "markdown", "markdown_inline" },
@@ -1441,15 +1447,15 @@ local lsp_formatting = function(bufnr)
     })
 end
 
-local setup_dap = function(dap)
+local setup_dap = function(idap)
   for _, cb in pairs(tooling.debuggers_adapters) do
     if type(cb) == "function" then
-      cb(dap)
+      cb(idap)
     end
   end
   for _, cb in pairs(tooling.debuggers_settings) do
     if type(cb) == "function" then
-      cb(dap)
+      cb(idap)
     end
   end
 end
@@ -1460,7 +1466,7 @@ local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 configure_handlers(telescope_builtin)
 
-hover_handler = function(bufnr)
+hover_handler = function(client, bufnr)
   local opts = { focus=false, scope="cursor" }
   local winid = require('ufo').peekFoldedLinesUnderCursor()
   if not winid then
@@ -1468,7 +1474,7 @@ hover_handler = function(bufnr)
       local line_nr = pos[1] - 1
       local column_nr = pos[2]
       local diagnostic_under_cursor =
-        vim.tbl_filter(in_range(line_nr, column_nr), vim.diagnostic.get(bufnr, client_id))
+        vim.tbl_filter(in_range(line_nr, column_nr), vim.diagnostic.get(bufnr, client))
 
       if rawequal(next(diagnostic_under_cursor), nil) then
         vim.lsp.buf.hover(nil, opts)
@@ -1548,7 +1554,7 @@ local global_on_attach = function(client, bufnr)
       vim.g.cursorhold_updatetime = 1500
       vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
         buffer = bufnr,
-        callback = function() hover_handler(bufnr) end
+        callback = function() hover_handler(client, bufnr) end
       })
     end
 
