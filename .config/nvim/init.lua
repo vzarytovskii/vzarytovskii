@@ -996,9 +996,9 @@ local languages = {
             enable = true,
         },
         inlayHints = {
-            enabled = true,
+            enabled = false,
             typeHints = {
-                enable = true,
+                enable = false,
             },
         },
       }

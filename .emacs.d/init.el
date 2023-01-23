@@ -2208,6 +2208,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;; Rust
 (use-package rustic
   :defer t
+  :hook ('rustic-mode-hook . 'lsp-mode)
   :config
   (setq rustic-lsp-server 'rust-analyzer
         rustic-lsp-client 'lsp-mode))
