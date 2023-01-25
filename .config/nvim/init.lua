@@ -89,7 +89,9 @@ packer.startup({function(use)
       'rcarriga/nvim-dap-ui'
   }
 
-  use 'github/copilot.vim'
+  use {
+    'zbirenbaum/copilot.lua',
+  }
 
   use {
       'hrsh7th/nvim-cmp',
@@ -98,7 +100,10 @@ packer.startup({function(use)
       'hrsh7th/cmp-nvim-lsp-signature-help',
       'hrsh7th/cmp-calc',
       'saadparwaiz1/cmp_luasnip',
-      'hrsh7th/cmp-copilot'
+  }
+
+  use {
+    "zbirenbaum/copilot-cmp",
   }
 
   use { "onsails/lspkind.nvim" }
@@ -106,10 +111,12 @@ packer.startup({function(use)
   use 'lvimuser/lsp-inlayhints.nvim'
   use { 'weilbith/nvim-code-action-menu' }
 
+  use { 'dnlhc/glance.nvim' }
+
   use { 'L3MON4D3/LuaSnip', requires = "rafamadriz/friendly-snippets" }
   use { 'jose-elias-alvarez/null-ls.nvim', requires = "nvim-lua/plenary.nvim" }
   use { "utilyre/barbecue.nvim",
-        branch = "dev",
+        branch = "main",
         requires = {
           "neovim/nvim-lspconfig",
           "smiteshp/nvim-navic",
@@ -135,6 +142,7 @@ packer.startup({function(use)
       'kyazdani42/nvim-web-devicons',
     },
   }
+  use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use { 'antoinemadec/FixCursorHold.nvim' }
   use { 'stevearc/aerial.nvim' }
@@ -1112,10 +1120,14 @@ local lsp_keybinds = function(bufnr)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ds", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-;>", "<cmd>lua vim.lsp.buf.document_symbol()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ws", "<cmd>lua vim.lsp.buf.workspace_symbol('')<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
+  --vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gd', '<CMD>Glance definitions<CR>', opts)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<CMD>Glance references<CR>', opts)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gy', '<CMD>Glance type_definitions<CR>', opts)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gm', '<CMD>Glance implementations<CR>', opts)
+  --vim.api.nvim_buf_set_keymap(bufnr, "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gI", "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
+  --vim.api.nvim_buf_set_keymap(bufnr, "n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gl", "<cmd>lua vim.diagnostic.open_float()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
   vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
@@ -1239,14 +1251,57 @@ local illuminate = require('illuminate')
 local inlay_hints = require("lsp-inlayhints")
 local dap = require('dap')
 local dapui = require('dapui')
+local glance = require('glance')
+local glance_actions = glance.actions
 
 dapui.setup()
+
+local icons = {
+    File = "[f]",
+    Module = "[M]",
+    Namespace = "[n]",
+    Package = "[P]",
+    Class = "[C]",
+    Method = "[m]",
+    Property = "[p]",
+    Field = "[F]",
+    Constructor = "[ctor]",
+    Enum = "[enum]",
+    Interface = "[I]",
+    Function = "[f]",
+    Variable = "[var]",
+    Constant = "[const]",
+    String = "[s]",
+    Number = "[n]",
+    Boolean = "[bool]",
+    Array = "[]",
+    Object = "[obj]",
+    Key = "[k]",
+    Null = "[nil]",
+    EnumMember = "[enum.M]",
+    Struct = "[s]",
+    Event = "[e]",
+    Operator = "[op]",
+    TypeParameter = "[T]",
+}
+
+navic.setup  {
+  icons = icons,
+  separator = " / ",
+  depth_limit_indicator = "..",
+}
 
 barbecue.setup({
   theme = 'tokyonight',
   create_autocmd = false,
   show_modified = true,
-  attach_navic = false
+  attach_navic = false,
+  kinds = icons,
+  symbols = {
+    modified = "*",
+    ellipsis = "...",
+    separator = "->",
+  },
 })
 
 vim.api.nvim_create_autocmd({
@@ -1345,6 +1400,33 @@ require('nvim-autopairs').setup {
   disable_filetype = { "TelescopePrompt" },
 }
 
+require('copilot').setup({
+  panel = {
+    enabled = false
+  },
+  suggestion = {
+    enabled = false
+  },
+  filetypes = {
+    yaml = false,
+    markdown = true,
+    help = false,
+    gitcommit = false,
+    gitrebase = false,
+    hgcommit = false,
+    svn = false,
+    cvs = false,
+    ["."] = false,
+  },
+  copilot_node_command = 'node',
+  server_opts_overrides = {},
+})
+
+local has_words_before = function()
+  if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then return false end
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_text(0, line-1, 0, line-1, col, {})[1]:match("^%s*$") == nil
+end
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
 nvim_cmp.setup {
   view = {
@@ -1368,7 +1450,10 @@ nvim_cmp.setup {
     end,
   },
   mapping = {
-    ['<CR>']      = nvim_cmp.mapping.confirm({select = false}),
+    ['<CR>']      = nvim_cmp.mapping.confirm({
+      behavior = nvim_cmp.ConfirmBehavior.Replace,
+      select = false
+    }),
     ['<C-p>']     = nvim_cmp.mapping.select_prev_item(),
     ['<C-n>']     = nvim_cmp.mapping.select_next_item(),
     ['<Up>']      = nvim_cmp.mapping.select_prev_item(),
@@ -1378,8 +1463,8 @@ nvim_cmp.setup {
     ['<C-Space>'] = nvim_cmp.mapping.complete(),
     ['<C-e>']     = nvim_cmp.mapping.close(),
     ['<Tab>']     = function(fallback)
-      if nvim_cmp.visible() then
-        nvim_cmp.select_next_item()
+      if nvim_cmp.visible() and has_words_before() then
+        nvim_cmp.select_next_item({ behavior = nvim_cmp.SelectBehavior.Select })
       elseif luasnip.expand_or_jumpable() then
         luasnip.expand_or_jump()
       else
@@ -1387,8 +1472,8 @@ nvim_cmp.setup {
       end
     end,
     ['<S-Tab>'] = function(fallback)
-      if nvim_cmp.visible() then
-        nvim_cmp.select_prev_item()
+      if nvim_cmp.visible() and has_words_before() then
+        nvim_cmp.select_prev_item({ behavior = nvim_cmp.SelectBehavior.Select })
       elseif luasnip.jumpable(-1) then
         luasnip.jump(-1)
       else
@@ -1397,7 +1482,7 @@ nvim_cmp.setup {
     end,
   },
   sources = nvim_cmp.config.sources({
-    { name = 'copilot' },
+    { name = "copilot", group_index = 2 },
     { name = 'nvim_lsp_signature_help' },
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
@@ -1415,14 +1500,34 @@ nvim_cmp.setup {
   },
   formatting = {
     fields = { "kind", "abbr", "menu" },
+    insert_text = require("copilot_cmp.format").remove_existing,
     format = function(entry, vim_item)
-      local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50 })(entry, vim_item)
+      local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50, symbol_map = { Copilot = "" } })(entry, vim_item)
       local strings = vim.split(kind.kind, "%s", { trimempty = true })
       kind.kind = " " .. strings[1] .. " "
       kind.menu = "    (" .. strings[2] .. ")"
 
       return kind
     end,
+  },
+  sorting = {
+    priority_weight = 2,
+    comparators = {
+      require("copilot_cmp.comparators").prioritize,
+      require("copilot_cmp.comparators").score,
+
+      -- Below is the default comparitor list and order for nvim-cmp
+      nvim_cmp.config.compare.offset,
+      -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
+      nvim_cmp.config.compare.exact,
+      nvim_cmp.config.compare.score,
+      nvim_cmp.config.compare.recently_used,
+      nvim_cmp.config.compare.locality,
+      nvim_cmp.config.compare.kind,
+      nvim_cmp.config.compare.sort_text,
+      nvim_cmp.config.compare.length,
+      nvim_cmp.config.compare.order,
+    },
   },
 }
 
@@ -1517,6 +1622,84 @@ local setup_dap = function(idap)
 end
 
 setup_dap(dap)
+
+glance.setup({
+  height = 18, -- Height of the window
+  zindex = 45,
+  preview_win_opts = { -- Configure preview window options
+    cursorline = true,
+    number = true,
+    wrap = true,
+  },
+  border = {
+    enable = false, -- Show window borders. Only horizontal borders allowed
+    top_char = '―',
+    bottom_char = '―',
+  },
+  list = {
+    position = 'right', -- Position of the list window 'left'|'right'
+    width = 0.33, -- 33% width relative to the active window, min 0.1, max 0.5
+  },
+  theme = { -- This feature might not work properly in nvim-0.7.2
+    enable = true, -- Will generate colors for the plugin based on your current colorscheme
+    mode = 'auto', -- 'brighten'|'darken'|'auto', 'auto' will set mode based on the brightness of your colorscheme
+  },
+  mappings = {
+    list = {
+      ['j'] = glance_actions.next, -- Bring the cursor to the next item in the list
+      ['k'] = glance_actions.previous, -- Bring the cursor to the previous item in the list
+      ['<Down>'] = glance_actions.next,
+      ['<Up>'] = glance_actions.previous,
+      ['<Tab>'] = glance_actions.next_location, -- Bring the cursor to the next location skipping groups in the list
+      ['<S-Tab>'] = glance_actions.previous_location, -- Bring the cursor to the previous location skipping groups in the list
+      ['<C-u>'] = glance_actions.preview_scroll_win(5),
+      ['<C-d>'] = glance_actions.preview_scroll_win(-5),
+      ['v'] = glance_actions.jump_vsplit,
+      ['s'] = glance_actions.jump_split,
+      ['t'] = glance_actions.jump_tab,
+      ['<CR>'] = glance_actions.jump,
+      ['o'] = glance_actions.jump,
+      ['<leader>l'] = glance_actions.enter_win('preview'), -- Focus preview window
+      ['q'] = glance_actions.close,
+      ['Q'] = glance_actions.close,
+      ['<Esc>'] = glance_actions.close,
+      -- ['<Esc>'] = false -- disable a mapping
+    },
+    preview = {
+      ['Q'] = glance_actions.close,
+      ['<Tab>'] = glance_actions.next_location,
+      ['<S-Tab>'] = glance_actions.previous_location,
+      ['<leader>l'] = glance_actions.enter_win('list'), -- Focus list window
+    },
+  },
+  hooks = {
+    before_open = function(results, open, jump, method)
+      local uri = vim.uri_from_bufnr(0)
+      if #results == 1 then
+        local target_uri = results[1].uri or results[1].targetUri
+        if target_uri == uri then
+          jump(results[1])
+        else
+          open(results)
+        end
+      else
+        open(results)
+      end
+    end,
+  },
+  folds = {
+    fold_closed = '',
+    fold_open = '',
+    folded = true, -- Automatically fold list on startup
+  },
+  indent_lines = {
+    enable = true,
+    icon = '│',
+  },
+  winbar = {
+    enable = true, -- Available strating from nvim-0.8+
+  },
+})
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
@@ -1670,6 +1853,9 @@ gitsigns.setup {
     ignore_whitespace = false,
   },
 }
+
+local neogit = require('neogit')
+neogit.setup {}
 
 require"octo".setup({
   default_remote = {"upstream", "origin"}

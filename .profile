@@ -3,6 +3,8 @@ export PRESSURE_VESSEL_FILESYSTEMS_RO=/var/games/pfx_proton-ge-custom
 export AVALONIA_SCREEN_SCALE_FACTORS='XWAYLAND0=2'
 export QT_QPA_PLATFORM=wayland
 
+alias magit="emacs -e \(progn \(magit-status\) \(delete-other-windows\)\)"
+
 if [ -n "$BASH_VERSION" ]; then
     if [ -f "$HOME/.bashrc" ]; then
 	. "$HOME/.bashrc"

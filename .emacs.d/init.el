@@ -1555,6 +1555,9 @@ FACE defaults to inheriting from default and highlight."
          ("C-c g" . magit-dispatch-popup))
   :config
   (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)
+        magit-list-refs-sortby "-creatordate"
+        magit-refs-show-commit-count 'branch
+        magit-status-sections-hook (-concat magit-status-sections-hook '(magit-insert-local-branches))
         magit-diff-refine-hunk t
   	magit-commit-arguments '("--verbose")
   	magit-section-initial-visibility-alist
