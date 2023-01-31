@@ -817,6 +817,8 @@ set_common_settings()
 
 require'nvim-web-devicons'.setup { }
 
+vim.o.background = "light"
+
 local tokyonight = require("tokyonight")
 tokyonight.setup({
   style = "day",
@@ -828,7 +830,7 @@ tokyonight.setup({
     variables = {},
     sidebars = "dark",
     floats = "dark",
-  },
+  }
 })
 
 vim.cmd[[colorscheme tokyonight]]
@@ -1442,6 +1444,16 @@ local has_words_before = function()
   return col ~= 0 and vim.api.nvim_buf_get_text(0, line-1, 0, line-1, col, {})[1]:match("^%s*$") == nil
 end
 vim.opt.completeopt = {'menu', 'menuone', 'noselect'}
+
+require("copilot_cmp").setup {
+  method = "getCompletionsCycling",
+  formatters = {
+    label = require("copilot_cmp.format").format_label_text,
+    insert_text = require("copilot_cmp.format").format_insert_text,
+    preview = require("copilot_cmp.format").deindent,
+  },
+}
+
 nvim_cmp.setup {
   view = {
     entries = "custom",
@@ -1496,7 +1508,7 @@ nvim_cmp.setup {
     end,
   },
   sources = nvim_cmp.config.sources({
-    { name = "copilot", group_index = 2 },
+    { name = "copilot" },
     { name = 'nvim_lsp_signature_help' },
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
@@ -1577,9 +1589,17 @@ if vim.o.ft == 'clap_input' and vim.o.ft == 'guihua' and vim.o.ft == 'guihua_rus
   nvim_cmp.setup.buffer { completion = {enable = false} }
 end
 
+nvim_cmp.event:on("menu_opened", function ()
+  vim.b.copilot_suggestion_hidden = true
+end)
+
+nvim_cmp.event:on("menu_closed", function ()
+  vim.b.copilot_suggestion_hidden = false
+end)
+
 mason.setup({
     PATH = "prepend",
-    max_concurrent_installers = 4,
+    max_concurrent_installers = 10,
     providers = {
       "mason.providers.registry-api",
       "mason.providers.client"
