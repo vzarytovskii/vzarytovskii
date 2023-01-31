@@ -86,7 +86,8 @@ packer.startup({function(use)
   use {
       'mfussenegger/nvim-dap',
       'jayp0521/mason-nvim-dap.nvim',
-      'rcarriga/nvim-dap-ui'
+      'rcarriga/nvim-dap-ui',
+      'theHamsta/nvim-dap-virtual-text'
   }
 
   use {
@@ -183,6 +184,7 @@ local virt_ns = vim.api.nvim_create_namespace('FloatingDiagnostic')
 local diag_augroup = vim.api.nvim_create_augroup('FloatingDiagnostic', { clear = true })
 
 
+---@diagnostic disable-next-line: lowercase-global
 function get_max_float_width()
   -- current window width
   local WIN_WIDTH = vim.fn.winwidth(0)
@@ -847,7 +849,7 @@ require('statuscol').setup({
 
 require("no-neck-pain").setup({
     enableOnVimEnter = true,
-    width = 140,
+    width = 180,
     buffers = {
         blend = -1,
     },
@@ -905,7 +907,7 @@ local languages = {
         end,
       },
       settings = function (dap)
-        dap.configurations.fs = {
+        dap.configurations.fsharp = {
           {
             type = "coreclr",
             name = "launch - netcoredbg",
@@ -1251,10 +1253,22 @@ local illuminate = require('illuminate')
 local inlay_hints = require("lsp-inlayhints")
 local dap = require('dap')
 local dapui = require('dapui')
+local dapvt = require("nvim-dap-virtual-text")
 local glance = require('glance')
 local glance_actions = glance.actions
 
 dapui.setup()
+dapvt.setup()
+
+dap.listeners.after.event_initialized["dapui_config"] = function()
+  dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function()
+  dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function()
+  dapui.close()
+end
 
 local icons = {
     File = "[f]",
@@ -1855,7 +1869,11 @@ gitsigns.setup {
 }
 
 local neogit = require('neogit')
-neogit.setup {}
+neogit.setup {
+  integrations = {
+    diffview = true
+  },
+}
 
 require"octo".setup({
   default_remote = {"upstream", "origin"}
