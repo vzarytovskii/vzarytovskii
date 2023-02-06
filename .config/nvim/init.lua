@@ -144,10 +144,6 @@ packer.startup({function(use)
     },
   }
   use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }
-  use {
-    'ldelossa/gh.nvim',
-    requires = { { 'ldelossa/litee.nvim' } }
-  }
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use { 'antoinemadec/FixCursorHold.nvim' }
   use { 'stevearc/aerial.nvim' }
@@ -1901,27 +1897,6 @@ neogit.setup {
 
 require"octo".setup({
   default_remote = {"upstream", "origin"}
-})
-
-require('litee.lib').setup()
-require('litee.gh').setup({
-  jump_mode   = "invoking",
-  map_resize_keys = false,
-  disable_keymaps = false,
-  icon_set = "default",
-  icon_set_custom = nil,
-  git_buffer_completion = true,
-  keymaps = {
-      open = "<CR>",
-      expand = "zo",
-      collapse = "zc",
-      goto_issue = "gd",
-      details = "d",
-      submit_comment = "<C-s>",
-      actions = "<C-a>",
-      resolve_thread = "<C-r>",
-      goto_web = "gx"
-  }
 })
 
 require("diffview").setup({
