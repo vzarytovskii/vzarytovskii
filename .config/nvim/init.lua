@@ -90,6 +90,15 @@ packer.startup({function(use)
       'theHamsta/nvim-dap-virtual-text'
   }
 
+  use({
+    "nvim-neotest/neotest",
+    requires = {
+      {
+        "Issafalcon/neotest-dotnet",
+      },
+    }
+  })
+
   use {
     'zbirenbaum/copilot.lua',
   }
@@ -152,6 +161,8 @@ packer.startup({function(use)
   use 'adelarsq/neofsharp.vim'
   use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
   use 'haringsrob/nvim_context_vt'
+
+  use { 'stevearc/oil.nvim' }
 
 end,
 config = {
@@ -1273,6 +1284,18 @@ dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
 
+require("neotest").setup({
+  adapters = {
+    require("neotest-dotnet")({
+      dap = { justMyCode = false },
+      custom_attributes = {
+        xunit = { "DirectoryAttribute" },
+      },
+      discovery_root = "solution" -- Default
+    })
+  }
+})
+
 local icons = {
     File = "[f]",
     Module = "[M]",
@@ -2044,3 +2067,56 @@ vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
 require('nvim_context_vt').setup({
   enabled = true
 })
+
+require("oil").setup({
+  columns = {
+    "icon",
+    "permissions",
+    "size",
+    "mtime",
+  },
+  buf_options = {
+    buflisted = false,
+  },
+  win_options = {
+    wrap = false,
+    signcolumn = "no",
+    cursorcolumn = false,
+    foldcolumn = "0",
+    spell = false,
+    list = false,
+    conceallevel = 3,
+    concealcursor = "n",
+  },
+  restore_win_options = true,
+  skip_confirm_for_simple_edits = false,
+  keymaps = {
+    ["g?"] = "actions.show_help",
+    ["<CR>"] = "actions.select",
+    ["<C-s>"] = "actions.select_vsplit",
+    ["<C-h>"] = "actions.select_split",
+    ["<C-t>"] = "actions.select_tab",
+    ["<C-p>"] = "actions.preview",
+    ["<C-c>"] = "actions.close",
+    ["<C-l>"] = "actions.refresh",
+    ["-"] = "actions.parent",
+    ["_"] = "actions.open_cwd",
+    ["`"] = "actions.cd",
+    ["~"] = "actions.tcd",
+    ["g."] = "actions.toggle_hidden",
+  },
+  use_default_keymaps = true,
+  view_options = {
+    show_hidden = false,
+  },
+  float = {
+    padding = 2,
+    max_width = 0,
+    max_height = 0,
+    border = "rounded",
+    win_options = {
+      winblend = 10,
+    },
+  },
+})
+
