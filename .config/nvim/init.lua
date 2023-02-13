@@ -865,7 +865,7 @@ require("no-neck-pain").setup({
     enableOnVimEnter = true,
     width = 180,
     buffers = {
-        blend = -1,
+        blend = 0,
     },
 })
 
@@ -954,7 +954,7 @@ local languages = {
   },
   lua = {
     servers = {
-      sumneko_lua = {
+      lua_ls = {
         settings = {
           Lua = {
             runtime = {
@@ -1291,7 +1291,6 @@ require("neotest").setup({
       custom_attributes = {
         xunit = { "DirectoryAttribute" },
       },
-      discovery_root = "solution" -- Default
     })
   }
 })
@@ -1415,6 +1414,36 @@ treesitter_context.setup({
 })
 
 treesitter_parsers.filetype_to_parsername.octo = "markdown"
+
+treesitter_parsers.get_parser_configs().fsharp = {
+  install_info = {
+    url = "https://github.com/vzarytovskii/tree-sitter-fsharp",
+    branch = "develop",
+    files = {"src/scanner.cc", "src/parser.c" }
+  },
+  filetype = "fsharp",
+}
+
+require "nvim-treesitter.configs".setup {
+  playground = {
+    enable = true,
+    disable = {},
+    updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
+    persist_queries = false, -- Whether the query persists across vim sessions
+    keybindings = {
+      toggle_query_editor = 'o',
+      toggle_hl_groups = 'i',
+      toggle_injected_languages = 't',
+      toggle_anonymous_nodes = 'a',
+      toggle_language_display = 'I',
+      focus_language = 'f',
+      unfocus_language = 'F',
+      update = 'R',
+      goto_node = '<cr>',
+      show_help = '?',
+    },
+  }
+}
 
 local capabilities = common_capabilities()
 
@@ -1746,15 +1775,15 @@ end
 setup_dap(dap)
 
 glance.setup({
-  height = 18, -- Height of the window
+  height = 18,
   zindex = 45,
-  preview_win_opts = { -- Configure preview window options
+  preview_win_opts = {
     cursorline = true,
     number = true,
     wrap = true,
   },
   border = {
-    enable = false, -- Show window borders. Only horizontal borders allowed
+    enable = true,
     top_char = '―',
     bottom_char = '―',
   },
