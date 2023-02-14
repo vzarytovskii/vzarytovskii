@@ -145,6 +145,9 @@ packer.startup({function(use)
   use 'nvim-treesitter/nvim-treesitter-context'
 
   use 'RRethy/vim-illuminate'
+
+  use { 'michaelb/sniprun', run = 'bash ./install.sh 1'}
+
   use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use { 'pwntester/octo.nvim',
     requires = {
@@ -1409,7 +1412,7 @@ treesitter.setup {
 }
 
 treesitter_context.setup({
-  enable = true,
+  enable = false, -- TODO: Broken now, re-enable later
   max_lines = 0,
 })
 
@@ -1417,8 +1420,8 @@ treesitter_parsers.filetype_to_parsername.octo = "markdown"
 
 treesitter_parsers.get_parser_configs().fsharp = {
   install_info = {
-    url = "https://github.com/vzarytovskii/tree-sitter-fsharp",
-    branch = "develop",
+    url = "~/code/tree-sitter-fsharp",
+    -- branch = "develop",
     files = {"src/scanner.cc", "src/parser.c" }
   },
   filetype = "fsharp",
@@ -1951,7 +1954,7 @@ local global_on_attach = function(client, bufnr)
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
 
-    inlay_hints.on_attach(client, bufnr)
+    inlay_hints.on_attach(client, bufnr, false)
 
     lsp_keybinds(bufnr)
 end
@@ -1990,11 +1993,23 @@ mason_lspconfig.setup_handlers {
     end,
 }
 
+require'sniprun'.setup({
+  display = {
+    "VirtualText",
+  },
+  live_display = { "VirtualTextOk" },
+  interpreter_options = {
+    FSharp_fifo = {
+      interpreter = "dotnet fsi --nologo --langversion:preview"
+    }
+  }
+})
+
 local gitsigns = require('gitsigns')
 gitsigns.setup {
   signcolumn = true,
   numhl      = true,
-  linehl     = false,
+  linehl     = true,
   word_diff  = true,
   current_line_blame = false,
   current_line_blame_opts = {
