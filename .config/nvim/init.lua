@@ -785,7 +785,7 @@ local function set_common_settings()
   vim.g.netrw_banner = 0
   vim.g.netrw_winsize = 25
 
-  vim.o.foldcolumn = '1'
+  vim.o.foldcolumn = '0'
   vim.o.foldlevel = 99
   vim.o.foldlevelstart = 99
   vim.o.foldenable = true
@@ -952,6 +952,16 @@ local languages = {
         init_options = {
           AutomaticWorkspaceInit = true
         }
+      }
+    }
+  },
+  jsts = {
+    tools = {},
+    debuggers = {},
+    servers = {
+      tsserver = {
+        on_attach = function(client, bufnr)
+        end,
       }
     }
   },
