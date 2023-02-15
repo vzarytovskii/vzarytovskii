@@ -158,6 +158,7 @@ packer.startup({function(use)
       'kyazdani42/nvim-web-devicons',
     },
   }
+  use 'tpope/vim-fugitive'
   use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use { 'antoinemadec/FixCursorHold.nvim' }
@@ -788,7 +789,7 @@ local function set_common_settings()
   vim.g.netrw_banner = 0
   vim.g.netrw_winsize = 25
 
-  vim.o.foldcolumn = '0'
+  vim.o.foldcolumn = '1'
   vim.o.foldlevel = 99
   vim.o.foldlevelstart = 99
   vim.o.foldenable = true
@@ -860,12 +861,12 @@ require('lualine').setup {
 }
 
 --vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScLa@%s%T@v:lua.ScNa@%=%{v:lua.ScLn()}%T"
-require('statuscol').setup({
-  separator = true,
-  relculright = true,
-  setopt = false,
-  order = "FSNs" -- fold, sign, line number, separator
-})
+--require('statuscol').setup({
+--  separator = true,
+--  relculright = true,
+--  setopt = false,
+--  order = "FSNs" -- fold, sign, line number, separator
+--})
 
 require("no-neck-pain").setup({
     enableOnVimEnter = true,
@@ -2142,7 +2143,7 @@ require('ufo').setup({
       }
   },
   fold_virt_text_handler = ufo_virt_text_handler,
-  provider_selector = function(bufnr, filetype, buftype)
+  provider_selector = function(bufnr, _, _)
         if treesitter_highlighter.active[bufnr] then
           return {'treesitter', 'indent'}
         else
