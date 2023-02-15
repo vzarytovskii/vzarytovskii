@@ -1675,15 +1675,15 @@ nvim_cmp.setup.cmdline({ '/', '?' }, {
   view = { entries = "native" },
 })
 
-nvim_cmp.setup.cmdline(':', {
-  mapping = nvim_cmp.mapping.preset.cmdline(),
-  sources = nvim_cmp.config.sources({
-    { name = 'path' }
-  }, {
-    { name = 'cmdline' }
-  }),
-  view = { entries = "native" },
-})
+--nvim_cmp.setup.cmdline(':', {
+--  mapping = nvim_cmp.mapping.preset.cmdline(),
+--  sources = nvim_cmp.config.sources({
+--    { name = 'path' }
+--  }, {
+--    { name = 'cmdline' }
+--  }),
+--  view = { entries = "native" },
+--})
 
 if vim.o.ft == 'clap_input' and vim.o.ft == 'guihua' and vim.o.ft == 'guihua_rust' then
   nvim_cmp.setup.buffer { completion = {enable = false} }
