@@ -62,6 +62,8 @@ packer.startup({function(use)
   use 'lewis6991/impatient.nvim'
   use 'nvim-lua/plenary.nvim'
 
+  use 'gelguy/wilder.nvim'
+
   -- UI, theme & related:
   use 'folke/tokyonight.nvim'
   use 'kyazdani42/nvim-web-devicons'
@@ -162,6 +164,7 @@ packer.startup({function(use)
   use { 'stevearc/aerial.nvim' }
   use { 'saecki/crates.nvim', requires = { 'nvim-lua/plenary.nvim' } }
   use 'adelarsq/neofsharp.vim'
+  use "b0o/schemastore.nvim"
   use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
   use 'haringsrob/nvim_context_vt'
 
@@ -872,15 +875,45 @@ require("no-neck-pain").setup({
     },
 })
 
+local wilder = require('wilder')
+wilder.setup({
+  modes = {':', '/', '?'},
+  next_key = '<Tab>',
+  previous_key = '<S-Tab>',
+})
+
 local nvim_runtime_path = vim.split(package.path, ';')
 table.insert(nvim_runtime_path, 'lua/?.lua')
 table.insert(nvim_runtime_path, 'lua/?/init.lua')
 
 local languages = {
   others = {
-    tools = { },
+    tools = { 
+      gitlint = {}
+    },
     debuggers = { },
-    servers = { }
+    servers = {
+      grammarly = {}
+    }
+  },
+  markdown = {
+    tools = { markdownlint = {} },
+    debuggers = { },
+    servers = { marksman = {} }
+  },
+  json = {
+    tools = { jsonlint = {} },
+    debuggers = { },
+    servers = {
+      jsonls = {
+        settings = {
+          json = {
+            schemas = require('schemastore').json.schemas(),
+            validate = { enable = true },
+          }, 
+        }
+      }
+    }
   },
   csharp = {
     tools = {},
@@ -1755,11 +1788,15 @@ mason_nvim_dap.setup({
 
 null_ls.setup({
     sources = {
+        null_ls.builtins.diagnostics.gitlint,
+        null_ls.builtins.code_actions.gitrebase,
         null_ls.builtins.code_actions.gitsigns,
         null_ls.builtins.completion.luasnip,
         null_ls.builtins.completion.tags,
         null_ls.builtins.hover.dictionary,
         null_ls.builtins.hover.printenv,
+        null_ls.builtins.diagnostics.markdownlint,
+        null_ls.builtins.diagnostics.jsonlint,
     },
 })
 
