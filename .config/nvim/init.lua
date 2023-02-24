@@ -69,6 +69,7 @@ packer.startup({function(use)
   use 'kyazdani42/nvim-web-devicons'
   use {"shortcuts/no-neck-pain.nvim"}
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = false } }
+  use { 'mawkler/modicator.nvim' }
   use { 'luukvbaal/statuscol.nvim' }
   use { 'nvim-telescope/telescope.nvim', requires = 'nvim-lua/plenary.nvim' }
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build', requires = { 'nvim-telescope/telescope.nvim' } }
@@ -168,8 +169,8 @@ packer.startup({function(use)
   use "b0o/schemastore.nvim"
   use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
   use 'haringsrob/nvim_context_vt'
-
   use { 'stevearc/oil.nvim' }
+  use { 'ellisonleao/glow.nvim' }
 
 end,
 config = {
@@ -796,6 +797,8 @@ local function set_common_settings()
 
   vim.opt.guicursor = ""
 
+  vim.o.termguicolors = true
+  vim.o.cursorline = true
   vim.opt.nu = true
   vim.opt.relativenumber = false
 
@@ -860,6 +863,8 @@ require('lualine').setup {
   }
 }
 
+require('modicator').setup({})
+
 --vim.o.statuscolumn = "%@v:lua.ScFa@%C%T%@v:lua.ScLa@%s%T@v:lua.ScNa@%=%{v:lua.ScLn()}%T"
 --require('statuscol').setup({
 --  separator = true,
@@ -869,7 +874,7 @@ require('lualine').setup {
 --})
 
 require("no-neck-pain").setup({
-    enableOnVimEnter = true,
+    enableOnVimEnter = false,
     width = 180,
     buffers = {
         blend = 0,
@@ -1460,7 +1465,7 @@ treesitter_context.setup({
   max_lines = 0,
 })
 
-treesitter_parsers.filetype_to_parsername.octo = "markdown"
+vim.treesitter.language.register("markdown", "octo")
 
 treesitter_parsers.get_parser_configs().fsharp = {
   install_info = {
@@ -2212,3 +2217,4 @@ require("oil").setup({
   },
 })
 
+require("glow").setup()
