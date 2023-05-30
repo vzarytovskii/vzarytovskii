@@ -874,11 +874,10 @@ require('modicator').setup({})
 --})
 
 require("no-neck-pain").setup({
-    enableOnVimEnter = false,
-    width = 180,
-    buffers = {
-        blend = 0,
+    autocmds = {
+      enableOnVimEnter = true,
     },
+    width = 180,
 })
 
 local wilder = require('wilder')
