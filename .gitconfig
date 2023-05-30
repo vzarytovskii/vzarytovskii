@@ -36,9 +36,9 @@
 	editor = emacs
 	whitespace = -trailing-space
 	hooksPath = /home/v/.git-templates/hooks
-	pager = delta
+#	pager = delta
 [interactive]
-	diffFilter = delta --color-only --features=interactive
+#	diffFilter = delta --color-only --features=interactive
 [delta]
 	navigate = true
 	features = decorations

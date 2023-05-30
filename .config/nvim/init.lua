@@ -67,6 +67,7 @@ packer.startup({function(use)
   -- UI, theme & related:
   use 'folke/tokyonight.nvim'
   use 'kyazdani42/nvim-web-devicons'
+  use {"shortcuts/no-neck-pain.nvim"}
   use { 'hoob3rt/lualine.nvim', requires = { 'kyazdani42/nvim-web-devicons', opt = false } }
   use { 'mawkler/modicator.nvim' }
   use { 'luukvbaal/statuscol.nvim' }
@@ -871,6 +872,14 @@ require('modicator').setup({})
 --  setopt = false,
 --  order = "FSNs" -- fold, sign, line number, separator
 --})
+
+require("no-neck-pain").setup({
+    enableOnVimEnter = false,
+    width = 180,
+    buffers = {
+        blend = 0,
+    },
+})
 
 local wilder = require('wilder')
 wilder.setup({
