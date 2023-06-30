@@ -893,7 +893,7 @@ table.insert(nvim_runtime_path, 'lua/?/init.lua')
 
 local languages = {
   others = {
-    tools = { 
+    tools = {
       gitlint = {}
     },
     debuggers = { },
@@ -915,7 +915,7 @@ local languages = {
           json = {
             schemas = require('schemastore').json.schemas(),
             validate = { enable = true },
-          }, 
+          },
         }
       }
     }
