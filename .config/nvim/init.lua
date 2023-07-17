@@ -174,6 +174,18 @@ require("lazy").setup({
     end
   },
   {
+    "shellRaining/hlchunk.nvim",
+    event = { "UIEnter" },
+    config = function ()
+      require('hlchunk').setup({
+        blank = { enable = false },
+        chunk = { enable = true },
+        indent = { enable = false },
+        line_num = { enable = false },
+      })
+    end
+  },
+  {
   "folke/flash.nvim",
     event = "VeryLazy",
     ---@type Flash.Config
@@ -235,6 +247,14 @@ require("lazy").setup({
     'adelarsq/neofsharp.vim',
     lazy = true,
     ft = "fsharp"
+  },
+  {
+    'simrat39/rust-tools.nvim',
+    lazy = true,
+    ft = "rust",
+    config = function ()
+      require("rust-tools").setup({})
+    end
   },
   { -- IDE stuff pretty much, lsp, cmp, copilot, etc
     'VonHeikemen/lsp-zero.nvim',
@@ -312,7 +332,7 @@ require("lazy").setup({
       })
       require('mason').setup()
       require("mason-lspconfig").setup({
-        ensure_installed = { "fsautocomplete" },
+        ensure_installed = { "fsautocomplete", "rust_analyzer" },
         handlers = {lsp.default_setup}
       })
 
@@ -369,6 +389,10 @@ require("lazy").setup({
         view = {
           entries = "custom",
           selection_order = 'near_cursor'
+        },
+        window = {
+          completion = cmp.config.window.bordered(),
+          documentation = cmp.config.window.bordered(),
         },
         sources = cmp.config.sources({
           { name = "copilot" },
@@ -528,6 +552,14 @@ require("lazy").setup({
       local treesitter_highlighter = require('vim.treesitter.highlighter')
 
       vim.treesitter.language.register("markdown", "octo")
+      treesitter_parsers.get_parser_configs().fsharp = {
+        install_info = {
+          url = "~/code/tree-sitter-fsharp",
+          -- branch = "develop",
+          files = {"src/scanner.cc", "src/parser.c" }
+        },
+        filetype = "fsharp",
+      }
 
       treesitter.setup {
         ensure_installed = {
@@ -560,9 +592,134 @@ require("lazy").setup({
     end
   },
   {
+    'kevinhwang91/nvim-ufo',
+    dependencies = {
+      'kevinhwang91/promise-async',
+      'nvim-treesitter/nvim-treesitter'
+    },
+    config = function ()
+      local treesitter_highlighter = require('vim.treesitter.highlighter')
+      local ufo_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
+          local newVirtText = {}
+          local suffix = ('  %d '):format(endLnum - lnum)
+          local sufWidth = vim.fn.strdisplaywidth(suffix)
+          local targetWidth = width - sufWidth
+          local curWidth = 0
+          for _, chunk in ipairs(virtText) do
+              local chunkText = chunk[1]
+              local chunkWidth = vim.fn.strdisplaywidth(chunkText)
+              if targetWidth > curWidth + chunkWidth then
+                  table.insert(newVirtText, chunk)
+              else
+                  chunkText = truncate(chunkText, targetWidth - curWidth)
+                  local hlGroup = chunk[2]
+                  table.insert(newVirtText, {chunkText, hlGroup})
+                  chunkWidth = vim.fn.strdisplaywidth(chunkText)
+                  -- str width returned from truncate() may less than 2nd argument, need padding
+                  if curWidth + chunkWidth < targetWidth then
+                      suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth)
+                  end
+                  break
+              end
+              curWidth = curWidth + chunkWidth
+          end
+          table.insert(newVirtText, {suffix, 'MoreMsg'})
+          return newVirtText
+      end
+      require('ufo').setup({
+        open_fold_hl_timeout = 150,
+        close_fold_kinds = {'imports', 'comment'},
+        preview = {
+            win_config = {
+                border = {'', '─', '', '', '', '─', '', ''},
+                winhighlight = 'Normal:Folded',
+                winblend = 0
+            },
+            mappings = {
+                scrollU = '<C-u>',
+                scrollD = '<C-d>'
+            }
+        },
+        fold_virt_text_handler = ufo_virt_text_handler,
+        provider_selector = function(bufnr, _, _)
+              if treesitter_highlighter.active[bufnr] then
+                return {'treesitter', 'indent'}
+              else
+                return {'lsp', 'indent'}
+              end
+          end
+      })
+      vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
+      vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
+      vim.keymap.set('n', 'zr', require('ufo').openFoldsExceptKinds)
+      vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
+    end
+  },
+  {
+    'stevearc/aerial.nvim',
+    config = function ()
+      local aerial = require('aerial')
+      aerial.setup({
+        on_attach = function(bufnr)
+          aerial.open_all()
+        end,
+        backends = { "treesitter", "lsp", "markdown", "man" },
+        close_automatic_events = { "unfocus", "switch_buffer", "unsupported" },
+        open_automatic = true,
+        show_guides = true,
+        attach_mode = "window",
+        layout = {
+          max_width = { 80, 0.25 },
+          width = nil,
+          min_width = 30,
+          win_opts = {},
+          default_direction = "float",
+          placement = "window",
+          preserve_equality = false,
+        },
+        guides = {
+          mid_item = "├─",
+          last_item = "└─",
+          nested_top = "│",
+          whitespace = "  ",
+        },
+        float = {
+          max_height = 0.9,
+          relative = "editor",
+          override = function(conf, source_winid)
+            local padding = 0
+            conf.anchor = 'NE'
+            conf.row = padding
+            conf.col = vim.o.columns - padding
+            return conf
+          end,
+        }
+      })
+    end
+  },
+  {
       'j-hui/fidget.nvim',
       event = 'LspAttach',
       branch = 'legacy',
       opts = { window = { blend = 0 } },
+      config = function ()
+        local fidget = require('fidget')
+
+        fidget.setup({
+          text = {
+            spinner = "dots"
+          },
+          align = {
+            bottom = true,
+            right = true,
+          },
+          fmt = {
+            stack_upwards = false,
+          },
+          window = {
+            relative = "editor" -- win or editor
+          }
+        })
+      end
   },
 })
