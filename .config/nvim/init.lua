@@ -448,6 +448,7 @@ require("lazy").setup({
           pcall(vim.cmd, 'MasonUpdate')
         end,
       },
+      { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
       { 'williamboman/mason-lspconfig.nvim' },
       {'SmiteshP/nvim-navic'},
       {'hrsh7th/nvim-cmp'}
@@ -456,10 +457,20 @@ require("lazy").setup({
       local lsp = require('lsp-zero').preset({})
 
       require('mason').setup()
+
       require("mason-lspconfig").setup({
         ensure_installed = { "fsautocomplete", "rust_analyzer" },
-        handlers = {lsp.default_setup}
+        handlers = { lsp.default_setup }
       })
+
+      require('mason-tool-installer').setup {
+        ensure_installed = {
+          'fantomas',
+          'netcoredbg'
+        },
+        auto_update = true,
+        run_on_start = true
+      }
 
       lsp.on_attach(
         function(client, bufnr)
@@ -833,12 +844,12 @@ require("lazy").setup({
       'j-hui/fidget.nvim',
       event = 'LspAttach',
       branch = 'legacy',
-      opts = { window = { blend = 0 } },
       config = function ()
         local fidget = require('fidget')
 
         fidget.setup({
           text = {
+            done = "done:",
             spinner = "dots"
           },
           align = {
@@ -849,9 +860,68 @@ require("lazy").setup({
             stack_upwards = false,
           },
           window = {
-            relative = "editor" -- win or editor
+            relative = "win" -- win or editor
           }
         })
       end
   },
+},
+{
+  root = vim.fn.stdpath("data") .. "/lazy",
+  defaults = {
+    lazy = true, -- should plugins be lazy-loaded?
+    version = nil,
+    cond = nil,
+  },
+  spec = nil, ---@type LazySpec
+  lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json", -- lockfile generated after running update.
+  concurrency = jit.os:find("Windows") and (vim.loop.available_parallelism() * 2) or nil, ---@type number limit the maximum amount of concurrent tasks
+  git = {
+    log = { "-8" }, -- show commits from the last 3 days
+    timeout = 120, -- kill processes that take more than 2 minutes
+    url_format = "https://github.com/%s.git",
+    filter = true,
+  },
+  install = {
+    missing = true,
+  },
+  ui = {
+    pills = true,
+    icons = {
+      cmd = "[cmd] ",
+      config = "[config]",
+      event = "[event]",
+      ft = "[filetype] ",
+      init = "[init] ",
+      import = "[import] ",
+      keys = "[keys] ",
+      lazy = "[lazy] ",
+      loaded = "[loaded]",
+      not_loaded = "[not loaded]",
+      plugin = "[plugin] ",
+      runtime = "[runtime] ",
+      source = "[source] ",
+      start = "[start]",
+      task = "[task] ",
+      list = {
+        "+",
+        "-",
+        "*",
+        "--",
+      },
+    },
+  },
+  diff = {
+    cmd = "git",
+  },
+  checker = {
+    enabled = true,
+    concurrency = nil,
+    notify = true,
+    frequency = 3600,
+  },
+  change_detection = {
+    enabled = true,
+    notify = true,
+  }
 })
