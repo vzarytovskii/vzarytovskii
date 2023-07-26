@@ -362,6 +362,8 @@ require("lazy").setup({
   {
     'VonHeikemen/lsp-zero.nvim',
     branch = 'dev-v3',
+    cmd = 'LspInfo',
+    event = {'BufReadPre', 'BufNewFile'},
     dependencies = {
       {'neovim/nvim-lspconfig'},
       {
@@ -384,33 +386,12 @@ require("lazy").setup({
           },
         }
       },
-      {'lvimuser/lsp-inlayhints.nvim'},
       {'SmiteshP/nvim-navic'},
       {'hrsh7th/nvim-cmp'}
     },
     config = function()
       local lsp = require('lsp-zero').preset({})
-      local ih = require("lsp-inlayhints")
-      ih.setup({
-        inlay_hints = {
-          parameter_hints = {
-            show = true,
-            prefix = "<- ",
-            separator = ", ",
-            remove_colon_start = true,
-            remove_colon_end = true,
-          },
-          type_hints = {
-            -- type and other hints
-            show = true,
-            prefix = "",
-            separator = ", ",
-            remove_colon_start = true,
-            remove_colon_end = true,
-          },
-        },
-        enabled_at_startup = true,
-      })
+
       require('mason').setup()
       require("mason-lspconfig").setup({
         ensure_installed = { "fsautocomplete", "rust_analyzer" },
@@ -419,13 +400,12 @@ require("lazy").setup({
 
       lsp.on_attach(
         function(client, bufnr)
-          ih.on_attach(client, bufnr, false)
           lsp.default_keymaps({buffer = bufnr})
           if client.server_capabilities.documentSymbolProvider then
             require('nvim-navic').attach(client, bufnr)
           end
           if client.server_capabilities.inlayHintProvider then
-              --vim.lsp.buf.inlay_hint(bufnr, true)
+              vim.lsp.inlay_hint(bufnr, true)
           end
           if client.server_capabilities.code_lens then
             local codelens = vim.api.nvim_create_augroup(
@@ -538,7 +518,6 @@ require("lazy").setup({
           },{
             { name = 'buffer' },
             { name = 'calc' },
-            -- { name = "crates" },
           }),
           mapping = {
             ['<CR>']      = cmp.mapping.confirm({
@@ -772,7 +751,7 @@ require("lazy").setup({
   },
   {
     'dgagn/diagflow.nvim',
-    cond = false,
+    cond = true,
     opts = {},
     config = function ()
       require('diagflow').setup({
