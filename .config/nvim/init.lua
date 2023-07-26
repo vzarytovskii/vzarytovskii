@@ -59,10 +59,85 @@ vim.cmd [[ set clipboard+=unnamedplus ]]
 vim.api.nvim_command('autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi,*.fsl,*.fsy set filetype=fsharp')
 vim.api.nvim_command('autocmd BufNewFile,BufRead *.fsproj,*.csproj,*.vbproj,*.cproj,*.proj set filetype=xml')
 
-local has_words_before = function()
+local function has_words_before()
   if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then return false end
   local line, col = unpack(vim.api.nvim_win_get_cursor(0))
   return col ~= 0 and vim.api.nvim_buf_get_text(0, line-1, 0, line-1, col, {})[1]:match("^%s*$") == nil
+end
+
+local function get_diagnostic_start(diagnostic_entry)
+  return diagnostic_entry['lnum'], diagnostic_entry['col']
+end
+
+local function get_diagnostic_end(diagnostic_entry)
+  return diagnostic_entry['end_lnum'], diagnostic_entry['end_col']
+end
+
+local function in_range(cursor_line, cursor_char)
+  return function(diagnostic)
+    local start_line, start_char = get_diagnostic_start(diagnostic)
+    local end_line, end_char = get_diagnostic_end(diagnostic)
+
+    local one_line_diag = start_line == end_line
+
+    if one_line_diag and start_line == cursor_line then
+      if cursor_char >= start_char and cursor_char < end_char then
+        return true
+      end
+
+    -- multi line diagnostic
+    else
+      if cursor_line == start_line and cursor_char >= start_char then
+        return true
+      elseif cursor_line == end_line and cursor_char < end_char then
+        return true
+      elseif cursor_line > start_line and cursor_line < end_line then
+        return true
+      end
+    end
+
+    return false
+  end
+end
+
+local function open_diagnostics_if_no_float()
+    for _, winid in pairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if vim.api.nvim_win_get_config(winid).zindex then
+        return
+      end
+    end
+    vim.diagnostic.open_float(0, {
+      scope = "cursor",
+      focusable = false,
+      close_events = {
+        "CursorMoved",
+        "CursorMovedI",
+        "BufHidden",
+        "InsertCharPre",
+        "WinLeave",
+      },
+    })
+end
+
+function hover_handler(client, bufnr)
+  local opts = { focus=false, scope="cursor" }
+  local winid = require('ufo').peekFoldedLinesUnderCursor()
+  if not winid then
+      local pos = vim.api.nvim_win_get_cursor(0)
+      local line_nr = pos[1] - 1
+      local column_nr = pos[2]
+      local diagnostic_under_cursor =
+        vim.tbl_filter(in_range(line_nr, column_nr), vim.diagnostic.get(bufnr, client))
+
+      if rawequal(next(diagnostic_under_cursor), nil) then
+        vim.lsp.buf.hover(nil, opts)
+      else
+        -- vim.diagnostic.open_float(nil, opts)
+        -- TODO: Add showing diagnostics, and maybe some additional info based on buffers (like show commit info or something in neogit, or show titles of GH issues/PRs in comments/buffers)
+        -- render_diagnostic_window(diagnostic_under_cursor[0] or diagnostic_under_cursor[1], opts)
+        open_diagnostics_if_no_float()
+      end
+  end
 end
 
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -105,6 +180,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
       },
     }
 
+    vim.diagnostic.config(config)
+
     vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
 
     vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
@@ -141,12 +218,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
-vim.diagnostic.config({
-    virtual_text = false,
-    virtual_lines = { only_current_line = true }
-})
-
 require("lazy").setup({
+  { 'antoinemadec/FixCursorHold.nvim' },
   {
     'projekt0n/github-nvim-theme',
     lazy = false,
@@ -202,6 +275,9 @@ require("lazy").setup({
     lazy = false,
     config = function ()
       require('lualine').setup {
+        options = {
+          icons_enabled = false
+        }
       }
     end
   },
@@ -426,6 +502,14 @@ require("lazy").setup({
                 vim.lsp.codelens.refresh()
               end,
               buffer = bufnr,
+            })
+          end
+
+          if client.supports_method("textDocument/hover") then
+            vim.g.cursorhold_updatetime = 1500
+            vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
+              buffer = bufnr,
+              callback = function() hover_handler(client, bufnr) end
             })
           end
         end
