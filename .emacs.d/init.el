@@ -63,7 +63,6 @@
                 use-package-compute-statistics t
                 use-package-hook-name-suffix nil)
 
-
   ;;; package manager bootstrap
   (defvar bootstrap-version)
   (let ((bootstrap-file
@@ -397,6 +396,85 @@
   :after magit
   :config
   (fullframe magit-status magit-mode-quit-window))
+
+(use-package faces
+  :straight nil
+  :preface
+
+  ;; (defun my-dpi ()
+  ;;   (let* ((attrs (car (display-monitor-attributes-list)))
+  ;;          (size (assoc 'mm-size attrs))
+  ;;          (sizex (cadr size))
+  ;;          (res (cdr (assoc 'geometry attrs)))
+  ;;          (resx (- (caddr res) (car res)))
+  ;;          dpi)
+  ;;     (catch 'exit
+  ;;       ;; in terminal
+  ;;       (unless sizex
+  ;;         (throw 'exit 10))
+  ;;       ;; on big screen
+  ;;       (when (> sizex 1000)
+  ;;         (throw 'exit 10))
+  ;;       ;; DPI
+  ;;       (* (/ (float resx) sizex) 25.4))))
+
+  (defun my-dpi (&optional frame)
+    "Get the DPI of FRAME (or current if nil)."
+    (cl-flet ((pyth (lambda (w h)
+                      (sqrt (+ (* w w)
+                               (* h h)))))
+              (mm2in (lambda (mm)
+                       (/ mm 25.4))))
+      (let* ((atts (frame-monitor-attributes frame))
+             (pix-w (cl-fourth (assoc 'geometry atts)))
+             (pix-h (cl-fifth (assoc 'geometry atts)))
+             (pix-d (pyth pix-w pix-h))
+             (mm-w (cl-second (assoc 'mm-size atts)))
+             (mm-h (cl-third (assoc 'mm-size atts)))
+             (mm-d (pyth mm-w mm-h)))
+        (/ pix-d (mm2in mm-d)))))
+
+  (defun my-preferred-font-size ()
+    (let ((dpi (my-dpi)))
+      (message "DPI: %d" dpi)
+      (cond
+       ((< dpi 110) 17)
+       ((> dpi 160) 18)
+       (t 14))))
+
+  (message "Initial preferred font size: %d" (my-preferred-font-size))
+
+  (defvar --font-name
+    "Fira Code")
+  (defvar --default-font
+    (font-spec :family --font-name :size (my-preferred-font-size) :dpi (my-dpi) :weight 'normal))
+
+  (defun adapt-font-size (&optional frame)
+    (message "Adapted preferred font size: %d" (my-preferred-font-size))
+    (set-frame-font (font-spec :family --font-name :size (my-preferred-font-size) :dpi (my-dpi) :weight 'normal)))
+
+  :config
+
+  (setf (alist-get 'font default-frame-alist)
+        (font-xlfd-name --default-font))
+  (set-frame-font --default-font t t)
+  (when (display-graphic-p)
+    (setq font-use-system-font t))
+
+  (add-function :after after-focus-change-function #'adapt-font-size)
+  (add-hook 'window-size-change-functions #'adapt-font-size)
+  (add-hook 'after-make-frame-functions #'adapt-font-size))
+
+(use-package visual-fill-column)
+
+(use-package display-line-numbers
+  :ensure nil
+  :hook (prog-mode-hook . display-line-numbers-mode)
+  :config
+  (setq-default display-line-numbers-width 5))
+
+(use-package mixed-pitch
+  :diminish)
 
 (use-package dired
   :straight nil
@@ -787,6 +865,31 @@
   :config
   (advice-add 'deadgrep--arguments :filter-return #'deadgrep--include-args))
 
+(use-package fsharp-mode
+  :defer t
+  :after (:all lsp-mode)
+  :commands fsharp-mode
+  :config
+  (setq indent-tabs-mode nil
+        truncate-lines t
+        tab-width 4))
+
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (fsharp-mode-hook . lsp-deferred)
+  :commands (lsp lsp-deferred))
+
+(use-package lsp-ui
+  :defer t
+  :delight
+  :after lsp-mode
+  :hook (lsp-after-open-hook . lsp-ui-mode)
+  :hook (lsp-after-open-hook . lsp-lens-mode)
+  :hook (lsp-after-open-hook . lsp-signature-mode)
+  :hook (lsp-after-open-hook . lsp-ui-sideline-mode)
+  :hook (lsp-after-open-hook . lsp-headerline-breadcrumb-mode)
+  :commands lsp-ui-mode)
 
 (provide 'init)
 ;;; init.el ends here

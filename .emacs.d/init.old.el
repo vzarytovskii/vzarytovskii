@@ -400,25 +400,6 @@ If ALL is non-nil, `swiper-all' is run."
         sml/shorten-modes t)
   (sml/setup))
 
-(use-package mini-modeline
-  ;; :disabled t
-  :delight
-  :straight (:host github :repo "andersjohansson/emacs-mini-modeline" :branch "29-mode-line-faces")
-  :after smart-mode-line
-  :config
-  (setq mini-modeline-enhance-visual nil
-        mini-modeline-display-gui-line nil)
-  (mini-modeline-mode t))
-
-(use-package display-line-numbers
-  :ensure nil
-  :hook (prog-mode-hook . display-line-numbers-mode)
-  :config
-  (setq-default display-line-numbers-width 5))
-
-(use-package mixed-pitch
-  :diminish)
-
 (use-package dimmer
   :disabled t
   :config
