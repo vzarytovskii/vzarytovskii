@@ -449,19 +449,6 @@ require("lazy").setup({
         end,
       },
       { 'williamboman/mason-lspconfig.nvim' },
-      {
-        'williamboman/mason-null-ls.nvim',
-        event = { "BufReadPre", "BufNewFile" },
-        dependencies = {
-          "williamboman/mason.nvim",
-          {
-            "jose-elias-alvarez/null-ls.nvim",
-            dependencies = {
-              'nvim-lua/plenary.nvim'
-            }
-          },
-        }
-      },
       {'SmiteshP/nvim-navic'},
       {'hrsh7th/nvim-cmp'}
     },
@@ -516,25 +503,6 @@ require("lazy").setup({
       )
 
       lsp.setup()
-
-      local null_ls = require('null-ls')
-      null_ls.setup({
-        sources = {
-          null_ls.builtins.formatting.fantomas,
-          null_ls.builtins.diagnostics.gitlint,
-          null_ls.builtins.code_actions.gitrebase,
-          null_ls.builtins.code_actions.gitsigns,
-          null_ls.builtins.completion.luasnip,
-          null_ls.builtins.completion.tags,
-          null_ls.builtins.hover.dictionary,
-          null_ls.builtins.hover.printenv
-        }
-      })
-      require('mason-null-ls').setup({
-        ensure_installed = { 'fantomas' },
-        automatic_installation = true,
-        handlers = {}
-      })
     end
   },
   {
@@ -595,8 +563,9 @@ require("lazy").setup({
           },
           sources = cmp.config.sources({
             { name = "copilot" },
-            { name = 'nvim_lsp_signature_help' },
+            { name = 'nvim_lsp_document_symbol' },
             { name = 'nvim_lsp' },
+            { name = 'nvim_lsp_signature_help' },
             { name = 'luasnip' },
             { name = 'git' }
           },{
