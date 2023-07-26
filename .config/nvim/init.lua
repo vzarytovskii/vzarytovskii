@@ -68,11 +68,60 @@ end
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('UserLspConfig', {}),
   callback = function(ev)
-    -- Enable completion triggered by <c-x><c-o>
+
+    local telescope_builtin = require('telescope.builtin')
+
+    local config = {
+      signs = {
+        active = true,
+        values = {
+          { name = "DiagnosticSignError", text = "[E]" },
+          { name = "DiagnosticSignWarn", text = "[W]" },
+          { name = "DiagnosticSignHint", text = "[H]" },
+          { name = "DiagnosticSignInfo", text = "[I]" },
+        },
+      },
+      virtual_text = false,
+      virtual_lines = { only_current_line = true },
+      update_in_insert = false,
+      underline = true,
+      severity_sort = true,
+      float = {
+        max_width = 120,
+        focus = false,
+        focusable = false,
+        style = "minimal",
+        border = "rounded",
+        source = "always",
+        header = "",
+        prefix = "",
+        format = function(d)
+          local code = d.code or (d.user_data and d.user_data.lsp.code)
+          if code then
+            return string.format("%s [%s]", d.message, code):gsub("1. ", "")
+          end
+          return d.message
+        end,
+      },
+    }
+
     vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
 
-    -- Buffer local mappings.
-    -- See `:help vim.lsp.*` for documentation on any of the below functions
+    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
+    vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
+    vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
+    vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
+    vim.lsp.handlers['textDocument/documentSymbol'] = telescope_builtin.lsp_document_symbols
+    vim.lsp.handlers['workspace/symbol'] = telescope_builtin.lsp_workspace_symbols
+    vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
+    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+      vim.lsp.diagnostic.on_publish_diagnostics, {
+        virtual_text = config.virtual_text,
+        update_in_insert = true,
+        show_diagnostic_autocmds = { 'InsertLeave', 'TextChanged', "TextYankPost", "CursorHold" },
+      }
+    )
+
     local opts = { buffer = ev.buf }
     vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
@@ -88,41 +137,13 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
     vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<space>f', function()
-      vim.lsp.buf.format { async = true }
-    end, opts)
+    vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, opts)
   end,
 })
 
 vim.diagnostic.config({
     virtual_text = false,
     virtual_lines = { only_current_line = true }
-})
-
-function OpenDiagnosticIfNoFloat()
-    for _, winid in pairs(vim.api.nvim_tabpage_list_wins(0)) do
-      if vim.api.nvim_win_get_config(winid).zindex then
-        return
-      end
-    end
-    vim.diagnostic.open_float(0, {
-      scope = "cursor",
-      focusable = false,
-      close_events = {
-        "CursorMoved",
-        "CursorMovedI",
-        "BufHidden",
-        "InsertCharPre",
-        "WinLeave",
-      },
-    })
-end
-
-vim.api.nvim_create_augroup("lsp_diagnostics_hold", { clear = true })
-vim.api.nvim_create_autocmd({ "CursorHold" }, {
-  pattern = "*",
-  command = "lua OpenDiagnosticIfNoFloat()",
-  group = "lsp_diagnostics_hold",
 })
 
 require("lazy").setup({
@@ -181,9 +202,6 @@ require("lazy").setup({
     lazy = false,
     config = function ()
       require('lualine').setup {
-        options = {
-          theme = 'tokyonight'
-        }
       }
     end
   },
@@ -191,6 +209,7 @@ require("lazy").setup({
     'nvim-lua/plenary.nvim',
     lazy = true
   },
+  { 'nvim-telescope/telescope.nvim' },
   {
     'gelguy/wilder.nvim',
     config = function ()
@@ -285,296 +304,17 @@ require("lazy").setup({
       require("rust-tools").setup({})
     end
   },
-  { -- IDE stuff pretty much, lsp, cmp, copilot, etc
-    'VonHeikemen/lsp-zero.nvim',
-    branch = 'dev-v3',
+  -- IDE stuff pretty much, lsp, cmp, copilot, etc
+  {
+    'nvim-treesitter/nvim-treesitter',
     dependencies = {
-      {'neovim/nvim-lspconfig'},
-      {
-        'williamboman/mason.nvim',
-        build = function()
-          pcall(vim.cmd, 'MasonUpdate')
-        end,
-      },
-      { 'williamboman/mason-lspconfig.nvim' },
-      { 'williamboman/mason-null-ls.nvim',
-        event = { "BufReadPre", "BufNewFile" },
-        dependencies = {
-          "williamboman/mason.nvim",
-          {
-            "jose-elias-alvarez/null-ls.nvim",
-            dependencies = {
-              'nvim-lua/plenary.nvim'
-            }
-          },
-        }
-      },
-      {'lvimuser/lsp-inlayhints.nvim'},
-      {'SmiteshP/nvim-navic'},
-      {'L3MON4D3/LuaSnip'},
-      {'hrsh7th/nvim-cmp'},
-      {'hrsh7th/cmp-nvim-lsp'},
-      {'hrsh7th/cmp-nvim-lsp-document-symbol'},
-      {'hrsh7th/cmp-nvim-lsp-signature-help'},
-      {'hrsh7th/cmp-calc'},
-      {'petertriho/cmp-git'},
-      {'saadparwaiz1/cmp_luasnip'},
-      {
-        'zbirenbaum/copilot-cmp',
-        dependencies = { 'zbirenbaum/copilot.lua' }
-      },
-      {
-        'nvim-treesitter/nvim-treesitter',
-        dependencies = {
-          'nvim-treesitter/playground',
-          'nvim-treesitter/nvim-treesitter-context'
-        },
-        build = function()
-          pcall(vim.cmd, 'TSUpdate')
-        end,
-      }
-
+      'nvim-treesitter/playground',
+      'nvim-treesitter/nvim-treesitter-context'
     },
-    config = function()
-      local lsp = require('lsp-zero').preset({})
-      local ih = require("lsp-inlayhints")
-      local cmp = require('cmp')
-      ih.setup({
-        inlay_hints = {
-          parameter_hints = {
-            show = true,
-            prefix = "<- ",
-            separator = ", ",
-            remove_colon_start = true,
-            remove_colon_end = true,
-          },
-          type_hints = {
-            -- type and other hints
-            show = true,
-            prefix = "",
-            separator = ", ",
-            remove_colon_start = true,
-            remove_colon_end = true,
-          },
-        },
-        enabled_at_startup = true,
-      })
-      require('mason').setup()
-      require("mason-lspconfig").setup({
-        ensure_installed = { "fsautocomplete", "rust_analyzer" },
-        handlers = {lsp.default_setup}
-      })
-
-      lsp.on_attach(function(client, bufnr)
-        ih.on_attach(client, bufnr, false)
-        lsp.default_keymaps({buffer = bufnr})
-        if client.server_capabilities.documentSymbolProvider then
-          require('nvim-navic').attach(client, bufnr)
-        end
-        if client.server_capabilities.inlayHintProvider then
-            --vim.lsp.buf.inlay_hint(bufnr, true)
-        end
-      end)
-
-      lsp.setup()
-      lsp.extend_cmp()
-
-      local cmp_action = lsp.cmp_action()
-
-      require("copilot").setup({
-        panel = {
-          enabled = false
-        },
-        suggestion = {
-          enabled = false
-        },
-        filetypes = {
-          yaml = false,
-          markdown = true,
-          help = false,
-          gitcommit = false,
-          gitrebase = false,
-          hgcommit = false,
-          svn = false,
-          cvs = false,
-          ["."] = false,
-        },
-        copilot_node_command = 'node',
-        server_opts_overrides = {},
-      })
-      require('copilot_cmp').setup({
-        method = "getCompletionsCycling",
-        formatters = {
-          label = require("copilot_cmp.format").format_label_text,
-          insert_text = require("copilot_cmp.format").format_insert_text,
-          preview = require("copilot_cmp.format").deindent,
-        },
-      })
-
-      local luasnip = require('luasnip')
-
-      require('luasnip.loaders.from_vscode').lazy_load()
-      cmp.setup({
-        view = {
-          entries = "custom",
-          selection_order = 'near_cursor'
-        },
-        window = {
-          completion = cmp.config.window.bordered(),
-          documentation = cmp.config.window.bordered(),
-        },
-        sources = cmp.config.sources({
-          { name = "copilot" },
-          -- { name = 'nvim_lsp_signature_help' },
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'git' }
-        },{
-          { name = 'buffer' },
-          { name = 'calc' },
-          -- { name = "crates" },
-        }),
-        mapping = {
-          ['<CR>']      = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Replace,
-            select = false
-          }),
-          ['<C -p>']     = cmp.mapping.select_prev_item(),
-          ['<C-n>']     = cmp.mapping.select_next_item(),
-          ['<Up>']      = cmp.mapping.select_prev_item(),
-          ['<Down>']    = cmp.mapping.select_next_item(),
-          ['<C-d>']     = cmp.mapping.scroll_docs(-4),
-          ['<C-f>']     = cmp.mapping.scroll_docs(4),
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<C-e>']     = cmp.mapping.close(),
-          ['<Tab>']     = function(fallback)
-            if cmp.visible() and has_words_before() then
-              cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
-            elseif luasnip.expand_or_jumpable() then
-              luasnip.expand_or_jump()
-            else
-              fallback()
-            end
-          end,
-          ['<S-Tab>'] = function(fallback)
-            if cmp.visible() and has_words_before() then
-              cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
-            elseif luasnip.jumpable(-1) then
-              luasnip.jump(-1)
-            else
-              fallback()
-            end
-          end,
-        }
-      })
-
-      cmp.setup.filetype('gitcommit', {
-        sources = cmp.config.sources({
-          { name = 'cmp_git' },
-        }, {
-          { name = 'buffer' },
-        })
-      })
-
-      cmp.setup.cmdline({ '/', '?' }, {
-        mapping = cmp.mapping.preset.cmdline(),
-        sources = cmp.config.sources({
-          { name = 'nvim_lsp_document_symbol' }
-        }, {
-          { name = 'buffer' }
-        }),
-        view = { entries = "native" },
-      })
-
-      cmp.event:on("menu_opened", function ()
-        vim.b.copilot_suggestion_hidden = true
-      end)
-
-      cmp.event:on("menu_closed", function ()
-        vim.b.copilot_suggestion_hidden = false
-      end)
-
-      local format = require("cmp_git.format")
-      local sort = require("cmp_git.sort")
-      require("cmp_git").setup({
-          -- defaults
-          filetypes = { "gitcommit", "octo" },
-          remotes = { "upstream", "origin" }, -- in order of most to least prioritized
-          enableRemoteUrlRewrites = false, -- enable git url rewrites, see https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
-          git = {
-              commits = {
-                  limit = 100,
-                  sort_by = sort.git.commits,
-                  format = format.git.commits,
-              },
-          },
-          github = {
-              issues = {
-                  fields = { "title", "number", "body", "updatedAt", "state" },
-                  filter = "all", -- assigned, created, mentioned, subscribed, all, repos
-                  limit = 100,
-                  state = "open", -- open, closed, all
-                  sort_by = sort.github.issues,
-                  format = format.github.issues,
-              },
-              mentions = {
-                  limit = 100,
-                  sort_by = sort.github.mentions,
-                  format = format.github.mentions,
-              },
-              pull_requests = {
-                  fields = { "title", "number", "body", "updatedAt", "state" },
-                  limit = 100,
-                  state = "open", -- open, closed, merged, all
-                  sort_by = sort.github.pull_requests,
-                  format = format.github.pull_requests,
-              },
-          },
-          trigger_actions = {
-              {
-                  debug_name = "git_commits",
-                  trigger_character = ":",
-                  action = function(sources, trigger_char, callback, params, git_info)
-                      return sources.git:get_commits(callback, params, trigger_char)
-                  end,
-              },
-              {
-                  debug_name = "github_issues_and_pr",
-                  trigger_character = "#",
-                  action = function(sources, trigger_char, callback, params, git_info)
-                      return sources.github:get_issues_and_prs(callback, git_info, trigger_char)
-                  end,
-              },
-              {
-                  debug_name = "github_mentions",
-                  trigger_character = "@",
-                  action = function(sources, trigger_char, callback, params, git_info)
-                      return sources.github:get_mentions(callback, git_info, trigger_char)
-                  end,
-              },
-          },
-        }
-      )
-
-      local null_ls = require('null-ls')
-      null_ls.setup({
-        sources = {
-          null_ls.builtins.formatting.fantomas,
-          null_ls.builtins.diagnostics.gitlint,
-          null_ls.builtins.code_actions.gitrebase,
-          null_ls.builtins.code_actions.gitsigns,
-          null_ls.builtins.completion.luasnip,
-          null_ls.builtins.completion.tags,
-          null_ls.builtins.hover.dictionary,
-          null_ls.builtins.hover.printenv
-        }
-      })
-      require('mason-null-ls').setup({
-        ensure_installed = { 'fantomas' },
-        automatic_installation = true,
-        handlers = {}
-      })
-
+    build = function()
+      pcall(vim.cmd, 'TSUpdate')
+    end,
+    config = function ()
       local treesitter = require('nvim-treesitter.configs')
       local treesitter_context = require('treesitter-context')
       local treesitter_parsers = require('nvim-treesitter.parsers')
@@ -617,8 +357,311 @@ require("lazy").setup({
           max_file_lines = nil,
         },
       }
-
     end
+  },
+  {
+    'VonHeikemen/lsp-zero.nvim',
+    branch = 'dev-v3',
+    dependencies = {
+      {'neovim/nvim-lspconfig'},
+      {
+        'williamboman/mason.nvim',
+        build = function()
+          pcall(vim.cmd, 'MasonUpdate')
+        end,
+      },
+      { 'williamboman/mason-lspconfig.nvim' },
+      {
+        'williamboman/mason-null-ls.nvim',
+        event = { "BufReadPre", "BufNewFile" },
+        dependencies = {
+          "williamboman/mason.nvim",
+          {
+            "jose-elias-alvarez/null-ls.nvim",
+            dependencies = {
+              'nvim-lua/plenary.nvim'
+            }
+          },
+        }
+      },
+      {'lvimuser/lsp-inlayhints.nvim'},
+      {'SmiteshP/nvim-navic'},
+      {'hrsh7th/nvim-cmp'}
+    },
+    config = function()
+      local lsp = require('lsp-zero').preset({})
+      local ih = require("lsp-inlayhints")
+      ih.setup({
+        inlay_hints = {
+          parameter_hints = {
+            show = true,
+            prefix = "<- ",
+            separator = ", ",
+            remove_colon_start = true,
+            remove_colon_end = true,
+          },
+          type_hints = {
+            -- type and other hints
+            show = true,
+            prefix = "",
+            separator = ", ",
+            remove_colon_start = true,
+            remove_colon_end = true,
+          },
+        },
+        enabled_at_startup = true,
+      })
+      require('mason').setup()
+      require("mason-lspconfig").setup({
+        ensure_installed = { "fsautocomplete", "rust_analyzer" },
+        handlers = {lsp.default_setup}
+      })
+
+      lsp.on_attach(
+        function(client, bufnr)
+          ih.on_attach(client, bufnr, false)
+          lsp.default_keymaps({buffer = bufnr})
+          if client.server_capabilities.documentSymbolProvider then
+            require('nvim-navic').attach(client, bufnr)
+          end
+          if client.server_capabilities.inlayHintProvider then
+              --vim.lsp.buf.inlay_hint(bufnr, true)
+          end
+          if client.server_capabilities.code_lens then
+            local codelens = vim.api.nvim_create_augroup(
+              'LSPCodeLens',
+              { clear = true }
+            )
+            vim.api.nvim_create_autocmd({ 'BufEnter' }, {
+              group = codelens,
+              callback = function()
+                vim.lsp.codelens.refresh()
+              end,
+              buffer = bufnr,
+              once = true,
+            })
+            vim.api.nvim_create_autocmd({ 'BufWritePost', 'CursorHold' }, {
+              group = codelens,
+              callback = function()
+                vim.lsp.codelens.refresh()
+              end,
+              buffer = bufnr,
+            })
+          end
+        end
+      )
+
+      lsp.setup()
+
+      local null_ls = require('null-ls')
+      null_ls.setup({
+        sources = {
+          null_ls.builtins.formatting.fantomas,
+          null_ls.builtins.diagnostics.gitlint,
+          null_ls.builtins.code_actions.gitrebase,
+          null_ls.builtins.code_actions.gitsigns,
+          null_ls.builtins.completion.luasnip,
+          null_ls.builtins.completion.tags,
+          null_ls.builtins.hover.dictionary,
+          null_ls.builtins.hover.printenv
+        }
+      })
+      require('mason-null-ls').setup({
+        ensure_installed = { 'fantomas' },
+        automatic_installation = true,
+        handlers = {}
+      })
+    end
+  },
+  {
+      'hrsh7th/nvim-cmp',
+      dependencies = {
+        {'VonHeikemen/lsp-zero.nvim' },
+        {'L3MON4D3/LuaSnip'},
+        {'hrsh7th/cmp-nvim-lsp'},
+        {'hrsh7th/cmp-nvim-lsp-document-symbol'},
+        {'hrsh7th/cmp-nvim-lsp-signature-help'},
+        {'hrsh7th/cmp-calc'},
+        {'petertriho/cmp-git'},
+        {'saadparwaiz1/cmp_luasnip'},
+        {
+          'zbirenbaum/copilot-cmp',
+          dependencies = { 'zbirenbaum/copilot.lua' }
+      }},
+      config = function ()
+        require('lsp-zero').extend_cmp()
+
+        require("copilot").setup({
+          panel = {
+            enabled = false
+          },
+          suggestion = {
+            enabled = false
+          },
+          filetypes = {
+            yaml = false,
+            markdown = true,
+            gitcommit = true,
+            gitrebase = false,
+            ["."] = false,
+          }
+        })
+
+        require('copilot_cmp').setup({
+          method = "getCompletionsCycling",
+          formatters = {
+            label = require("copilot_cmp.format").format_label_text,
+            insert_text = require("copilot_cmp.format").format_insert_text,
+            preview = require("copilot_cmp.format").deindent,
+          },
+        })
+
+        local luasnip = require('luasnip')
+        require('luasnip.loaders.from_vscode').lazy_load()
+
+        local cmp = require('cmp')
+        cmp.setup({
+          view = {
+            entries = "custom",
+            selection_order = 'near_cursor'
+          },
+          window = {
+            completion = cmp.config.window.bordered(),
+            documentation = cmp.config.window.bordered(),
+          },
+          sources = cmp.config.sources({
+            { name = "copilot" },
+            { name = 'nvim_lsp_signature_help' },
+            { name = 'nvim_lsp' },
+            { name = 'luasnip' },
+            { name = 'git' }
+          },{
+            { name = 'buffer' },
+            { name = 'calc' },
+            -- { name = "crates" },
+          }),
+          mapping = {
+            ['<CR>']      = cmp.mapping.confirm({
+              behavior = cmp.ConfirmBehavior.Replace,
+              select = false
+            }),
+            ['<C -p>']     = cmp.mapping.select_prev_item(),
+            ['<C-n>']     = cmp.mapping.select_next_item(),
+            ['<Up>']      = cmp.mapping.select_prev_item(),
+            ['<Down>']    = cmp.mapping.select_next_item(),
+            ['<C-d>']     = cmp.mapping.scroll_docs(-4),
+            ['<C-f>']     = cmp.mapping.scroll_docs(4),
+            ['<C-Space>'] = cmp.mapping.complete(),
+            ['<C-e>']     = cmp.mapping.close(),
+            ['<Tab>']     = function(fallback)
+              if cmp.visible() and has_words_before() then
+                cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+              elseif luasnip.expand_or_jumpable() then
+                luasnip.expand_or_jump()
+              else
+                fallback()
+              end
+            end,
+            ['<S-Tab>'] = function(fallback)
+              if cmp.visible() and has_words_before() then
+                cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
+              elseif luasnip.jumpable(-1) then
+                luasnip.jump(-1)
+              else
+                fallback()
+              end
+            end,
+          }
+        })
+
+        cmp.setup.filetype('gitcommit', {
+          sources = cmp.config.sources({
+            { name = 'cmp_git' },
+          }, {
+            { name = 'buffer' },
+          })
+        })
+
+        cmp.setup.cmdline({ '/', '?' }, {
+          mapping = cmp.mapping.preset.cmdline(),
+          sources = cmp.config.sources({
+            { name = 'nvim_lsp_document_symbol' }
+          }, {
+            { name = 'buffer' }
+          }),
+          view = { entries = "native" },
+        })
+
+        cmp.event:on("menu_opened", function ()
+          vim.b.copilot_suggestion_hidden = true
+        end)
+
+        cmp.event:on("menu_closed", function ()
+          vim.b.copilot_suggestion_hidden = false
+        end)
+
+        local format = require("cmp_git.format")
+        local sort = require("cmp_git.sort")
+        require("cmp_git").setup({
+            -- defaults
+            filetypes = { "gitcommit", "octo" },
+            remotes = { "upstream", "origin" }, -- in order of most to least prioritized
+            enableRemoteUrlRewrites = false, -- enable git url rewrites, see https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
+            git = {
+                commits = {
+                    limit = 100,
+                    sort_by = sort.git.commits,
+                    format = format.git.commits,
+                },
+            },
+            github = {
+                issues = {
+                    fields = { "title", "number", "body", "updatedAt", "state" },
+                    filter = "all", -- assigned, created, mentioned, subscribed, all, repos
+                    limit = 100,
+                    state = "open", -- open, closed, all
+                    sort_by = sort.github.issues,
+                    format = format.github.issues,
+                },
+                mentions = {
+                    limit = 100,
+                    sort_by = sort.github.mentions,
+                    format = format.github.mentions,
+                },
+                pull_requests = {
+                    fields = { "title", "number", "body", "updatedAt", "state" },
+                    limit = 100,
+                    state = "open", -- open, closed, merged, all
+                    sort_by = sort.github.pull_requests,
+                    format = format.github.pull_requests,
+                },
+            },
+            trigger_actions = {
+                {
+                    debug_name = "git_commits",
+                    trigger_character = ":",
+                    action = function(sources, trigger_char, callback, params, git_info)
+                        return sources.git:get_commits(callback, params, trigger_char)
+                    end,
+                },
+                {
+                    debug_name = "github_issues_and_pr",
+                    trigger_character = "#",
+                    action = function(sources, trigger_char, callback, params, git_info)
+                        return sources.github:get_issues_and_prs(callback, git_info, trigger_char)
+                    end,
+                },
+                {
+                    debug_name = "github_mentions",
+                    trigger_character = "@",
+                    action = function(sources, trigger_char, callback, params, git_info)
+                        return sources.github:get_mentions(callback, git_info, trigger_char)
+                    end,
+                },
+            },
+          }
+        )
+      end
   },
   {
     'kevinhwang91/nvim-ufo',
@@ -686,7 +729,7 @@ require("lazy").setup({
   },
   {
     'stevearc/aerial.nvim',
-    -- cond = false, -- Disable, it's not that useful as for now.
+    cond = false, -- Disable, it's not that useful as for now.
     config = function ()
       local aerial = require('aerial')
       aerial.setup({
