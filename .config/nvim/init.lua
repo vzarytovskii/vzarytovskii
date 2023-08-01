@@ -288,6 +288,7 @@ require("lazy").setup({
   { 'nvim-telescope/telescope.nvim' },
   {
     'gelguy/wilder.nvim',
+    event = 'UiEnter',
     config = function ()
       local wilder = require('wilder')
       wilder.setup({
@@ -299,13 +300,14 @@ require("lazy").setup({
   },
   {
     "shellRaining/hlchunk.nvim",
-    event = { "UIEnter" },
+    event = { "BufEnter" },
     config = function ()
       require('hlchunk').setup({
         blank = { enable = false },
         chunk = { enable = true },
         indent = { enable = false },
         line_num = { enable = false },
+        context = { enable = true }
       })
     end
   },
@@ -325,6 +327,7 @@ require("lazy").setup({
   },
   { -- Git and github related stuff
     'NeogitOrg/neogit',
+    event = 'VeryLazy',
     dependencies = {
       'nvim-lua/plenary.nvim',
       { 'sindrets/diffview.nvim', dependencies = 'nvim-lua/plenary.nvim' },
@@ -339,6 +342,7 @@ require("lazy").setup({
     config = function ()
       local neogit = require('neogit')
       neogit.setup({
+        use_magit_keybindings = true,
         integrations = {
           diffview = true
         },
@@ -463,14 +467,14 @@ require("lazy").setup({
         handlers = { lsp.default_setup }
       })
 
-      require('mason-tool-installer').setup {
+      require('mason-tool-installer').setup({
         ensure_installed = {
           'fantomas',
           'netcoredbg'
         },
         auto_update = true,
         run_on_start = true
-      }
+      })
 
       lsp.on_attach(
         function(client, bufnr)
