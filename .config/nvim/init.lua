@@ -459,11 +459,11 @@ require("lazy").setup({
     },
     config = function()
       local lsp = require('lsp-zero').preset({})
-
+      local lspconfig = require('lspconfig')
       require('mason').setup()
 
       require("mason-lspconfig").setup({
-        ensure_installed = { "fsautocomplete", "rust_analyzer" },
+        ensure_installed = { "fsautocomplete", "rust_analyzer", "marksman", "prosemd_lsp", "grammarly" },
         handlers = { lsp.default_setup }
       })
 
