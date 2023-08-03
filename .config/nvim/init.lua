@@ -135,7 +135,7 @@ function hover_handler(client, bufnr)
         -- vim.diagnostic.open_float(nil, opts)
         -- TODO: Add showing diagnostics, and maybe some additional info based on buffers (like show commit info or something in neogit, or show titles of GH issues/PRs in comments/buffers)
         -- render_diagnostic_window(diagnostic_under_cursor[0] or diagnostic_under_cursor[1], opts)
-        open_diagnostics_if_no_float()
+        -- open_diagnostics_if_no_float()
       end
   end
 end
@@ -709,6 +709,20 @@ require("lazy").setup({
           }
         )
       end
+  },
+  {
+    'RRethy/vim-illuminate',
+    event = { 'BufEnter' },
+    config = function ()
+      require('illuminate').configure({
+        providers = {
+              'lsp',
+              'treesitter',
+              'regex',
+          },
+        delay = 50
+      })
+    end
   },
   {
     'kevinhwang91/nvim-ufo',
