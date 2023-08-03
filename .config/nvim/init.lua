@@ -300,6 +300,49 @@ require("lazy").setup({
     end
   },
   {
+    'lewis6991/satellite.nvim',
+    event = { 'BufEnter' },
+    config = function ()
+      require('satellite').setup {
+        current_only = true,
+        winblend = 50,
+        zindex = 40,
+        excluded_filetypes = {},
+        width = 3,
+        handlers = {
+          cursor = {
+            enable = true,
+            symbols = { '⎺', '⎻', '⎼', '⎽' }
+          },
+          search = {
+            enable = true,
+          },
+          diagnostic = {
+            enable = true,
+            signs = {'-', '=', '≡'},
+            min_severity = vim.diagnostic.severity.HINT,
+          },
+          gitsigns = {
+            enable = true,
+            signs = {
+              add = "+",
+              change = "*",
+              delete = "-",
+            }
+          },
+          marks = {
+            enable = true,
+            show_builtins = false, -- shows the builtin marks like [ ] < >
+            key = 'm'
+          },
+          quickfix = {
+            signs = { '-', '=', '≡' },
+          }
+        },
+      }
+    end
+  },
+  {
     "shellRaining/hlchunk.nvim",
     event = { "BufEnter" },
     config = function ()
