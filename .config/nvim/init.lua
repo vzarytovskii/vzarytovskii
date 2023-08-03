@@ -130,12 +130,12 @@ function hover_handler(client, bufnr)
         vim.tbl_filter(in_range(line_nr, column_nr), vim.diagnostic.get(bufnr, client))
 
       if rawequal(next(diagnostic_under_cursor), nil) then
-        vim.lsp.buf.hover(nil, opts)
+        -- vim.lsp.buf.hover(nil, opts)
       else
         -- vim.diagnostic.open_float(nil, opts)
         -- TODO: Add showing diagnostics, and maybe some additional info based on buffers (like show commit info or something in neogit, or show titles of GH issues/PRs in comments/buffers)
         -- render_diagnostic_window(diagnostic_under_cursor[0] or diagnostic_under_cursor[1], opts)
-        -- open_diagnostics_if_no_float()
+        open_diagnostics_if_no_float()
       end
   end
 end
