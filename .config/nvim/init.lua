@@ -22,7 +22,6 @@ vim.o.foldenable = true
 
 vim.opt.guicursor = ""
 
-vim.o.termguicolors = true
 vim.o.cursorline = true
 vim.opt.nu = true
 vim.opt.relativenumber = false
@@ -44,7 +43,7 @@ vim.opt.undofile = true
 vim.opt.hlsearch = false
 vim.opt.incsearch = true
 
-vim.opt.termguicolors = true
+
 
 vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes"
@@ -225,6 +224,8 @@ require("lazy").setup({
     lazy = false,
     priority = 1000,
     config = function()
+      vim.opt.termguicolors = true
+      vim.opt.background = "light"
       require('github-theme').setup({
         options = {
           compile_path = vim.fn.stdpath('cache') .. '/github-theme',
