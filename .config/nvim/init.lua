@@ -139,82 +139,93 @@ function hover_handler(client, bufnr)
   end
 end
 
-vim.api.nvim_create_autocmd('LspAttach', {
-  group = vim.api.nvim_create_augroup('UserLspConfig', {}),
-  callback = function(ev)
+vim.api.nvim_create_autocmd(
+  'LspAttach',
+  {
+    group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+    callback = function(ev)
 
-    local telescope_builtin = require('telescope.builtin')
+      local telescope_builtin = require('telescope.builtin')
+      local glance = require('glance.lsp')
 
-    local config = {
-      signs = {
-        active = true,
-        values = {
-          { name = "DiagnosticSignError", text = "[E]" },
-          { name = "DiagnosticSignWarn", text = "[W]" },
-          { name = "DiagnosticSignHint", text = "[H]" },
-          { name = "DiagnosticSignInfo", text = "[I]" },
+      local config = {
+        signs = {
+          active = true,
+          values = {
+            { name = "DiagnosticSignError", text = "[E]" },
+            { name = "DiagnosticSignWarn", text = "[W]" },
+            { name = "DiagnosticSignHint", text = "[H]" },
+            { name = "DiagnosticSignInfo", text = "[I]" },
+          },
         },
-      },
-      virtual_text = false,
-      virtual_lines = { only_current_line = true },
-      update_in_insert = false,
-      underline = true,
-      severity_sort = true,
-      float = {
-        max_width = 120,
-        focus = false,
-        focusable = false,
-        style = "minimal",
-        border = "rounded",
-        source = "always",
-        header = "",
-        prefix = "",
-        format = function(d)
-          local code = d.code or (d.user_data and d.user_data.lsp.code)
-          if code then
-            return string.format("%s [%s]", d.message, code):gsub("1. ", "")
-          end
-          return d.message
-        end,
-      },
-    }
-
-    vim.diagnostic.config(config)
-
-    vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
-
-    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
-    vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
-    vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
-    vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
-    vim.lsp.handlers['textDocument/documentSymbol'] = telescope_builtin.lsp_document_symbols
-    vim.lsp.handlers['workspace/symbol'] = telescope_builtin.lsp_workspace_symbols
-    vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-      vim.lsp.diagnostic.on_publish_diagnostics, {
-        virtual_text = config.virtual_text,
-        update_in_insert = true,
-        show_diagnostic_autocmds = { 'InsertLeave', 'TextChanged', "TextYankPost", "CursorHold" },
+        virtual_text = false,
+        virtual_lines = { only_current_line = true },
+        update_in_insert = false,
+        underline = true,
+        severity_sort = true,
+        float = {
+          max_width = 120,
+          focus = false,
+          focusable = false,
+          style = "minimal",
+          border = "rounded",
+          source = "always",
+          header = "",
+          prefix = "",
+          format = function(d)
+            local code = d.code or (d.user_data and d.user_data.lsp.code)
+            if code then
+              return string.format("%s [%s]", d.message, code):gsub("1. ", "")
+            end
+            return d.message
+          end,
+        },
       }
-    )
 
-    local opts = { buffer = ev.buf }
-    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-    vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-    vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wl', function()
-      print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-    end, opts)
-    vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
-    vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
-    vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
-    vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, opts)
-  end,
+      vim.diagnostic.config(config)
+
+      vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
+
+      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, config.float)
+      vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, config.float)
+      vim.lsp.handlers['textDocument/declaration'] = vim.lsp.with(vim.lsp.buf.declaration, config.float)
+      vim.lsp.handlers['textDocument/definition'] = telescope_builtin.lsp_definitions
+      vim.lsp.handlers['textDocument/references'] = telescope_builtin.lsp_references
+      vim.lsp.handlers['textDocument/documentSymbol'] = telescope_builtin.lsp_document_symbols
+      vim.lsp.handlers['workspace/symbol'] = telescope_builtin.lsp_workspace_symbols
+      vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+        vim.lsp.diagnostic.on_publish_diagnostics, {
+          virtual_text = config.virtual_text,
+          update_in_insert = true,
+          show_diagnostic_autocmds = { 'InsertLeave', 'TextChanged', "TextYankPost", "CursorHold" },
+        }
+      )
+
+      local opts = { buffer = ev.buf }
+      vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+      vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+      vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+      vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+      vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+      vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
+      vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
+      vim.keymap.set('n', '<space>wl', function()
+        print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+      end, opts)
+      vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
+      vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
+      vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
+      vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+      vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, opts)
+
+      -- Explicity set for Glance, since it doesn't seem to have an API to set the handler
+      local options = { noremap = false, silent = true }
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gd', '<CMD>Glance definitions<CR>', options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gr', '<CMD>Glance references<CR>', options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gy', '<CMD>Glance type_definitions<CR>', options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gm', '<CMD>Glance implementations<CR>', options)
+
+    end,
 })
 
 require("lazy").setup({
@@ -498,8 +509,9 @@ require("lazy").setup({
       },
       { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
       { 'williamboman/mason-lspconfig.nvim' },
-      {'SmiteshP/nvim-navic'},
-      {'hrsh7th/nvim-cmp'}
+      { 'SmiteshP/nvim-navic' },
+      { 'hrsh7th/nvim-cmp' },
+      { 'dnlhc/glance.nvim' }
     },
     config = function()
       local lsp = require('lsp-zero').preset({})
@@ -927,6 +939,77 @@ require("lazy").setup({
         })
       end
   },
+  {
+    'dnlhc/glance.nvim',
+    event = 'LspAttach',
+    config = function ()
+      local glance = require('glance')
+      local glance_actions = glance.actions
+      glance.setup({
+        height = 18,
+        zindex = 45,
+        preview_win_opts = {
+          cursorline = true,
+          number = true,
+          wrap = true,
+        },
+        border = {
+          enable = true,
+          top_char = '―',
+          bottom_char = '―',
+        },
+        list = {
+          position = 'right', -- Position of the list window 'left'|'right'
+          width = 0.33, -- 33% width relative to the active window, min 0.1, max 0.5
+        },
+        theme = { -- This feature might not work properly in nvim-0.7.2
+          enable = true, -- Will generate colors for the plugin based on your current colorscheme
+          mode = 'auto', -- 'brighten'|'darken'|'auto', 'auto' will set mode based on the brightness of your colorscheme
+        },
+        mappings = {
+          list = {
+            ['j'] = glance_actions.next, -- Bring the cursor to the next item in the list
+            ['k'] = glance_actions.previous, -- Bring the cursor to the previous item in the list
+            ['<Down>'] = glance_actions.next,
+            ['<Up>'] = glance_actions.previous,
+            ['<Tab>'] = glance_actions.next_location, -- Bring the cursor to the next location skipping groups in the list
+            ['<S-Tab>'] = glance_actions.previous_location, -- Bring the cursor to the previous location skipping groups in the list
+            ['<C-u>'] = glance_actions.preview_scroll_win(5),
+            ['<C-d>'] = glance_actions.preview_scroll_win(-5),
+            ['v'] = glance_actions.jump_vsplit,
+            ['s'] = glance_actions.jump_split,
+            ['t'] = glance_actions.jump_tab,
+            ['<CR>'] = glance_actions.jump,
+            ['o'] = glance_actions.jump,
+            ['<leader>l'] = glance_actions.enter_win('preview'), -- Focus preview window
+            ['q'] = glance_actions.close,
+            ['Q'] = glance_actions.close,
+            ['<Esc>'] = glance_actions.close,
+            -- ['<Esc>'] = false -- disable a mapping
+          },
+          preview = {
+            ['Q'] = glance_actions.close,
+            ['<Tab>'] = glance_actions.next_location,
+            ['<S-Tab>'] = glance_actions.previous_location,
+            ['<leader>l'] = glance_actions.enter_win('list'), -- Focus list window
+          },
+        },
+        hooks = { },
+        folds = {
+          fold_closed = '',
+          fold_open = '',
+          folded = true,
+        },
+        indent_lines = {
+          enable = false,
+          icon = '│',
+        },
+        winbar = {
+          enable = true,
+        },
+      })
+    end
+  }
 },
 {
   root = vim.fn.stdpath("data") .. "/lazy",
