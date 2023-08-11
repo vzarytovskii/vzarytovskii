@@ -354,6 +354,20 @@ require("lazy").setup({
     end
   },
   {
+    'stevearc/oil.nvim',
+    lazy = false,
+    config = function()
+      require('oil').setup({
+        columns = { 'size', 'permissions', 'mtime' },
+        default_file_explorer = true,
+        use_default_keymaps = true,
+        view_options = {
+          show_hidden = true,
+        }
+      })
+    end
+  },
+  {
     "shellRaining/hlchunk.nvim",
     event = { "BufEnter" },
     config = function ()
@@ -362,7 +376,7 @@ require("lazy").setup({
         chunk = { enable = true },
         indent = { enable = false },
         line_num = { enable = false },
-        context = { enable = true }
+        context = { enable = false }
       })
     end
   },
