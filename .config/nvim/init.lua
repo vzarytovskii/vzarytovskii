@@ -497,7 +497,7 @@ require("lazy").setup({
   {
     'VonHeikemen/lsp-zero.nvim',
     branch = 'dev-v3',
-    cmd = 'LspInfo',
+    cmd = { 'LspInfo', 'Mason' },
     event = {'BufReadPre', 'BufNewFile'},
     dependencies = {
       {'neovim/nvim-lspconfig'},
@@ -535,6 +535,7 @@ require("lazy").setup({
       lsp.on_attach(
         function(client, bufnr)
           lsp.default_keymaps({buffer = bufnr})
+          client.server_capabilities.semanticTokensProvider = true
           if client.server_capabilities.documentSymbolProvider then
             require('nvim-navic').attach(client, bufnr)
           end
