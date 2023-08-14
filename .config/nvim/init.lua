@@ -417,7 +417,8 @@ require("lazy").setup({
         },
       })
       require("diffview").setup({
-        enhanced_diff_hl = true
+        enhanced_diff_hl = true,
+        use_icons = false
       })
 
       local gitsigns = require('gitsigns')
