@@ -110,16 +110,23 @@
       read-process-output-max (* 1024 1024 3)
       message-log-max 16384
       idle-update-delay 2
-      jit-lock-defer-time 0.05
-      jit-lock-stealth-time 0.2
+      jit-lock-chunk-size 5000
+      jit-lock-context-time 0.2
+      jit-lock-defer-time .1
+      jit-lock-stealth-nice 0.2
+      jit-lock-stealth-time 5
       jit-lock-stealth-verbose nil
       fast-but-imprecise-scrolling t)
 
 (when (and (fboundp 'native-comp-available-p) (native-comp-available-p))
   (setq native-comp-speed 3
+        native-comp-debug 0
+        native-comp-verbose 0
         native-comp-deferred-compilation t
         native-comp-async-report-warnings-errors nil
         native-comp-async-jobs-number 20
+        native-comp-jit-compilation t
+        native-comp-enable-subr-trampolines t
         native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-always-compile t
