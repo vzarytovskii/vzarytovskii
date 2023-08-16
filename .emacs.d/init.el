@@ -865,6 +865,12 @@
   :config
   (advice-add 'deadgrep--arguments :filter-return #'deadgrep--include-args))
 
+(use-package flycheck
+  :defer t
+  :hook (after-init-hook . global-flycheck-mode)
+  :config
+  (setq flycheck-highlighting-mode 'sexps))
+
 (use-package fsharp-mode
   :defer t
   :after (:all lsp-mode)
@@ -875,21 +881,14 @@
         tab-width 4))
 
 (use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-c l")
+  :defer t
+  :commands (lsp lsp-deferred lsp-mode)
   :hook (fsharp-mode-hook . lsp-deferred)
-  :commands (lsp lsp-deferred))
+  :after flycheck)
 
 (use-package lsp-ui
   :defer t
-  :delight
-  :after lsp-mode
-  :hook (lsp-after-open-hook . lsp-ui-mode)
-  :hook (lsp-after-open-hook . lsp-lens-mode)
-  :hook (lsp-after-open-hook . lsp-signature-mode)
-  :hook (lsp-after-open-hook . lsp-ui-sideline-mode)
-  :hook (lsp-after-open-hook . lsp-headerline-breadcrumb-mode)
-  :commands lsp-ui-mode)
+  :after lsp-mode)
 
 ;; Git stuff
 
