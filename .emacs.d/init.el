@@ -1020,26 +1020,6 @@
 (use-package github-explorer
   :after graphql)
 
-;; Have multiple packages for PR handling, just to test them out.
-(use-package github-review
-  ;; :disabled t
-  :after (:all magit forge transient)
-  :straight (:host github :repo "charignon/github-review" :files ("github-review.el"))
-  :config
-  (transient-insert-suffix 'forge-dispatch '(1)
-    ["GitHub Review"
-     ("p g" "github-review at point" github-review-forge-pr-at-point)]))
-
-(use-package code-review
-  :disabled t ;; breaking with updated CloSQL
-  ;;:straight (:host github :repo "vzarytovskii/code-review")
-  :after (:all magit forge transient)
-  :config
-  (setq code-review-new-buffer-window-strategy #'switch-to-buffer)
-  (transient-insert-suffix 'forge-dispatch '(1)
-    ["Code Review"
-     ("p c" "code-review at point" code-review-forge-pr-at-point)]))
-
 (use-package pr-review
   ;; :disabled t
   :straight (:host github :repo "blahgeek/emacs-pr-review" :files (:defaults "graphql"))

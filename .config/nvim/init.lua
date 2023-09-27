@@ -43,8 +43,6 @@ vim.opt.undofile = true
 vim.opt.hlsearch = false
 vim.opt.incsearch = true
 
-
-
 vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes"
 vim.opt.isfname:append("@-@")
@@ -236,7 +234,7 @@ require("lazy").setup({
     priority = 1000,
     config = function()
       vim.opt.termguicolors = true
-      vim.opt.background = "light"
+      --vim.opt.background = "light"
       require('github-theme').setup({
         options = {
           compile_path = vim.fn.stdpath('cache') .. '/github-theme',
@@ -279,8 +277,24 @@ require("lazy").setup({
         specs = {},
         groups = {},
       })
-      vim.cmd([[colorscheme github_light_high_contrast]])
+      -- vim.cmd([[colorscheme github_light_high_contrast]])
+      require('auto-dark-mode').init()
     end,
+    dependencies = { "f-person/auto-dark-mode.nvim" }
+  },
+  {
+    "f-person/auto-dark-mode.nvim",
+    config = {
+      update_interval = 1000,
+      set_dark_mode = function()
+        vim.api.nvim_set_option("background", "dark")
+        vim.cmd("colorscheme github_dark_high_contrast")
+      end,
+      set_light_mode = function()
+        vim.api.nvim_set_option("background", "light")
+        vim.cmd("colorscheme github_light_high_contrast")
+      end,
+    },
   },
   {
     'hoob3rt/lualine.nvim',
