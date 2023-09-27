@@ -23,8 +23,8 @@ vim.o.foldenable = true
 vim.opt.guicursor = ""
 
 vim.o.cursorline = true
-vim.opt.nu = true
-vim.opt.relativenumber = false
+vim.opt.number = true
+vim.opt.relativenumber = true
 
 vim.opt.tabstop = 4
 vim.opt.softtabstop = 4
@@ -44,7 +44,7 @@ vim.opt.hlsearch = false
 vim.opt.incsearch = true
 
 vim.opt.scrolloff = 8
-vim.opt.signcolumn = "yes"
+vim.opt.signcolumn = "number"
 vim.opt.isfname:append("@-@")
 
 vim.opt.updatetime = 50
@@ -223,6 +223,13 @@ vim.api.nvim_create_autocmd(
       vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gy', '<CMD>Glance type_definitions<CR>', options)
       vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gm', '<CMD>Glance implementations<CR>', options)
 
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gpd', "<cmd>lua require('goto-preview').goto_preview_definition()<CR>", options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gpt', "<cmd>lua require('goto-preview').goto_preview_type_definition()<CR>", options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gpi', "<cmd>lua require('goto-preview').goto_preview_implementation()<CR>", options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gpD', "<cmd>lua require('goto-preview').goto_preview_declaration()<CR>", options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gP',  "<cmd>lua require('goto-preview').close_all_win()<CR>", options)
+      vim.api.nvim_buf_set_keymap(ev.buf, 'n', 'gpr', "<cmd>lua require('goto-preview').goto_preview_references()<CR>", options)
+
     end,
 })
 
@@ -311,7 +318,49 @@ require("lazy").setup({
     'nvim-lua/plenary.nvim',
     lazy = true
   },
-  { 'nvim-telescope/telescope.nvim' },
+  {
+    'nvim-telescope/telescope.nvim',
+     dependencies = { 'nvim-lua/plenary.nvim' },
+     config = function()
+      local telescope = require('telescope')
+      local telescope_actions = require('telescope.actions')
+      local telescope_builtin = require('telescope.builtin')
+      telescope.setup {
+        defaults = {
+          file_ignore_patterns = { "node_modules", ".git", ".vscode", ".artifacts" },
+          vimgrep_arguments = {
+            "rg",
+            "--color=never",
+            "--no-heading",
+            "--with-filename",
+            "--line-number",
+            "--column",
+            "--smart-case",
+            "--trim" -- add this value
+          },
+          layout_config = {
+            vertical = { width = 0.5 }
+          },
+          mappings = {
+            i = {
+              ['<C-u>'] = false,
+              ['<C-d>'] = false,
+              ["<esc>"] = telescope_actions.close,
+              ["<C-g>"] = telescope_actions.close
+            }
+          },
+        },
+        pickers = {
+          find_files = {
+            find_command = { "fdfind", "--type", "f", "--strip-cwd-prefix" },
+          }
+        }
+      }
+
+      vim.keymap.set({'n', 'v', 'i'}, '<M-f>', telescope_builtin.find_files, {})
+      vim.keymap.set({'n', 'v', 'i'}, '<M-s>', telescope_builtin.live_grep, {})
+     end
+  },
   {
     'gelguy/wilder.nvim',
     event = 'UiEnter',
@@ -561,6 +610,39 @@ require("lazy").setup({
         run_on_start = true
       })
 
+      lspconfig.fsautocomplete.setup({
+        settings = {
+          FSharp = {
+            excludeProjectDirectories = {
+               ".git",
+               "paket-files",
+               ".paket",
+               ".github",
+               ".idea",
+               "obj",
+               "bin",
+               "deploy",
+               "dist",
+               "node_modules",
+               ".vscode",
+            },
+            enableAdaptiveLspServer = true,
+            enableMSBuildProjectGraph = true,
+            unusedDeclarationsAnalyzer = true,
+            fsac = {
+              cachedTypeCheckCount = 1000,
+                gc = {
+                  conserveMemory = 0,
+                  heapCount = 6,
+                  server = true
+                },
+                parallelReferenceResolution = true,
+            },
+            externalAutocomplete = true,
+        }
+       }
+      })
+
       lsp.on_attach(
         function(client, bufnr)
           lsp.default_keymaps({buffer = bufnr})
@@ -678,7 +760,7 @@ require("lazy").setup({
               behavior = cmp.ConfirmBehavior.Replace,
               select = false
             }),
-            ['<C -p>']     = cmp.mapping.select_prev_item(),
+            ['<C-p>']     = cmp.mapping.select_prev_item(),
             ['<C-n>']     = cmp.mapping.select_next_item(),
             ['<Up>']      = cmp.mapping.select_prev_item(),
             ['<Down>']    = cmp.mapping.select_next_item(),
@@ -970,6 +1052,13 @@ require("lazy").setup({
       end
   },
   {
+    'rmagatti/goto-preview',
+    event = 'LspAttach',
+    config = function()
+      require('goto-preview').setup {}
+    end
+  },
+  {
     'dnlhc/glance.nvim',
     event = 'LspAttach',
     config = function ()
@@ -993,7 +1082,7 @@ require("lazy").setup({
           width = 0.33, -- 33% width relative to the active window, min 0.1, max 0.5
         },
         theme = { -- This feature might not work properly in nvim-0.7.2
-          enable = true, -- Will generate colors for the plugin based on your current colorscheme
+          enable = false, -- Will generate colors for the plugin based on your current colorscheme
           mode = 'auto', -- 'brighten'|'darken'|'auto', 'auto' will set mode based on the brightness of your colorscheme
         },
         mappings = {
@@ -1024,10 +1113,18 @@ require("lazy").setup({
             ['<leader>l'] = glance_actions.enter_win('list'), -- Focus list window
           },
         },
-        hooks = { },
+        hooks = {
+          before_open = function(results, open, jump, method)
+            if #results == 1 then
+              jump(results[1]) -- argument is optional
+            else
+              open(results) -- argument is optional
+            end
+          end,
+        },
         folds = {
-          fold_closed = '',
-          fold_open = '',
+          fold_closed = '+',
+          fold_open = '-',
           folded = true,
         },
         indent_lines = {
