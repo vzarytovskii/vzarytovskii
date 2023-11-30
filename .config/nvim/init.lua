@@ -651,7 +651,7 @@ require("lazy").setup({
             require('nvim-navic').attach(client, bufnr)
           end
           if client.server_capabilities.inlayHintProvider then
-              vim.lsp.inlay_hint(bufnr, true)
+              vim.lsp.inlay_hint.enable(bufnr)
           end
           if client.server_capabilities.code_lens then
             local codelens = vim.api.nvim_create_augroup(
@@ -677,7 +677,7 @@ require("lazy").setup({
 
           if client.supports_method("textDocument/hover") then
             vim.g.cursorhold_updatetime = 1500
-            vim.api.nvim_create_autocmd("CursorHold, CursorHoldI", {
+            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = bufnr,
               callback = function() hover_handler(client, bufnr) end
             })
