@@ -3,7 +3,6 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
     branches:
-        - 'master'
         - 'main'
         - 'release/*'
 permissions:
@@ -24,9 +23,9 @@ jobs:
         if [[ ${{ vars.LOCKDOWN }} == "true" ]]; then
           exit 1
         fi
-    # Did bot already commented the PR?
+    # Did bot already comment the PR?
     - name: Find Comment
-      if: failure()
+      if: success() || failure()
       uses: peter-evans/find-comment@v2.4.0
       id: fc
       with:
@@ -61,5 +60,19 @@ jobs:
                 repo: context.repo.repo,
                 comment_id: ${{steps.fc.outputs.comment-id}},
                 body: body
+            });
+            return comment.data.id;
+    # If comment exists, but we are no longer in maintenance mode, delete the comment.
+    - name: Update comment
+      if: steps.fc.outputs.comment-id != '' && success()
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ github.token }}
+        script: |
+            let body = "<!-- DO_NOT_REMOVE: repository_lockdown -->\n\n> [!CAUTION]\n>Repository is on lockdown for maintenance, all merges are on hold."
+            const comment = await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{steps.fc.outputs.comment-id}}
             });
             return comment.data.id;
