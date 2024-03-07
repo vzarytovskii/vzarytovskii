@@ -26,7 +26,7 @@ jobs:
         fi
     # Did bot already comment the PR?
     - name: Find Comment
-      if: success() || failure()
+      if: (success() || failure())
       uses: peter-evans/find-comment@v2.4.0
       id: fc
       with:
@@ -64,7 +64,7 @@ jobs:
             });
             return comment.data.id;
     # If comment exists, but we are no longer in maintenance mode, delete the comment.
-    - name: Update comment
+    - name: Delete comment
       if: steps.fc.outputs.comment-id != '' && success()
       uses: actions/github-script@v6
       with:
@@ -76,4 +76,4 @@ jobs:
                 repo: context.repo.repo,
                 comment_id: ${{steps.fc.outputs.comment-id}}
             });
-            return comment.data.id;
+            return 0;
