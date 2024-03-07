@@ -21,7 +21,9 @@ jobs:
     - name: Check if lockdown is in place
       run: |
         set -e
-        [[ ${{ vars.LOCKDOWN }} == "true" ]] && exit 1
+        if [[ ${{ vars.LOCKDOWN }} == "true" ]]; then
+          exit 1
+        fi
     # Did bot already commented the PR?
     - name: Find Comment
       if: failure()
