@@ -45,7 +45,7 @@ jobs:
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `${{steps.release_notes_changes.outputs.release-notes-check-message}}`
+                body: body
             });
             return comment.data.id;
     # If yes, update the comment
@@ -60,6 +60,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{steps.fc.outputs.comment-id}},
-                body: `${{steps.release_notes_changes.outputs.release-notes-check-message}}`
+                body: body
             });
             return comment.data.id;
