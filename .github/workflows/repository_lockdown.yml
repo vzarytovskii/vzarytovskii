@@ -1,0 +1,62 @@
+name: Repository lockdown check
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches:
+        - 'main'
+        - 'release/*'
+permissions:
+  issues: write
+  pull-requests: write
+jobs:
+  repository_lockdown:
+    permissions:
+       issues: write
+       pull-requests: write
+    env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check if lockdown is in place
+      run: |
+        set -e
+        [[ ${{ vars.LOCKDOWN }} == "true" ]] && exit 1
+    # Did bot already commented the PR?
+    - name: Find Comment
+      if: failure()
+      uses: peter-evans/find-comment@v2.4.0
+      id: fc
+      with:
+        issue-number: ${{github.event.pull_request.number}}
+        comment-author: 'github-actions[bot]'
+        body-includes: '<!-- DO_NOT_REMOVE: repository_lockdown -->'
+    # If not, create a new comment
+    - name: Create comment
+      if: steps.fc.outputs.comment-id == '' && failure()
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ github.token }}
+        script: |
+            let body = "<!-- DO_NOT_REMOVE: repository_lockdown -->\n\n> [!CAUTION]\n>Repository is on lockdown for maintenance, all merges are on hold."
+            const comment = await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `${{steps.release_notes_changes.outputs.release-notes-check-message}}`
+            });
+            return comment.data.id;
+    # If yes, update the comment
+    - name: Update comment
+      if: steps.fc.outputs.comment-id != '' && failure()
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ github.token }}
+        script: |
+            let body = "<!-- DO_NOT_REMOVE: repository_lockdown -->\n\n> [!CAUTION]\n>Repository is on lockdown for maintenance, all merges are on hold."
+            const comment = await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{steps.fc.outputs.comment-id}},
+                body: `${{steps.release_notes_changes.outputs.release-notes-check-message}}`
+            });
+            return comment.data.id;
