@@ -1,6 +1,6 @@
 ;;; early-init.el --- Emacs 27+ early init. -*- lexical-binding: t; -*-
 ;;; Commentary:
-;; Emacs 27+ early init, for main configuration, see config.el.
+;; Emacs 27+ early init, for main configuration, see init.el.
 
 ;;; Code:
 
@@ -127,8 +127,8 @@
         native-comp-async-jobs-number 20
         native-comp-jit-compilation t
         native-comp-enable-subr-trampolines t
-        native-comp-driver-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
-        native-comp-compiler-options '("-march=skylake" "-mtune=native" "-Ofast" "-g0" "-fno-finite-math-only")
+        native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only")
+        native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-always-compile t
         warning-minimum-level :error))
 

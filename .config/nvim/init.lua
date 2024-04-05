@@ -30,6 +30,10 @@ vim.opt.tabstop = 4
 vim.opt.softtabstop = 4
 vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
+vim.opt.exrc = true
+
+vim.g.lsp_zero_extend_lspconfig = 0
+
 
 vim.opt.smartindent = true
 
@@ -459,6 +463,7 @@ require("lazy").setup({
   },
   { -- Git and github related stuff
     'NeogitOrg/neogit',
+    branch = 'develop',
     event = 'VeryLazy',
     dependencies = {
       'nvim-lua/plenary.nvim',
@@ -574,7 +579,7 @@ require("lazy").setup({
   },
   {
     'VonHeikemen/lsp-zero.nvim',
-    branch = 'dev-v3',
+    branch = 'v3.x',
     cmd = { 'LspInfo', 'Mason' },
     event = {'BufReadPre', 'BufNewFile'},
     dependencies = {
@@ -598,7 +603,9 @@ require("lazy").setup({
 
       require("mason-lspconfig").setup({
         ensure_installed = { "fsautocomplete", "rust_analyzer", "marksman", "prosemd_lsp", "grammarly" },
-        handlers = { lsp.default_setup }
+        handlers = { 
+          lsp.default_setup
+        }
       })
 
       require('mason-tool-installer').setup({
@@ -611,8 +618,15 @@ require("lazy").setup({
       })
 
       lspconfig.fsautocomplete.setup({
+        cmd = { 'fsautocomplete', '--adaptive-lsp-server-enabled' },
+        root_dir = lspconfig.util.root_pattern('*.sln', '*.fsproj', '.git'),
+        filetypes = { 'fsharp' },
+        init_options = {
+          AutomaticWorkspaceInit = true,
+        }, 
         settings = {
           FSharp = {
+            workspacePath = "FSharp.Compiler.Service.sln",
             excludeProjectDirectories = {
                ".git",
                "paket-files",
@@ -625,21 +639,25 @@ require("lazy").setup({
                "dist",
                "node_modules",
                ".vscode",
+               "vsintegration"
             },
+            workspaceModePeekDeepLevel = 1, 
             enableAdaptiveLspServer = true,
-            enableMSBuildProjectGraph = true,
-            unusedDeclarationsAnalyzer = true,
+            enableMSBuildProjectGraph = false,
+            unusedDeclarationsAnalyzer = false,
             fsac = {
-              cachedTypeCheckCount = 1000,
+              cachedTypeCheckCount = 10000,
                 gc = {
                   conserveMemory = 0,
-                  heapCount = 6,
-                  server = true
+                  heapCount = 10,
+                  server = true,
+                  noAffinitize = true
                 },
                 parallelReferenceResolution = true,
             },
             externalAutocomplete = true,
-        }
+        },
+        Fsharp = { fsac = { gc = { noAffinitize = true } } } 
        }
       })
 
@@ -684,6 +702,17 @@ require("lazy").setup({
           end
         end
       )
+
+      lsp.set_server_config({
+        capabilities = {
+          textDocument = {
+            foldingRange = {
+              dynamicRegistration = false,
+              lineFoldingOnly = true
+            }
+          }
+        }
+      })
 
       lsp.setup()
     end
