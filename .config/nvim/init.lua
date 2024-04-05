@@ -463,7 +463,7 @@ require("lazy").setup({
   },
   { -- Git and github related stuff
     'NeogitOrg/neogit',
-    branch = 'develop',
+    branch = 'nightly',
     event = 'VeryLazy',
     dependencies = {
       'nvim-lua/plenary.nvim',
