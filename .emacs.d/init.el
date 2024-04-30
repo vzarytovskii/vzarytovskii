@@ -427,6 +427,25 @@
 
 (use-package forge
   :after magit
+  :preface
+  (defun forge-bug-reference-setup ()
+  (magit--with-safe-default-directory nil
+    (when-let ((repo (forge-get-repository 'full)))
+      (setq-local
+       bug-reference-auto-setup-functions
+       (let ((functions bug-reference-auto-setup-functions))
+         (list (lambda ()
+                 (catch 'setup
+                   (dolist (f functions)
+                     (when (funcall f)
+                       (setq bug-reference-bug-regexp
+                             (concat "[^\n]" bug-reference-bug-regexp))
+                       (throw 'setup t))))))))
+      (if (derived-mode-p 'prog-mode)
+          (bug-reference-prog-mode 1)
+        (bug-reference-mode 1))
+      (add-hook 'completion-at-point-functions
+                'forge-topic-completion-at-point nil t))))
   :hook (magit-mode . forge-bug-reference-setup)
   :config
   (setq forge-topic-list-limit '(100 . -10)))
@@ -461,17 +480,27 @@
               (unpushed . show)
               (untracked . show)
               (unstaged . show)
-              (pullreqs . show)
-              (issues . show)
-              (stashes . show)
+              (pullreqs . hide)
+              (issues . hide)
+              (stashes . hide)
+              (branches . hide)
               (todos . show)
-              (branches . show)
+              (branches . hide)
               (recent . show))
         magit-section-visibility-indicator '("…" . nil))
 
+  (remove-hook 'magit-status-sections-hook 'magit-insert-local-branches)
   (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-pullreqs nil t)
   (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-issues nil t)
-
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-merge-log nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-rebase-sequence nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-am-sequence nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-sequencer-sequence nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-output nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-rest nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-log nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-untracked-files nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent nil t)
   (progn
     (setq magit-post-display-buffer-hook
           #'(lambda ()
@@ -565,18 +594,16 @@
   :after (:all magit forge transient)
   :config
   (transient-insert-suffix 'magit-dispatch '(1)
-    ["PR Review"
-     ("p n" "PR review notifications" pr-review-notification)
-     ("p " "PR review notifications" pr-review-notification)]))
+    ["Code Review"
+     ("= n" "PR review notifications" pr-review-notification)]))
 
 (use-package code-review
-  :straight (:host github :repo "phelrine/emacs-pr-review" :branch "fix/closql-update" :files (:defaults "graphql"))
+  :straight (:host github :repo "phelrine/code-review" :branch "fix/closql-update" :files (:defaults "graphql"))
   :after (:all magit forge transient)
   :config
   (transient-insert-suffix 'magit-dispatch '(1)
     ["Code Review"
-     ("r n" "PR review notifications" pr-review-notification)
-     ("p " "PR review notifications" pr-review-notification)]))
+     ("= c" "Review PR at cursor" code-review-forge-pr-at-point)]))
 
 (use-package git-link
   :bind (("C-x C-g i")))
