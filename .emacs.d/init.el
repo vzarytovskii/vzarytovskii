@@ -129,6 +129,21 @@
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
 
+(defvar big-fringe-mode nil)
+(define-minor-mode big-fringe-mode
+  "Minor mode to use big fringe in the current buffer."
+  :init-value nil
+  :global t
+  :variable big-fringe-mode
+  :group 'editing-basics
+  (if (not big-fringe-mode)
+      (set-fringe-style nil)
+    (set-fringe-mode
+     (/ (- (frame-pixel-width)
+           (* 200 (frame-char-width)))
+        2))))
+
+
 (use-package delight
   :after use-package)
 
@@ -159,6 +174,7 @@
                     (with-current-buffer (process-buffer future)
                       (setq async--cb callback)))))
               '((name . --queue-dispatch))))
+
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
   :delight auto-revert-mode
@@ -174,7 +190,7 @@
          ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
-	 ("C-g"             . 'keyboard-quit)
+	       ("C-g"             . 'keyboard-quit)
          ("C-k"             . 'kill-buffer)
          ("C-K"             . 'kill-this-buffer)
          ("C-c o"           . 'switch-to-minibuffer))
@@ -258,6 +274,17 @@
   :config
   ;; Defaults
 
+  (add-hook 'window-configuration-change-DELETEME-hook
+    (lambda ()
+      (if (delq nil
+                (let ((fw (frame-width)))
+                  (mapcar (lambda(w) (< (window-width w) (/ fw 2)))
+                          (window-list))))
+          (big-fringe-mode 0)
+        (big-fringe-mode 1))))
+
+  (big-fringe-mode 0)
+
   (setq-default major-mode 'text-mode
                 use-file-dialog nil
                 use-dialog-box t
@@ -333,33 +360,12 @@
   (add-to-list 'default-frame-alist '(tool-bar-lines . 0))
   (add-to-list 'default-frame-alist '(left-fringe . 1))
   (add-to-list 'default-frame-alist '(right-fringe . 1))
-  (add-to-list 'default-frame-alist '(internal-border-width . 0)))
-
-(use-package fullframe
-  :after magit
-  :config
-  (fullframe magit-status magit-mode-quit-window))
+  (add-to-list 'default-frame-alist '(internal-border-width . 0)
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))))
 
 (use-package faces
   :straight nil
   :preface
-
-  ;; (defun my-dpi ()
-  ;;   (let* ((attrs (car (display-monitor-attributes-list)))
-  ;;          (size (assoc 'mm-size attrs))
-  ;;          (sizex (cadr size))
-  ;;          (res (cdr (assoc 'geometry attrs)))
-  ;;          (resx (- (caddr res) (car res)))
-  ;;          dpi)
-  ;;     (catch 'exit
-  ;;       ;; in terminal
-  ;;       (unless sizex
-  ;;         (throw 'exit 10))
-  ;;       ;; on big screen
-  ;;       (when (> sizex 1000)
-  ;;         (throw 'exit 10))
-  ;;       ;; DPI
-  ;;       (* (/ (float resx) sizex) 25.4))))
 
   (defun my-dpi (&optional frame)
     "Get the DPI of FRAME (or current if nil)."
@@ -407,3 +413,273 @@
   (add-function :after after-focus-change-function #'adapt-font-size)
   (add-hook 'window-size-change-functions #'adapt-font-size)
   (add-hook 'after-make-frame-functions #'adapt-font-size))
+
+(use-package hydra)
+(use-package transient
+  :config
+  (setq transient-default-level 5))
+(use-package fullframe
+  :after magit
+  :config
+  (fullframe magit-status magit-mode-quit-window))
+
+;; Git
+
+(use-package forge
+  :after magit
+  :hook (magit-mode . forge-bug-reference-setup)
+  :config
+  (setq forge-topic-list-limit '(100 . -10)))
+
+(use-package ediff
+  :ensure nil
+  :custom
+  (ediff-keep-variants nil)
+  (ediff-split-window-function #'split-window-horizontally)
+  (ediff-window-setup-function #'ediff-setup-windows-plain))
+
+(use-package git-modes)
+
+(use-package magit
+  :defer t
+  :commands (magit magit-status magit-blame magit-mode magit-file-popup)
+  :bind (("C-x g" . magit-status)
+         ("C-c g" . magit-dispatch-popup))
+  :config
+  (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)
+        magit-list-refs-sortby "-creatordate"
+        magit-refs-show-commit-count 'branch
+        magit-status-sections-hook (-concat magit-status-sections-hook '(magit-insert-local-branches))
+        magit-diff-refine-hunk t
+  	    magit-commit-arguments '("--verbose")
+        magit-display-buffer-function #'magit-display-buffer-traditional
+        magit-diff-highlight-hunk-region-functions
+          '(magit-diff-highlight-hunk-region-dim-outside
+            magit-diff-highlight-hunk-region-using-face)
+        magit-section-initial-visibility-alist
+            '((unpulled . show)
+              (unpushed . show)
+              (untracked . show)
+              (unstaged . show)
+              (pullreqs . show)
+              (issues . show)
+              (stashes . show)
+              (todos . show)
+              (branches . show)
+              (recent . show))
+        magit-section-visibility-indicator '("…" . nil))
+
+  (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-pullreqs nil t)
+  (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-issues nil t)
+
+  (progn
+    (setq magit-post-display-buffer-hook
+          #'(lambda ()
+              (when (derived-mode-p 'magit-status-mode)
+                (delete-other-windows))))
+
+    (setenv "GIT_PAGER" "")
+    (add-hook 'magit-log-edit-mode-hook
+              '(lambda ()
+                 (auto-fill-mode)
+                 (flyspell-mode)
+                 (set-fill-column 120))))
+
+  (defvar magit--modified-files nil)
+
+  (defun magit-maybe-cache-modified-files ()
+    "Maybe save a list of modified files.
+ That list is later used by `magit-update-uncommitted-buffers',
+ provided it is a member of `magit-post-refresh-hook'.  If it is
+ not, then don't save anything here."
+    (when (memq 'magit-update-uncommitted-buffers magit-post-refresh-hook)
+      (setq magit--modified-files (magit-unstaged-files t))))
+
+  (add-hook 'magit-pre-refresh-hook #'magit-maybe-cache-modified-files)
+  (add-hook 'magit-pre-call-git-hook #'magit-maybe-cache-modified-files)
+  (add-hook 'magit-pre-start-git-hook #'magit-maybe-cache-modified-files)
+
+  (defun magit-update-uncommitted-buffers ()
+    "Update some file-visiting buffers belonging to the current repository.
+ Run `magit-update-uncommitted-buffer-hook' for each buffer
+ which visits a file inside the current repository that had
+ uncommitted changes before running the current Magit command
+ and/or that does so now."
+    (let ((topdir (magit-toplevel)))
+      (dolist (file (delete-consecutive-dups
+		     (sort (nconc (magit-unstaged-files t)
+				  magit--modified-files)
+			   #'string<)))
+	(--when-let (find-buffer-visiting (expand-file-name file topdir))
+	  (with-current-buffer it
+	    (run-hooks 'magit-update-uncommitted-buffer-hook))))))
+
+  (add-hook 'magit-post-refresh-hook #'magit-update-uncommitted-buffers)
+
+  (define-advice magit-push-current-to-upstream (:before (args) query-yes-or-no)
+    "Prompt for confirmation before permitting a push to upstream."
+    (when-let ((branch (magit-get-current-branch)))
+      (unless (yes-or-no-p (format "Push %s branch upstream to %s? "
+				   branch
+				   (or (magit-get-upstream-branch branch)
+				       (magit-get "branch" branch "remote"))))
+	(user-error "Push to upstream aborted by user")))))
+
+(use-package magit-lfs
+  :after magit)
+
+(use-package magit-todos
+  :after magit
+  :hook (magit-mode-hook . magit-todos-mode)
+  :custom
+  (magit-todos-exclude-globs '("node_modules" "*.json"))
+  :config
+  (setq magit-todos-auto-group-items 'always))
+
+(use-package magit-delta
+  :delight
+  :if (executable-find "delta")
+  :after magit
+  :hook (magit-mode-hook . magit-delta-mode)
+  :config
+  (setq magit-delta-hide-plus-minus-markers nil))
+
+(use-package magit-filenotify
+  :after magit
+  :hook (after-save-hook . magit-filenotify-mode))
+
+
+(use-package git-commit-insert-issue
+  :config
+  (add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode))
+
+(use-package graphql)
+
+(use-package ghub)
+
+(use-package github-explorer
+  :after graphql)
+
+(use-package pr-review
+  :straight (:host github :repo "blahgeek/emacs-pr-review" :branch "master" :files (:defaults "graphql"))
+  :after (:all magit forge transient)
+  :config
+  (transient-insert-suffix 'magit-dispatch '(1)
+    ["PR Review"
+     ("p n" "PR review notifications" pr-review-notification)
+     ("p " "PR review notifications" pr-review-notification)]))
+
+(use-package code-review
+  :straight (:host github :repo "phelrine/emacs-pr-review" :branch "fix/closql-update" :files (:defaults "graphql"))
+  :after (:all magit forge transient)
+  :config
+  (transient-insert-suffix 'magit-dispatch '(1)
+    ["Code Review"
+     ("r n" "PR review notifications" pr-review-notification)
+     ("p " "PR review notifications" pr-review-notification)]))
+
+(use-package git-link
+  :bind (("C-x C-g i")))
+
+(use-package git-blamed)
+
+(use-package git-timemachine
+  :after magit
+  :commands my/git-timemachine-on
+  :bind ("C-x v t" . git-timemachine-toggle)
+  :config
+  (defhydra my/git-timemachine
+    (:color pink :hint nil)
+    ("n" git-timemachine-show-next-revision "Next Revision" :column "Go to")
+    ("p" git-timemachine-show-previous-revision "Next Revision")
+    ("c" git-timemachine-show-current-revision "Current Revision")
+    ("g" git-timemachine-show-nth-revision "Nth Revision")
+    ("t" git-timemachine-show-revision-fuzzy "Search")
+    ("W" git-timemachine-kill-revision "Copy full revision" :column "Actions")
+    ("w" git-timemachine-kill-abbreviated-revision "Copy abbreviated revision" :column "Actions")
+    ("C" git-timemachine-show-commit "Show commit")
+    ("b" git-timemachine-blame "Blame")
+    ("q" git-timemachine-quit "cancel" :color blue :column nil))
+  (defun my/git-timemachine-on ()
+    (interactive)
+    (git-timemachine)
+    (my/git-timemachine/body))
+
+  ;; (define-advice git-timemachine-mode (:after (_args) open-timemachine-hydra)
+  ;; (my/git-timemachine-on))
+
+  (transient-insert-suffix 'magit-dispatch '(1)
+    ["Git Time Machine"
+     ("T" "Toggle time machine" my/git-timemachine-on)]))
+
+(use-package git-messenger
+  :init
+  (setq git-messenger:show-detail t
+        git-messenger:use-magit-popup t)
+  :bind (:map vc-prefix-map
+              ("p" . git-messenger:popup-message)))
+
+(use-package git-gutter-fringe
+  :delight git-gutter-mode
+  :hook (after-init-hook . global-git-gutter-mode)
+  :init (setq git-gutter:visual-line t
+              git-gutter:disabled-modes '(asm-mode image-mode)
+              git-gutter:modified-sign "~" ;;"❚"
+              git-gutter:added-sign "+" ;;"✚"
+              git-gutter:deleted-sign "-" ;;"✖"
+              blamer-max-commit-message-length 100)
+
+  :bind (("C-c v =" . git-gutter:popup-hunk)
+         ("C-c p" . git-gutter:previous-hunk)
+         ("C-c n" . git-gutter:next-hunk)))
+
+(use-package diff-hl
+  :disabled t
+  :config
+  (global-diff-hl-mode))
+
+(use-package smerge-mode
+  :after hydra
+  :preface
+  (with-eval-after-load 'hydra
+    (defhydra smerge-hydra
+      (:color pink :hint nil :post (smerge-auto-leave))
+      "
+^Move^       ^Keep^               ^Diff^                 ^Other^
+^^-----------^^-------------------^^---------------------^^-------
+_n_ext       _b_ase               _<_: upper/base        _C_ombine
+_p_rev       _u_pper              _=_: upper/lower       _r_esolve
+^^           _l_ower              _>_: base/lower        _k_ill current
+^^           _a_ll                _R_efine
+^^           _RET_: current       _E_diff
+"
+      ("n" smerge-next)
+      ("p" smerge-prev)
+      ("b" smerge-keep-base)
+      ("u" smerge-keep-upper)
+      ("l" smerge-keep-lower)
+      ("a" smerge-keep-all)
+      ("RET" smerge-keep-current)
+      ("\C-m" smerge-keep-current)
+      ("<" smerge-diff-base-upper)
+      ("=" smerge-diff-upper-lower)
+      (">" smerge-diff-base-lower)
+      ("R" smerge-refine)
+      ("E" smerge-ediff)
+      ("C" smerge-combine-with-next)
+      ("r" smerge-resolve)
+      ("k" smerge-kill-current)
+      ("ZZ" (lambda ()
+              (interactive)
+              (save-buffer)
+              (bury-buffer))
+       "Save and bury buffer" :color blue)
+      ("q" nil "cancel" :color blue)))
+  :hook ((find-file-hook . (lambda ()
+                             (save-excursion
+                               (goto-char (point-min))
+                               (when (re-search-forward "^<<<<<<< " nil t)
+                                 (smerge-mode 1)))))
+         (magit-diff-visit-file-hook . (lambda ()
+                                         (when smerge-mode
+                                           (smerge-hydra/body))))))

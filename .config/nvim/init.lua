@@ -1,16 +1,18 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
     "git",
     "clone",
     "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable",
+    "--branch=main",
     lazypath,
   })
 end
 
 vim.opt.rtp:prepend(lazypath)
+
 vim.g.mapleader = " "
 vim.wo.signcolumn = "yes"
 vim.wo.number = true
@@ -512,7 +514,10 @@ require("lazy").setup({
   {
     'adelarsq/neofsharp.vim',
     lazy = true,
-    ft = "fsharp"
+    ft = "fsharp",
+    config = function ()
+      vim.fn.setenv("BUILDING_USING_DOTNET", "true")
+    end
   },
   {
     'simrat39/rust-tools.nvim',
@@ -526,12 +531,9 @@ require("lazy").setup({
   {
     'nvim-treesitter/nvim-treesitter',
     dependencies = {
-      'nvim-treesitter/playground',
       'nvim-treesitter/nvim-treesitter-context'
     },
-    build = function()
-      pcall(vim.cmd, 'TSUpdate')
-    end,
+    build = ":TSUpdate",
     config = function ()
       local treesitter = require('nvim-treesitter.configs')
       local treesitter_context = require('treesitter-context')
@@ -543,13 +545,16 @@ require("lazy").setup({
         install_info = {
           url = "~/code/tree-sitter-fsharp",
           -- branch = "develop",
-          files = {"src/scanner.cc", "src/parser.c" }
+          files = {"src/scanner.c", "src/parser.c" }
         },
         filetype = "fsharp",
       }
 
       treesitter.setup {
+        auto_install = true,
         ensure_installed = {
+          "fsharp",
+          "query",
           "lua", "rust", "c_sharp", "comment", "diff", "yaml",
           "git_rebase", "gitattributes", "gitcommit",
           "json", "markdown", "markdown_inline" },
@@ -626,6 +631,7 @@ require("lazy").setup({
         }, 
         settings = {
           FSharp = {
+            generateBinlog = "true",
             workspacePath = "FSharp.Compiler.Service.sln",
             excludeProjectDirectories = {
                ".git",
