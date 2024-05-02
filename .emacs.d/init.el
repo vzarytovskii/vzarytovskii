@@ -489,18 +489,86 @@
               (recent . show))
         magit-section-visibility-indicator '("…" . nil))
 
-  (remove-hook 'magit-status-sections-hook 'magit-insert-local-branches)
+  (defun magit-remove-from-hook (magit-hook funs)
+    (dolist (f funs)
+      (remove-hook magit-hook f)))
+
+  (defun magit-add-section-hooks (magit-hook funs)
+    (dolist (f funs)
+      (magit-add-section-hook magit-hook f nil t)))
+
+  ;; Cleanup magit status page by removing everything from it, and then add only wanted items
+  ;; Magit status header
+  ;;(magit-remove-from-hook
+  ;;  'magit-status-headers-hook
+  ;;  '(magit-insert-head-branch-header
+  ;;    magit-insert-upstream-branch-header
+  ;;    magit-insert-push-branch-header
+  ;;    magit-insert-tags-header
+  ;;    magit-insert-error-header
+  ;;    magit-insert-diff-filter-header))
+
+  ;;(magit-add-section-hooks
+  ;;  'magit-status-headers-hook
+  ;;  '(magit-insert-head-branch-header
+  ;;    magit-insert-upstream-branch-header
+  ;;    ;;magit-insert-push-branch-header
+  ;;    magit-insert-error-header
+  ;;    magit-insert-diff-filter-header))
+
+  ;; Magit status sections
+  (magit-remove-from-hook
+    'magit-status-sections-hook
+    '(;;magit-insert-unpushed-to-upstream-or-recent
+      ;;magit-insert-merge-log
+      ;;magit-insert-rebase-sequence
+      ;;magit-insert-am-sequence
+      ;;magit-insert-sequencer-sequence
+      ;;magit-insert-bisect-output
+      ;;magit-insert-bisect-rest
+      ;;magit-insert-bisect-log
+      ;;magit-insert-untracked-files
+      ;;magit-insert-unstaged-changes
+      ;;magit-insert-staged-changes
+      ;;magit-insert-stashes
+      ;;magit-insert-unpulled-from-upstream
+      ;;magit-insert-unpulled-from-pushremote
+      ;;magit-insert-unpushed-to-upstream
+      ;;magit-insert-unpushed-to-pushremote
+      ;;magit-insert-tracked-files
+      ;;magit-insert-ignored-files
+      ;;magit-insert-skip-worktree-files
+      ;;magit-insert-assumed-unchanged-files
+      ;;magit-insert-unpulled-or-recent-commits
+      ;;magit-insert-recent-commits
+      ;;magit-insert-unpulled-cherries
+      ;;magit-insert-unpushed-cherries
+      magit-insert-local-branches
+      ;;forge-insert-pullreqs
+      ;;forge-insert-issues
+      ))
+  ;;(magit-add-section-hooks
+  ;;  'magit-status-sections-hook
+  ;;  '(magit-insert-unstaged-changes
+  ;;    magit-insert-staged-changes
+  ;;    magit-insert-untracked-files
+  ;;    magit-insert-unpulled-or-recent-commits
+  ;;    forge-insert-pullreqs
+  ;;    forge-insert-issues))
+
+
   (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-pullreqs nil t)
   (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-issues nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-merge-log nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-rebase-sequence nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-am-sequence nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-sequencer-sequence nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-output nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-rest nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-log nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-untracked-files nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-merge-log nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-rebase-sequence nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-am-sequence nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-sequencer-sequence nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-output nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-rest nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-log nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-untracked-files nil t)
+  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent nil t)
+
   (progn
     (setq magit-post-display-buffer-hook
           #'(lambda ()
@@ -558,6 +626,7 @@
   :after magit)
 
 (use-package magit-todos
+  :disabled t
   :after magit
   :hook (magit-mode-hook . magit-todos-mode)
   :custom
