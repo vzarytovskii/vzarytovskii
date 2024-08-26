@@ -421,7 +421,7 @@
 (use-package fullframe
   :after magit
   :config
-  (fullframe magit-status magit-mode-quit-window))
+  (fullframe magit-status magit-mode-quit-window code-review-forge-pr-at-point))
 
 ;; Git
 
@@ -645,7 +645,6 @@
 (use-package magit-filenotify
   :after magit
   :hook (after-save-hook . magit-filenotify-mode))
-
 
 (use-package git-commit-insert-issue
   :config
