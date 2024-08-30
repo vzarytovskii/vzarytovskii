@@ -4,14 +4,6 @@
 
 ;;; Code:
 
-(let ((minver 26))
-  (unless (>= emacs-major-version minver)
-    (error "Your Emacs is too old -- this configuration requires v%s or higher" minver)))
-
-(unless (>= emacs-major-version 27)
-  (message "Early init: Emacs Version < 27.0")
-  (load (expand-file-name "early-init.el" user-emacs-directory)))
-
 ;; Setup package system
 
 (eval-when-compile
@@ -23,7 +15,7 @@
   (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
 
   (setq package-quickstart t
-        gnutls-algorithm-priority  "NORMAL:-VERS-TLS1.3"
+        gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
         package-archive-priorities
         '(("melpa" .  500)
           ("melpa-stable" . 400)
@@ -90,6 +82,22 @@
     (package-install 'use-package))
   (straight-use-package 'use-package))
 
+(require 'tls)
+
+(setq gnutls-verify-error (not (getenv "INSECURE"))
+      tls-checktrust gnutls-verify-error
+      tls-program (list "gnutls-cli --x509cafile %t -p %p %h"
+                        ;; compatibility fallbacks
+                        "gnutls-cli -p %p %h"
+                        "openssl s_client -connect %h:%p -no_ssl2 -no_ssl3 -ign_eof"))
+
+(use-package gcmh
+  :ensure t
+  :hook (after-init-hook . gcmh-mode)
+  :custom
+  (gcmh-idle-delay 10)
+  (gcmh-high-cons-threshold #x6400000))
+
 (use-package auto-package-update
   :if (not (daemonp))
   :custom
@@ -100,17 +108,9 @@
   :config
   (auto-package-update-maybe))
 
-(require 'tls)
 
-(setq gnutls-verify-error (not (getenv "INSECURE"))
-      tls-checktrust gnutls-verify-error
-      tls-program (list "gnutls-cli --x509cafile %t -p %p %h"
-                        ;; compatibility fallbacks
-                        "gnutls-cli -p %p %h"
-                        "openssl s_client -connect %h:%p -no_ssl2 -no_ssl3 -ign_eof"))
-
-(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin"))
-(setq exec-path (append exec-path '("~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin")))
+(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin"))
+(setq exec-path (append exec-path '("~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin")))
 
 (defun reload-init-file ()
     (interactive)
@@ -129,51 +129,13 @@
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
 
-(defvar big-fringe-mode nil)
-(define-minor-mode big-fringe-mode
-  "Minor mode to use big fringe in the current buffer."
-  :init-value nil
-  :global t
-  :variable big-fringe-mode
-  :group 'editing-basics
-  (if (not big-fringe-mode)
-      (set-fringe-style nil)
-    (set-fringe-mode
-     (/ (- (frame-pixel-width)
-           (* 200 (frame-char-width)))
-        2))))
-
+(use-package exec-path-from-shell
+  :ensure t
+  :when (eq system-type 'darwin)
+  :hook (after-init-hook . exec-path-from-shell-initialize))
 
 (use-package delight
   :after use-package)
-
-(use-package async
-  :init
-  (setq async-bytecomp-allowed-packages '(all))
-  :config
-  (async-bytecomp-package-mode t)
-  (dired-async-mode 1)
-  ;; limit number of async processes
-  (eval-when-compile
-    (require 'cl-lib))
-  (defvar async-maximum-parallel-procs 20)
-  (defvar async--parallel-procs 0)
-  (defvar async--queue nil)
-  (defvar-local async--cb nil)
-  (advice-add #'async-start :around
-              (lambda (orig-func func &optional callback)
-                (if (>= async--parallel-procs async-maximum-parallel-procs)
-                    (push `(,func ,callback) async--queue)
-                  (cl-incf async--parallel-procs)
-                  (let ((future (funcall orig-func func
-                                         (lambda (re)
-                                           (cl-decf async--parallel-procs)
-                                           (when async--cb (funcall async--cb re))
-                                           (when-let (args (pop async--queue))
-                                             (apply #'async-start args))))))
-                    (with-current-buffer (process-buffer future)
-                      (setq async--cb callback)))))
-              '((name . --queue-dispatch))))
 
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
@@ -270,28 +232,31 @@
     (if mark-active
         (kill-ring-save beg end)
       (kill-ring-save (line-beginning-position) (line-end-position))))
-
   :config
+
+  (add-to-list 'initial-frame-alist '(fullscreen . maximized))
+  (add-to-list 'default-frame-alist '(fullscreen . fullheight))
+
+  (when (fboundp 'menu-bar-mode)
+    (menu-bar-mode -1))
+  (when (fboundp 'tool-bar-mode)
+    (tool-bar-mode -1))
+  (when (fboundp 'set-scroll-bar-mode)
+    (set-scroll-bar-mode nil))
+
+
   ;; Defaults
-
-  (add-hook 'window-configuration-change-DELETEME-hook
-    (lambda ()
-      (if (delq nil
-                (let ((fw (frame-width)))
-                  (mapcar (lambda(w) (< (window-width w) (/ fw 2)))
-                          (window-list))))
-          (big-fringe-mode 0)
-        (big-fringe-mode 1))))
-
-  (big-fringe-mode 0)
 
   (setq-default major-mode 'text-mode
                 use-file-dialog nil
-                use-dialog-box t
+                use-dialog-box nil
                 cursor-type 'box
                 x-stretch-cursor t
                 cursor-in-non-selected-window nil
-                indent-tabs-mode nil)
+                indent-tabs-mode nil
+                tab-width 4
+                select-enable-primary t
+                select-enable-clipboard t)
 
   (fset 'yes-or-no-p 'y-or-n-p)
   (setq inhibit-default-init t
@@ -300,12 +265,16 @@
         inhibit-startup-echo-area-message t
         initial-scratch-message nil
 
-	idle-update-delay 1.1
+	      idle-update-delay 1.1
 
         scroll-margin 0
         scroll-step 1
         scroll-conservatively 100000
         scroll-preserve-screen-position 1
+        scroll-preserve-screen-position 'always
+        hscroll-step 2
+        hscroll-margin 2
+
         next-line-add-newlines nil
 
         byte-compile-warnings '(cl-functions)
@@ -315,13 +284,16 @@
         tab-width 4
         frame-resize-pixelwise t
 
-	redisplay-skip-fontification-on-input t
+        display-raw-bytes-as-hex t
+	      redisplay-skip-fontification-on-input t
 
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
         window-divider-default-places 'right-only
 
-	show-trailing-whitespace t
+        blink-cursor-mode nil
+
+	      show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
         backup-directory-alist '(("." . "~/.saves"))
@@ -329,452 +301,82 @@
         track-eol nil
         line-move-visual nil
         kill-whole-line t
-        indent-tabs-mode nil
         truncate-lines t
         show-paren-style 'parenthesis
-        frame-resize-pixelwise t))
+        frame-resize-pixelwise t
+        use-short-answers t))
 
-(use-package frame
-  :straight nil
-  :config
-  (setq mode-line-compact t
-        max-mini-window-height 1.0
-        input-method-use-echo-area nil
-        echo-keystrokes 0
-        resize-mini-windows nil)
-  (blink-cursor-mode -1)
-  (column-number-mode t)
-  (global-subword-mode t)
-  (horizontal-scroll-bar-mode -1)
-  (line-number-mode +1)
-  (menu-bar-mode -1)
-  (scroll-bar-mode -1)
-  (size-indication-mode t)
-  (toggle-scroll-bar -1)
-  (tool-bar-mode -1)
-
-  (when (featurep 'ns)
-    (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
-  (add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
-  (add-to-list 'default-frame-alist '(menu-bar-lines . 0))
-  (add-to-list 'default-frame-alist '(tool-bar-lines . 0))
-  (add-to-list 'default-frame-alist '(left-fringe . 1))
-  (add-to-list 'default-frame-alist '(right-fringe . 1))
-  (add-to-list 'default-frame-alist '(internal-border-width . 0)
-  (add-to-list 'default-frame-alist '(fullscreen . maximized))))
-
-(use-package faces
-  :straight nil
-  :preface
-
-  (defun my-dpi (&optional frame)
-    "Get the DPI of FRAME (or current if nil)."
-    (cl-flet ((pyth (lambda (w h)
-                      (sqrt (+ (* w w)
-                               (* h h)))))
-              (mm2in (lambda (mm)
-                       (/ mm 25.4))))
-      (let* ((atts (frame-monitor-attributes frame))
-             (pix-w (cl-fourth (assoc 'geometry atts)))
-             (pix-h (cl-fifth (assoc 'geometry atts)))
-             (pix-d (pyth pix-w pix-h))
-             (mm-w (cl-second (assoc 'mm-size atts)))
-             (mm-h (cl-third (assoc 'mm-size atts)))
-             (mm-d (pyth mm-w mm-h)))
-        (/ pix-d (mm2in mm-d)))))
-
-  (defun my-preferred-font-size ()
-    (let ((dpi (my-dpi)))
-      (message "DPI: %d" dpi)
-      (cond
-       ((< dpi 110) 17)
-       ((> dpi 130) 18)
-       (t 14))))
-
-  (message "Initial preferred font size: %d" (my-preferred-font-size))
-
-  (defvar --font-name
-    "Consolas")
-  (defvar --default-font
-    (font-spec :family --font-name :size (my-preferred-font-size) :dpi (my-dpi) :weight 'normal))
-
-  (defun adapt-font-size (&optional frame)
-    (message "Adapted preferred font size: %d" (my-preferred-font-size))
-    (set-frame-font (font-spec :family --font-name :size (my-preferred-font-size) :dpi (my-dpi) :weight 'normal)))
-
-  :config
-
-  (setf (alist-get 'font default-frame-alist)
-        (font-xlfd-name --default-font))
-  (set-frame-font --default-font t t)
-  (when (display-graphic-p)
-    (setq font-use-system-font t))
-
-  (add-function :after after-focus-change-function #'adapt-font-size)
-  (add-hook 'window-size-change-functions #'adapt-font-size)
-  (add-hook 'after-make-frame-functions #'adapt-font-size))
-
-(use-package hydra)
-(use-package transient
-  :config
-  (setq transient-default-level 5))
-(use-package fullframe
-  :after magit
-  :config
-  (fullframe magit-status magit-mode-quit-window code-review-forge-pr-at-point))
-
-;; Git
-
-(use-package forge
-  :after magit
-  :preface
-  (defun forge-bug-reference-setup ()
-  (magit--with-safe-default-directory nil
-    (when-let ((repo (forge-get-repository 'full)))
-      (setq-local
-       bug-reference-auto-setup-functions
-       (let ((functions bug-reference-auto-setup-functions))
-         (list (lambda ()
-                 (catch 'setup
-                   (dolist (f functions)
-                     (when (funcall f)
-                       (setq bug-reference-bug-regexp
-                             (concat "[^\n]" bug-reference-bug-regexp))
-                       (throw 'setup t))))))))
-      (if (derived-mode-p 'prog-mode)
-          (bug-reference-prog-mode 1)
-        (bug-reference-mode 1))
-      (add-hook 'completion-at-point-functions
-                'forge-topic-completion-at-point nil t))))
-  :hook (magit-mode . forge-bug-reference-setup)
-  :config
-  (setq forge-topic-list-limit '(100 . -10)))
-
-(use-package ediff
+(use-package hl-line
   :ensure nil
-  :custom
-  (ediff-keep-variants nil)
-  (ediff-split-window-function #'split-window-horizontally)
-  (ediff-window-setup-function #'ediff-setup-windows-plain))
+  :when (display-graphic-p)
+  :hook (after-init-hook . global-hl-line-mode))
 
-(use-package git-modes)
-
-(use-package magit
+;; ---
+(use-package yasnippet
+  :defer t)
+(use-package markdown-mode
+  :defer t)
+(use-package lsp-mode
   :defer t
-  :commands (magit magit-status magit-blame magit-mode magit-file-popup)
-  :bind (("C-x g" . magit-status)
-         ("C-c g" . magit-dispatch-popup))
-  :config
-  (setq magit-status-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18)
-        magit-list-refs-sortby "-creatordate"
-        magit-refs-show-commit-count 'branch
-        magit-status-sections-hook (-concat magit-status-sections-hook '(magit-insert-local-branches))
-        magit-diff-refine-hunk t
-  	    magit-commit-arguments '("--verbose")
-        magit-display-buffer-function #'magit-display-buffer-traditional
-        magit-diff-highlight-hunk-region-functions
-          '(magit-diff-highlight-hunk-region-dim-outside
-            magit-diff-highlight-hunk-region-using-face)
-        magit-section-initial-visibility-alist
-            '((unpulled . show)
-              (unpushed . show)
-              (untracked . show)
-              (unstaged . show)
-              (pullreqs . hide)
-              (issues . hide)
-              (stashes . hide)
-              (branches . hide)
-              (todos . show)
-              (branches . hide)
-              (recent . show))
-        magit-section-visibility-indicator '("…" . nil))
-
-  (defun magit-remove-from-hook (magit-hook funs)
-    (dolist (f funs)
-      (remove-hook magit-hook f)))
-
-  (defun magit-add-section-hooks (magit-hook funs)
-    (dolist (f funs)
-      (magit-add-section-hook magit-hook f nil t)))
-
-  ;; Cleanup magit status page by removing everything from it, and then add only wanted items
-  ;; Magit status header
-  ;;(magit-remove-from-hook
-  ;;  'magit-status-headers-hook
-  ;;  '(magit-insert-head-branch-header
-  ;;    magit-insert-upstream-branch-header
-  ;;    magit-insert-push-branch-header
-  ;;    magit-insert-tags-header
-  ;;    magit-insert-error-header
-  ;;    magit-insert-diff-filter-header))
-
-  ;;(magit-add-section-hooks
-  ;;  'magit-status-headers-hook
-  ;;  '(magit-insert-head-branch-header
-  ;;    magit-insert-upstream-branch-header
-  ;;    ;;magit-insert-push-branch-header
-  ;;    magit-insert-error-header
-  ;;    magit-insert-diff-filter-header))
-
-  ;; Magit status sections
-  (magit-remove-from-hook
-    'magit-status-sections-hook
-    '(;;magit-insert-unpushed-to-upstream-or-recent
-      ;;magit-insert-merge-log
-      ;;magit-insert-rebase-sequence
-      ;;magit-insert-am-sequence
-      ;;magit-insert-sequencer-sequence
-      ;;magit-insert-bisect-output
-      ;;magit-insert-bisect-rest
-      ;;magit-insert-bisect-log
-      ;;magit-insert-untracked-files
-      ;;magit-insert-unstaged-changes
-      ;;magit-insert-staged-changes
-      ;;magit-insert-stashes
-      ;;magit-insert-unpulled-from-upstream
-      ;;magit-insert-unpulled-from-pushremote
-      ;;magit-insert-unpushed-to-upstream
-      ;;magit-insert-unpushed-to-pushremote
-      ;;magit-insert-tracked-files
-      ;;magit-insert-ignored-files
-      ;;magit-insert-skip-worktree-files
-      ;;magit-insert-assumed-unchanged-files
-      ;;magit-insert-unpulled-or-recent-commits
-      ;;magit-insert-recent-commits
-      ;;magit-insert-unpulled-cherries
-      ;;magit-insert-unpushed-cherries
-      magit-insert-local-branches
-      ;;forge-insert-pullreqs
-      ;;forge-insert-issues
-      ))
-  ;;(magit-add-section-hooks
-  ;;  'magit-status-sections-hook
-  ;;  '(magit-insert-unstaged-changes
-  ;;    magit-insert-staged-changes
-  ;;    magit-insert-untracked-files
-  ;;    magit-insert-unpulled-or-recent-commits
-  ;;    forge-insert-pullreqs
-  ;;    forge-insert-issues))
-
-
-  (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-pullreqs nil t)
-  (magit-add-section-hook 'magit-status-sections-hook 'forge-insert-issues nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-merge-log nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-rebase-sequence nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-am-sequence nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-sequencer-sequence nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-output nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-rest nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-bisect-log nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-untracked-files nil t)
-  ;;(magit-add-section-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent nil t)
-
-  (progn
-    (setq magit-post-display-buffer-hook
-          #'(lambda ()
-              (when (derived-mode-p 'magit-status-mode)
-                (delete-other-windows))))
-
-    (setenv "GIT_PAGER" "")
-    (add-hook 'magit-log-edit-mode-hook
-              '(lambda ()
-                 (auto-fill-mode)
-                 (flyspell-mode)
-                 (set-fill-column 120))))
-
-  (defvar magit--modified-files nil)
-
-  (defun magit-maybe-cache-modified-files ()
-    "Maybe save a list of modified files.
- That list is later used by `magit-update-uncommitted-buffers',
- provided it is a member of `magit-post-refresh-hook'.  If it is
- not, then don't save anything here."
-    (when (memq 'magit-update-uncommitted-buffers magit-post-refresh-hook)
-      (setq magit--modified-files (magit-unstaged-files t))))
-
-  (add-hook 'magit-pre-refresh-hook #'magit-maybe-cache-modified-files)
-  (add-hook 'magit-pre-call-git-hook #'magit-maybe-cache-modified-files)
-  (add-hook 'magit-pre-start-git-hook #'magit-maybe-cache-modified-files)
-
-  (defun magit-update-uncommitted-buffers ()
-    "Update some file-visiting buffers belonging to the current repository.
- Run `magit-update-uncommitted-buffer-hook' for each buffer
- which visits a file inside the current repository that had
- uncommitted changes before running the current Magit command
- and/or that does so now."
-    (let ((topdir (magit-toplevel)))
-      (dolist (file (delete-consecutive-dups
-		     (sort (nconc (magit-unstaged-files t)
-				  magit--modified-files)
-			   #'string<)))
-	(--when-let (find-buffer-visiting (expand-file-name file topdir))
-	  (with-current-buffer it
-	    (run-hooks 'magit-update-uncommitted-buffer-hook))))))
-
-  (add-hook 'magit-post-refresh-hook #'magit-update-uncommitted-buffers)
-
-  (define-advice magit-push-current-to-upstream (:before (args) query-yes-or-no)
-    "Prompt for confirmation before permitting a push to upstream."
-    (when-let ((branch (magit-get-current-branch)))
-      (unless (yes-or-no-p (format "Push %s branch upstream to %s? "
-				   branch
-				   (or (magit-get-upstream-branch branch)
-				       (magit-get "branch" branch "remote"))))
-	(user-error "Push to upstream aborted by user")))))
-
-(use-package magit-lfs
-  :after magit)
-
-(use-package magit-todos
-  :disabled t
-  :after magit
-  :hook (magit-mode-hook . magit-todos-mode)
-  :custom
-  (magit-todos-exclude-globs '("node_modules" "*.json"))
-  :config
-  (setq magit-todos-auto-group-items 'always))
-
-(use-package magit-delta
-  :delight
-  :if (executable-find "delta")
-  :after magit
-  :hook (magit-mode-hook . magit-delta-mode)
-  :config
-  (setq magit-delta-hide-plus-minus-markers nil))
-
-(use-package magit-filenotify
-  :after magit
-  :hook (after-save-hook . magit-filenotify-mode))
-
-(use-package git-commit-insert-issue
-  :config
-  (add-hook 'git-commit-mode-hook 'git-commit-insert-issue-mode))
-
-(use-package graphql)
-
-(use-package ghub)
-
-(use-package github-explorer
-  :after graphql)
-
-(use-package pr-review
-  :straight (:host github :repo "blahgeek/emacs-pr-review" :branch "master" :files (:defaults "graphql"))
-  :after (:all magit forge transient)
-  :config
-  (transient-insert-suffix 'magit-dispatch '(1)
-    ["Code Review"
-     ("= n" "PR review notifications" pr-review-notification)]))
-
-(use-package code-review
-  :straight (:host github :repo "phelrine/code-review" :branch "fix/closql-update" :files (:defaults "graphql"))
-  :after (:all magit forge transient)
-  :config
-  (transient-insert-suffix 'magit-dispatch '(1)
-    ["Code Review"
-     ("= c" "Review PR at cursor" code-review-forge-pr-at-point)]))
-
-(use-package git-link
-  :bind (("C-x C-g i")))
-
-(use-package git-blamed)
-
-(use-package git-timemachine
-  :after magit
-  :commands my/git-timemachine-on
-  :bind ("C-x v t" . git-timemachine-toggle)
-  :config
-  (defhydra my/git-timemachine
-    (:color pink :hint nil)
-    ("n" git-timemachine-show-next-revision "Next Revision" :column "Go to")
-    ("p" git-timemachine-show-previous-revision "Next Revision")
-    ("c" git-timemachine-show-current-revision "Current Revision")
-    ("g" git-timemachine-show-nth-revision "Nth Revision")
-    ("t" git-timemachine-show-revision-fuzzy "Search")
-    ("W" git-timemachine-kill-revision "Copy full revision" :column "Actions")
-    ("w" git-timemachine-kill-abbreviated-revision "Copy abbreviated revision" :column "Actions")
-    ("C" git-timemachine-show-commit "Show commit")
-    ("b" git-timemachine-blame "Blame")
-    ("q" git-timemachine-quit "cancel" :color blue :column nil))
-  (defun my/git-timemachine-on ()
-    (interactive)
-    (git-timemachine)
-    (my/git-timemachine/body))
-
-  ;; (define-advice git-timemachine-mode (:after (_args) open-timemachine-hydra)
-  ;; (my/git-timemachine-on))
-
-  (transient-insert-suffix 'magit-dispatch '(1)
-    ["Git Time Machine"
-     ("T" "Toggle time machine" my/git-timemachine-on)]))
-
-(use-package git-messenger
-  :init
-  (setq git-messenger:show-detail t
-        git-messenger:use-magit-popup t)
-  :bind (:map vc-prefix-map
-              ("p" . git-messenger:popup-message)))
-
-(use-package git-gutter-fringe
-  :delight git-gutter-mode
-  :hook (after-init-hook . global-git-gutter-mode)
-  :init (setq git-gutter:visual-line t
-              git-gutter:disabled-modes '(asm-mode image-mode)
-              git-gutter:modified-sign "~" ;;"❚"
-              git-gutter:added-sign "+" ;;"✚"
-              git-gutter:deleted-sign "-" ;;"✖"
-              blamer-max-commit-message-length 100)
-
-  :bind (("C-c v =" . git-gutter:popup-hunk)
-         ("C-c p" . git-gutter:previous-hunk)
-         ("C-c n" . git-gutter:next-hunk)))
-
-(use-package diff-hl
-  :disabled t
-  :config
-  (global-diff-hl-mode))
-
-(use-package smerge-mode
-  :after hydra
+  :hook (prog-mode-hook . (lambda ()
+                            (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode)
+                              (lsp-deferred))))
   :preface
-  (with-eval-after-load 'hydra
-    (defhydra smerge-hydra
-      (:color pink :hint nil :post (smerge-auto-leave))
-      "
-^Move^       ^Keep^               ^Diff^                 ^Other^
-^^-----------^^-------------------^^---------------------^^-------
-_n_ext       _b_ase               _<_: upper/base        _C_ombine
-_p_rev       _u_pper              _=_: upper/lower       _r_esolve
-^^           _l_ower              _>_: base/lower        _k_ill current
-^^           _a_ll                _R_efine
-^^           _RET_: current       _E_diff
-"
-      ("n" smerge-next)
-      ("p" smerge-prev)
-      ("b" smerge-keep-base)
-      ("u" smerge-keep-upper)
-      ("l" smerge-keep-lower)
-      ("a" smerge-keep-all)
-      ("RET" smerge-keep-current)
-      ("\C-m" smerge-keep-current)
-      ("<" smerge-diff-base-upper)
-      ("=" smerge-diff-upper-lower)
-      (">" smerge-diff-base-lower)
-      ("R" smerge-refine)
-      ("E" smerge-ediff)
-      ("C" smerge-combine-with-next)
-      ("r" smerge-resolve)
-      ("k" smerge-kill-current)
-      ("ZZ" (lambda ()
-              (interactive)
-              (save-buffer)
-              (bury-buffer))
-       "Save and bury buffer" :color blue)
-      ("q" nil "cancel" :color blue)))
-  :hook ((find-file-hook . (lambda ()
-                             (save-excursion
-                               (goto-char (point-min))
-                               (when (re-search-forward "^<<<<<<< " nil t)
-                                 (smerge-mode 1)))))
-         (magit-diff-visit-file-hook . (lambda ()
-                                         (when smerge-mode
-                                           (smerge-hydra/body))))))
+  (setq read-process-output-max (* 1024 1024)) ; 1MB
+  (setenv "LSP_USE_PLISTS" "true")
+  :init
+  (setq lsp-use-plists t)
+  :config
+  ;; Emacs LSP booster
+  ;; @seee https://github.com/blahgeek/emacs-lsp-booster
+  (when (executable-find "emacs-lsp-booster")
+    (defun lsp-booster--advice-json-parse (old-fn &rest args)
+      "Try to parse bytecode instead of json."
+      (or
+      (when (equal (following-char) ?#)
+        (let ((bytecode (read (current-buffer))))
+          (when (byte-code-function-p bytecode)
+            (funcall bytecode))))
+      (apply old-fn args)))
+    (advice-add (if (progn (require 'json)
+                          (fboundp 'json-parse-buffer))
+                    'json-parse-buffer
+                  'json-read)
+                :around
+                #'lsp-booster--advice-json-parse)
+
+    (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+      "Prepend emacs-lsp-booster command to lsp CMD."
+      (let ((orig-result (funcall old-fn cmd test?)))
+        (if (and (not test?)                             ;; for check lsp-server-present?
+                (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+                lsp-use-plists
+                (not (functionp 'json-rpc-connection))  ;; native json-rpc
+                (executable-find "emacs-lsp-booster"))
+            (progn
+              (message "Using emacs-lsp-booster for %s!" orig-result)
+              (cons "emacs-lsp-booster" orig-result))
+          orig-result)))
+    (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)))
+
+  (use-package lsp-ui
+    :after lsp-mode
+    :defer t)
+
+  (use-package lsp-bridge
+    :disabled t ;; Until I sort out global python packages installation on macOS 14+
+    :defer t
+    :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+              :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+              :build (:not compile))
+    :init
+    (global-lsp-bridge-mode))
+
+  (use-package fsharp-mode
+    :defer t
+    :after (:all lsp-mode)
+    :mode "\\.fs[iylx]?$"
+    :config
+    (setq indent-tabs-mode nil
+          truncate-lines t
+          tab-width 4))
