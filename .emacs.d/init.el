@@ -152,7 +152,7 @@
          ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
-	       ("C-g"             . 'keyboard-quit)
+         ("C-g"             . 'keyboard-quit)
          ("C-k"             . 'kill-buffer)
          ("C-K"             . 'kill-this-buffer)
          ("C-c o"           . 'switch-to-minibuffer))
@@ -259,13 +259,14 @@
                 select-enable-clipboard t)
 
   (fset 'yes-or-no-p 'y-or-n-p)
+  
   (setq inhibit-default-init t
         inhibit-startup-screen t
         inhibit-startup-message t
         inhibit-startup-echo-area-message t
         initial-scratch-message nil
 
-	      idle-update-delay 1.1
+	    idle-update-delay 1.1
 
         scroll-margin 0
         scroll-step 1
@@ -284,8 +285,8 @@
         tab-width 4
         frame-resize-pixelwise t
 
-        display-raw-bytes-as-hex t
-	      redisplay-skip-fontification-on-input t
+        display-raw-bytes-as-hex
+	    redisplay-skip-fontification-on-input t
 
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
@@ -293,7 +294,7 @@
 
         blink-cursor-mode nil
 
-	      show-trailing-whitespace t
+	    show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
         backup-directory-alist '(("." . "~/.saves"))
@@ -314,8 +315,10 @@
 ;; ---
 (use-package yasnippet
   :defer t)
+
 (use-package markdown-mode
   :defer t)
+
 (use-package lsp-mode
   :defer t
   :hook (prog-mode-hook . (lambda ()
