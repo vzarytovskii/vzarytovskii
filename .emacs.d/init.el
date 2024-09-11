@@ -90,24 +90,6 @@
                         "gnutls-cli -p %p %h"
                         "openssl s_client -connect %h:%p -no_ssl2 -no_ssl3 -ign_eof"))
 
-(use-package gcmh
-  :ensure t
-  :hook (after-init-hook . gcmh-mode)
-  :custom
-  (gcmh-idle-delay 10)
-  (gcmh-high-cons-threshold #x6400000))
-
-(use-package auto-package-update
-  :if (not (daemonp))
-  :custom
-  (auto-package-update-interval 7) ;; in days
-  (auto-package-update-prompt-before-update t)
-  (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results t)
-  :config
-  (auto-package-update-maybe))
-
-
 (setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin"))
 (setq exec-path (append exec-path '("~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin")))
 
@@ -127,6 +109,23 @@
   (setq browse-url-generic-program  "/mnt/c/Windows/System32/cmd.exe"
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
+
+(use-package gcmh
+  :ensure t
+  :hook (after-init-hook . gcmh-mode)
+  :custom
+  (gcmh-idle-delay 10)
+  (gcmh-high-cons-threshold #x6400000))
+
+(use-package auto-package-update
+  :if (not (daemonp))
+  :custom
+  (auto-package-update-interval 7) ;; in days
+  (auto-package-update-prompt-before-update t)
+  (auto-package-update-delete-old-versions t)
+  (auto-package-update-hide-results t)
+  :config
+  (auto-package-update-maybe))
 
 (use-package exec-path-from-shell
   :ensure t
@@ -235,17 +234,6 @@
   (enable-recursive-minibuffers t)
   (read-extended-command-predicate #'command-completion-default-include-p)
   :config
-
-  (add-to-list 'initial-frame-alist '(fullscreen . maximized))
-  (add-to-list 'default-frame-alist '(fullscreen . fullheight))
-
-  (when (fboundp 'menu-bar-mode)
-    (menu-bar-mode -1))
-  (when (fboundp 'tool-bar-mode)
-    (tool-bar-mode -1))
-  (when (fboundp 'set-scroll-bar-mode)
-    (set-scroll-bar-mode nil))
-
   ;; Defaults
 
   (setq-default major-mode 'text-mode
@@ -260,14 +248,14 @@
                 select-enable-clipboard t)
 
   (fset 'yes-or-no-p 'y-or-n-p)
-  
+
   (setq inhibit-default-init t
         inhibit-startup-screen t
         inhibit-startup-message t
         inhibit-startup-echo-area-message t
         initial-scratch-message nil
 
-	    idle-update-delay 1.1
+	      idle-update-delay 1.1
 
         scroll-margin 0
         scroll-step 1
@@ -284,10 +272,9 @@
         ring-bell-function 'flash-mode-line
 
         tab-width 4
-        frame-resize-pixelwise t
 
         display-raw-bytes-as-hex t
-	    redisplay-skip-fontification-on-input t
+	      redisplay-skip-fontification-on-input t
 
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
@@ -295,7 +282,7 @@
 
         blink-cursor-mode nil
 
-	    show-trailing-whitespace t
+	      show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
         backup-directory-alist '(("." . "~/.saves"))

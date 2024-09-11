@@ -12,6 +12,13 @@
   (message "Early init: Emacs Version < 27.0")
   (load (expand-file-name "early-init.el" user-emacs-directory)))
 
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(fullscreen . fullheight))
+(add-to-list 'default-frame-alist '(undecorated . t))
+(when (fboundp 'menu-bar-mode) (menu-bar-mode -1))
+(when (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+(when (fboundp 'set-scroll-bar-mode) (set-scroll-bar-mode nil))
+
 ;; Some basic checks:
 
 (if (and (fboundp 'native-comp-available-p)
@@ -47,6 +54,7 @@
         native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-always-compile t
         warning-minimum-level :error))
+
 
 (provide 'early-init)
 ;;; early-init.el ends here
