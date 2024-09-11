@@ -1,6 +1,5 @@
-;;; init.el --- Emacs configuration bootstrap. -*- lexical-binding: t; -*-
+;/;; init.el --- Emacs configuration bootstrap. -*- lexical-binding: t; -*-
 ;;; Commentary:
-;; Emacs bootstrap, for main configuration, see config.el
 
 ;;; Code:
 
@@ -153,8 +152,8 @@
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
          ("C-g"             . 'keyboard-quit)
-         ("C-k"             . 'kill-buffer)
-         ("C-K"             . 'kill-this-buffer)
+         ;; ("C-k"             . 'kill-buffer)
+         ;; ("C-K"             . 'kill-this-buffer)
          ("C-c o"           . 'switch-to-minibuffer))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
@@ -232,6 +231,9 @@
     (if mark-active
         (kill-ring-save beg end)
       (kill-ring-save (line-beginning-position) (line-end-position))))
+  :custom
+  (enable-recursive-minibuffers t)
+  (read-extended-command-predicate #'command-completion-default-include-p)
   :config
 
   (add-to-list 'initial-frame-alist '(fullscreen . maximized))
@@ -243,7 +245,6 @@
     (tool-bar-mode -1))
   (when (fboundp 'set-scroll-bar-mode)
     (set-scroll-bar-mode nil))
-
 
   ;; Defaults
 
@@ -285,7 +286,7 @@
         tab-width 4
         frame-resize-pixelwise t
 
-        display-raw-bytes-as-hex
+        display-raw-bytes-as-hex t
 	    redisplay-skip-fontification-on-input t
 
         window-divider-default-right-width 1
@@ -307,10 +308,54 @@
         frame-resize-pixelwise t
         use-short-answers t))
 
+(use-package modus-themes
+  :ensure t
+  :config
+  (setq modus-themes-italic-constructs nil
+        modus-themes-bold-constructs t)
+
+  (setq modus-themes-common-palette-overrides
+        modus-themes-preset-overrides-intense))
+
+(use-package auto-dark
+  :config
+  (auto-dark-mode t)
+  (setq auto-dark-allow-osascript t)
+  (setq auto-dark-dark-theme 'modus-vivendi-tritanopia)
+  (setq auto-dark-light-theme 'modus-operandi-tritanopia))
+
 (use-package hl-line
   :ensure nil
   :when (display-graphic-p)
   :hook (after-init-hook . global-hl-line-mode))
+
+(use-package vertico
+  :init
+  (vertico-mode)
+  (vertico-multiform-mode)
+  (setq vertico-multiform-commands
+        '(
+          (consult-imenu buffer indexed)
+          (consult-grep buffer indexed)
+	      (execute-extended-command flat)))
+  (setq vertico-multiform-categories
+      '((file grid)
+        (consult-grep buffer))))
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package consult
+  :bind (
+         ("M-s"   . consult-ripgrep)
+         ("C-x b" . consult-buffer))
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :init
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref))
 
 ;; ---
 (use-package yasnippet
@@ -383,3 +428,18 @@
     (setq indent-tabs-mode nil
           truncate-lines t
           tab-width 4))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("9a977ddae55e0e91c09952e96d614ae0be69727ea78ca145beea1aae01ac78d2"
+     default)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
