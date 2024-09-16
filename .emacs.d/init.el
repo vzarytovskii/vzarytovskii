@@ -5,83 +5,84 @@
 
 ;; Setup package system
 
-(eval-when-compile
-  (require 'package)
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-  (add-to-list 'package-archives '("elpa" . "https://elpa.gnu.org/packages/") t)
-  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
-  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
 
-  (setq package-quickstart t
-        gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
-        package-archive-priorities
-        '(("melpa" .  500)
-          ("melpa-stable" . 400)
-          ("elpa" . 300)
-          ("org" . 200)
-          ("gnu" . 100)))
+(setq package-quickstart t
+      gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
+      package-archive-priorities
+      '(("melpa" .  500)
+        ("melpa-stable" . 400)
+        ("elpa" . 300)
+        ("org" . 200)
+        ("gnu" . 100)))
 
-  ;; Initialise the packages, avoiding a re-initialisation.
-  (unless (bound-and-true-p package--initialized)
-    (setq package-enable-at-startup nil)
-    (package-initialize))
+;; Initialise the packages, avoiding a re-initialisation.
+(unless (bound-and-true-p package--initialized)
+  (package-initialize))
 
+(setq use-package-vc-prefer-newest t
+      package-install-upgrade-built-in t  ; Always upgrade built-in packages
+      load-prefer-newer t                 ; Always load newer compiled files
+      ad-redefinition-action 'accept)     ; Silence advice redefinition warnings
 
-  (setq load-prefer-newer t)              ; Always load newer compiled files
-  (setq ad-redefinition-action 'accept)   ; Silence advice redefinition warnings
+(defvar elpaca-installer-version 0.7)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil :depth 1
+                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                              :build (:not elpaca--activate-package)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+      (build (expand-file-name "elpaca/" elpaca-builds-directory))
+      (order (cdr elpaca-order))
+      (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (when (< emacs-major-version 28) (require 'subr-x))
+    (condition-case-unless-debug err
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                ,@(when-let ((depth (plist-get order :depth)))
+                                                    (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                ,(plist-get order :repo) ,repo))))
+                ((zerop (call-process "git" nil buffer t "checkout"
+                                      (or (plist-get order :ref) "--"))))
+                (emacs (concat invocation-directory invocation-name))
+                ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                      "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                ((require 'elpaca))
+                ((elpaca-generate-autoloads "elpaca" repo)))
+            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (load "./elpaca-autoloads")))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
 
-  ;; Setup use-package and straight.el
-  (setq-default straight-repository-branch "develop"
-                straight-use-package-by-default t
-                straight-check-for-modifications nil
-                straight-disable-autoloads nil
-                straight-disable-byte-compilation nil
-                straight-disable-native-compilation nil
-                straight-use-symlinks t
-                straight-cache-autoloads t
-                straight-vc-git-default-branch "master"
-                straight-vc-git-default-remote-name "origin"
-                straight-vc-git-default-clone-depth 1
-                straight-fix-flycheck t)
+(elpaca elpaca-use-package
+  ;; Enable use-package :ensure support for Elpaca.
+  (elpaca-use-package-mode))
 
-  ;; Setup use-package
-  (setq-default use-package-always-demand t
-                use-package-always-defer nil
-                use-package-always-ensure nil
-                use-package-expand-minimally nil
-                use-package-enable-imenu-support t
-                use-package-compute-statistics t
-                use-package-hook-name-suffix nil)
+(setq elpaca-ignored-dependencies
+      (delq 'transient elpaca-ignored-dependencies))
 
-  ;;; package manager bootstrap
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 6))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    ;; catch emacs updates that have native compiled leftovers
-    ;; Credits: https://github.com/radian-software/straight.el/issues/643
-    (unless (catch 'emacs-version-changed
-              (load bootstrap-file nil 'nomessage))
-      (when (boundp 'native-comp-eln-load-path)
-        ;; remove leftovers, with confirmation just to be safe
-        (when (yes-or-no-p (format "Delete '%s'?" (car native-comp-eln-load-path)))
-          (delete-directory (expand-file-name (car native-comp-eln-load-path)) t))
-        ;; and try again
-        (load bootstrap-file nil 'nomessage))))
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
-  (straight-use-package 'use-package))
-
-(require 'tls)
+;; Setup use-package
+(setq-default use-package-always-demand t
+              use-package-always-defer nil
+              use-package-always-ensure t
+              use-package-expand-minimally nil
+              use-package-enable-imenu-support t
+              use-package-compute-statistics t
+              use-package-hook-name-suffix nil)
 
 (setq gnutls-verify-error (not (getenv "INSECURE"))
       tls-checktrust gnutls-verify-error
@@ -111,7 +112,6 @@
         browse-url-browser-function #'browse-url-generic))
 
 (use-package gcmh
-  :ensure t
   :hook (after-init-hook . gcmh-mode)
   :custom
   (gcmh-idle-delay 10)
@@ -128,15 +128,16 @@
   (auto-package-update-maybe))
 
 (use-package exec-path-from-shell
-  :ensure t
   :when (eq system-type 'darwin)
   :hook (after-init-hook . exec-path-from-shell-initialize))
 
-(use-package delight
-  :after use-package)
+(use-package delight)
+
+(use-package transient)
 
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
+  :ensure nil
   :delight auto-revert-mode
   :bind (("C-z"             . nil)
          ("C-x C-z"         . nil)
@@ -296,7 +297,6 @@
         use-short-answers t))
 
 (use-package modus-themes
-  :ensure t
   :config
   (setq modus-themes-italic-constructs nil
         modus-themes-bold-constructs t)
@@ -401,7 +401,7 @@
   (use-package lsp-bridge
     :disabled t ;; Until I sort out global python packages installation on macOS 14+
     :defer t
-    :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+    :ensure '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
               :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
               :build (:not compile))
     :init
@@ -415,6 +415,11 @@
     (setq indent-tabs-mode nil
           truncate-lines t
           tab-width 4))
+
+  (use-package magit
+    :ensure '(magit :type git :host github :repo "magit/magit" :branch "main")
+    :config
+    (remove-hook 'magit-refs-sections-hook 'magit-insert-tags))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

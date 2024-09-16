@@ -12,6 +12,8 @@
   (message "Early init: Emacs Version < 27.0")
   (load (expand-file-name "early-init.el" user-emacs-directory)))
 
+(setq package-enable-at-startup nil)
+
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(fullscreen . fullheight))
 (add-to-list 'default-frame-alist '(undecorated . t))
