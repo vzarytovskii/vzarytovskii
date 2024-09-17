@@ -301,6 +301,12 @@
         use-short-answers t))
 
 (use-package modus-themes
+  :ensure '(modus-themes
+    :host github
+    :repo "protesilaos/modus-themes"
+    :branch "main"
+    :files (:defaults "*.el")
+    :main "modus-themes.el")
   :config
   (setq modus-themes-italic-constructs nil
         modus-themes-bold-constructs t)
@@ -309,11 +315,11 @@
         modus-themes-preset-overrides-intense))
 
 (use-package auto-dark
+  :delight auto-dark-mode
+  :init (auto-dark-mode)
   :config
-  (auto-dark-mode t)
   (setq auto-dark-allow-osascript t)
-  (setq auto-dark-dark-theme 'modus-vivendi-tritanopia)
-  (setq auto-dark-light-theme 'modus-operandi-tritanopia))
+  (setq auto-dark-themes '((modus-vivendi) (modus-operandi))))
 
 (use-package hl-line
   :ensure nil
@@ -435,25 +441,8 @@
           magit-revision-insert-related-refs nil)
 
     (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
-    (remove-hook 'magit-refs-sections-hook 'magit-insert-tags)
-    (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
-    (remove-hook 'magit-status-sections-hook 'magit-insert-tags-headers))
+    (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header))
 
   (use-package forge
     :defer t
     :after magit)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("9a977ddae55e0e91c09952e96d614ae0be69727ea78ca145beea1aae01ac78d2"
-     default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
