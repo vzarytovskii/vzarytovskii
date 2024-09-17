@@ -309,10 +309,24 @@
     :main "modus-themes.el")
   :config
   (setq modus-themes-italic-constructs nil
-        modus-themes-bold-constructs t)
+        modus-themes-bold-constructs nil
+        modus-themes-mixed-fonts nil
+        modus-themes-variable-pitch-ui nil
+        modus-themes-disable-other-themes t
+        modus-themes-common-palette-overrides
+          `(
+            ;; From the section "Make the mode line borderless"
+            (border-mode-line-active unspecified)
+            (border-mode-line-inactive unspecified)
 
-  (setq modus-themes-common-palette-overrides
-        modus-themes-preset-overrides-intense))
+            ;; From the section "Make matching parenthesis more or less intense"
+            (bg-paren-match bg-magenta-intense)
+            (underline-paren-match fg-main)
+
+            ;; And expand the preset here.  Note that the ,@ works because
+            ;; we use the backtick for this list, instead of a straight
+            ;; quote.
+            ,@modus-themes-preset-overrides-warmer)))
 
 (use-package auto-dark
   :delight auto-dark-mode
