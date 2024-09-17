@@ -1,33 +1,12 @@
-;/;; init.el --- Emacs configuration bootstrap. -*- lexical-binding: t; -*-
+;;; init.el --- Emacs configuration bootstrap.
+;; -*- lexical-binding: t; -*-
+;; -*-no-byte-compile: t; -*-
+
 ;;; Commentary:
 
 ;;; Code:
 
 ;; Setup package system
-
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
-(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
-
-(setq package-quickstart t
-      gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
-      package-archive-priorities
-      '(("melpa" .  500)
-        ("melpa-stable" . 400)
-        ("elpa" . 300)
-        ("org" . 200)
-        ("gnu" . 100)))
-
-;; Initialise the packages, avoiding a re-initialisation.
-(unless (bound-and-true-p package--initialized)
-  (package-initialize))
-
-(setq use-package-vc-prefer-newest t
-      package-install-upgrade-built-in t  ; Always upgrade built-in packages
-      load-prefer-newer t                 ; Always load newer compiled files
-      ad-redefinition-action 'accept)     ; Silence advice redefinition warnings
 
 (defvar elpaca-installer-version 0.7)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -67,6 +46,31 @@
     (load "./elpaca-autoloads")))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+
+(require 'package)
+
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+
+(setq package-quickstart t
+      gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
+      package-archive-priorities
+      '(("melpa" .  500)
+        ("melpa-stable" . 400)
+        ("elpa" . 300)
+        ("org" . 200)
+        ("gnu" . 100)))
+
+;; Initialise the packages, avoiding a re-initialisation.
+(unless (bound-and-true-p package--initialized)
+  (package-initialize))
+
+(setq use-package-vc-prefer-newest t
+      package-install-upgrade-built-in t  ; Always upgrade built-in packages
+      load-prefer-newer t                 ; Always load newer compiled files
+      ad-redefinition-action 'accept)     ; Silence advice redefinition warnings
 
 (elpaca elpaca-use-package
   ;; Enable use-package :ensure support for Elpaca.
@@ -417,9 +421,27 @@
           tab-width 4))
 
   (use-package magit
+    :defer t
+    :commands magit-status
     :ensure '(magit :type git :host github :repo "magit/magit" :branch "main")
+    :preface
+    (defun magit-disable-whitespace-mode ()
+      (setq-local whitespace-trailing nil))
+    :custom
+    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
     :config
-    (remove-hook 'magit-refs-sections-hook 'magit-insert-tags))
+
+    (setq magit-ellipsis (get-byte 0 ".")
+          magit-revision-insert-related-refs nil)
+
+    (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
+    (remove-hook 'magit-refs-sections-hook 'magit-insert-tags)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-tags-headers))
+
+  (use-package forge
+    :defer t
+    :after magit)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

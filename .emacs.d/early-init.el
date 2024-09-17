@@ -1,4 +1,6 @@
-;;; early-init.el --- Emacs 27+ early init. -*- lexical-binding: t; -*-
+;;; early-init.el --- Emacs 27+ early init.
+;; -*- lexical-binding: t; -*-
+;; -*-no-byte-compile: t; -*-
 ;;; Commentary:
 ;; Emacs 27+ early init, for main configuration, see init.el.
 
@@ -12,7 +14,11 @@
   (message "Early init: Emacs Version < 27.0")
   (load (expand-file-name "early-init.el" user-emacs-directory)))
 
-(setq package-enable-at-startup nil)
+(with-eval-after-load 'package
+  (setopt package-enable-at-startup nil))
+
+(defun display-startup-echo-area-message ()
+  (message ""))
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(fullscreen . fullheight))
@@ -55,7 +61,7 @@
         native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only")
         native-comp-always-compile t
-        warning-minimum-level :error))
+        warning-minimum-level :warning))
 
 
 (provide 'early-init)
