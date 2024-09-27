@@ -95,9 +95,6 @@
                         "gnutls-cli -p %p %h"
                         "openssl s_client -connect %h:%p -no_ssl2 -no_ssl3 -ign_eof"))
 
-(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin"))
-(setq exec-path (append exec-path '("~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin")))
-
 (defun reload-init-file ()
     (interactive)
     (load-file user-init-file))
@@ -254,15 +251,7 @@
 
   (fset 'yes-or-no-p 'y-or-n-p)
 
-  (setq inhibit-default-init t
-        inhibit-startup-screen t
-        inhibit-startup-message t
-        inhibit-startup-echo-area-message t
-        initial-scratch-message nil
-
-	      idle-update-delay 1.1
-
-        scroll-margin 0
+  (setq scroll-margin 0
         scroll-step 1
         scroll-conservatively 100000
         scroll-preserve-screen-position 1
@@ -329,7 +318,9 @@
             ,@modus-themes-preset-overrides-warmer)))
 
 (use-package auto-dark
+  :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :ref "478d10238a85cdda72ffbb529fc78d8a5a4322ff")
   :delight auto-dark-mode
+  :hook (after-init-hook . auto-dark-mode)
   :init (auto-dark-mode)
   :config
   (setq auto-dark-allow-osascript t)
