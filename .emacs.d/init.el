@@ -299,23 +299,14 @@
   :config
   (setq modus-themes-italic-constructs nil
         modus-themes-bold-constructs nil
-        modus-themes-mixed-fonts nil
-        modus-themes-variable-pitch-ui nil
+        modus-themes-mixed-fonts t
+        modus-themes-variable-pitch-ui t
         modus-themes-disable-other-themes t
         modus-themes-common-palette-overrides
           `(
-            ;; From the section "Make the mode line borderless"
             (border-mode-line-active unspecified)
             (border-mode-line-inactive unspecified)
-
-            ;; From the section "Make matching parenthesis more or less intense"
-            (bg-paren-match bg-magenta-intense)
-            (underline-paren-match fg-main)
-
-            ;; And expand the preset here.  Note that the ,@ works because
-            ;; we use the backtick for this list, instead of a straight
-            ;; quote.
-            ,@modus-themes-preset-overrides-warmer)))
+            ,@modus-themes-preset-overrides-intense)))
 
 (use-package auto-dark
   :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :ref "478d10238a85cdda72ffbb529fc78d8a5a4322ff")
@@ -360,6 +351,41 @@
         xref-show-definitions-function #'consult-xref))
 
 ;; ---
+
+(use-package treesit
+  :ensure nil
+  :preface
+  (defun mp-setup-install-grammars ()
+    "Install Tree-sitter grammars if they are absent."
+    (interactive)
+    (dolist (grammar
+             '((json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
+               (markdown . "https://github.com/ikatyang/tree-sitter-markdown")
+               (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+               (rust . "https://github.com/tree-sitter/tree-sitter-rust")
+               (fsharp . ("https://github.com/ionide/tree-sitter-fsharp" "main" "fsharp/src"))
+               (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
+               (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
+      (add-to-list 'treesit-language-source-alist grammar)
+      (unless (treesit-language-available-p (car grammar))
+        (treesit-install-language-grammar (car grammar))
+        (message "`%s' parser was installed." lang)
+	      (sit-for 0.75))))
+
+  (dolist (mapping
+           '((python-mode . python-ts-mode)
+             (bash-mode . bash-ts-mode)
+             (conf-toml-mode . toml-ts-mode)
+             (json-mode . json-ts-mode)
+             (js-json-mode . json-ts-mode)))
+    (add-to-list 'major-mode-remap-alist mapping))
+
+  :config
+  (mp-setup-install-grammars))
+
+(use-package scopeline
+  :config (add-hook 'prog-mode-hook #'scopeline-mode))
+
 (use-package yasnippet
   :defer t)
 
@@ -373,13 +399,13 @@
                               (lsp-deferred))))
   :preface
   (setq read-process-output-max (* 1024 1024)) ; 1MB
-  (setenv "LSP_USE_PLISTS" "true")
+  (setenv "LSP_USE_PLISTS" "false") ;; enable if using booster
   :init
-  (setq lsp-use-plists t)
+  (setq lsp-use-plists nil) ;; enable if using booster
   :config
   ;; Emacs LSP booster
   ;; @seee https://github.com/blahgeek/emacs-lsp-booster
-  (when (executable-find "emacs-lsp-booster")
+  (when (executable-find "emacs-lsp-booster-disabled")
     (defun lsp-booster--advice-json-parse (old-fn &rest args)
       "Try to parse bytecode instead of json."
       (or
@@ -424,7 +450,6 @@
 
   (use-package fsharp-mode
     :defer t
-    :after (:all lsp-mode)
     :mode "\\.fs[iylx]?$"
     :config
     (setq indent-tabs-mode nil
