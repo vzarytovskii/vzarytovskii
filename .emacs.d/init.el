@@ -53,6 +53,7 @@
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+(add-to-list 'package-archives '("gnu-devel" . "https://elpa.gnu.org/devel/") t)
 
 (setq package-quickstart t
       gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
@@ -118,15 +119,6 @@
   (gcmh-idle-delay 10)
   (gcmh-high-cons-threshold #x6400000))
 
-(use-package auto-package-update
-  :if (not (daemonp))
-  :custom
-  (auto-package-update-interval 7) ;; in days
-  (auto-package-update-prompt-before-update t)
-  (auto-package-update-delete-old-versions t)
-  (auto-package-update-hide-results t)
-  :config
-  (auto-package-update-maybe))
 
 (use-package exec-path-from-shell
   :when (eq system-type 'darwin)
@@ -398,7 +390,7 @@
                             (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode)
                               (lsp-deferred))))
   :preface
-  (setq read-process-output-max (* 1024 1024)) ; 1MB
+  (setq read-process-output-max (* 64 1024)) ; 1MB
   (setenv "LSP_USE_PLISTS" "false") ;; enable if using booster
   :init
   (setq lsp-use-plists nil) ;; enable if using booster
@@ -476,3 +468,17 @@
   (use-package forge
     :defer t
     :after magit)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7"
+     default)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
