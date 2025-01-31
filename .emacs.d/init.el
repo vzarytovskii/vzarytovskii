@@ -355,16 +355,16 @@
     (interactive)
     (dolist (grammar
              '((json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
-               (markdown . "https://github.com/ikatyang/tree-sitter-markdown")
+               (markdown . ("https://github.com/ikatyang/tree-sitter-markdown" "master"))
                (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-               (rust . "https://github.com/tree-sitter/tree-sitter-rust")
+               (rust . ("https://github.com/tree-sitter/tree-sitter-rust" "master"))
                (fsharp . ("https://github.com/ionide/tree-sitter-fsharp" "main" "fsharp/src"))
                (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
                (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
       (add-to-list 'treesit-language-source-alist grammar)
       (unless (treesit-language-available-p (car grammar))
         (treesit-install-language-grammar (car grammar))
-        (message "`%s' parser was installed." lang)
+        ; (message "`%s' parser was installed." lang)
 	      (sit-for 0.75))))
 
   (dolist (mapping
