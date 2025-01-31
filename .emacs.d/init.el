@@ -8,7 +8,7 @@
 
 ;; Setup package system
 
-(defvar elpaca-installer-version 0.7)
+(defvar elpaca-installer-version 0.9)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -52,8 +52,8 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
-(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
 (add-to-list 'package-archives '("gnu-devel" . "https://elpa.gnu.org/devel/") t)
+(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
 
 (setq package-quickstart t
       gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"
@@ -62,7 +62,8 @@
         ("melpa-stable" . 400)
         ("elpa" . 300)
         ("org" . 200)
-        ("gnu" . 100)))
+        ("gnu-devel" . 100)
+        ("gnu" . 50)))
 
 ;; Initialise the packages, avoiding a re-initialisation.
 (unless (bound-and-true-p package--initialized)
@@ -300,6 +301,8 @@
             (border-mode-line-inactive unspecified)
             ,@modus-themes-preset-overrides-intense)))
 
+(use-package llama)
+
 (use-package auto-dark
   :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :ref "478d10238a85cdda72ffbb529fc78d8a5a4322ff")
   :delight auto-dark-mode
@@ -467,7 +470,7 @@
 
   (use-package forge
     :defer t
-    :after magit)
+    :after (:all magit llama))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
