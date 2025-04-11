@@ -25,7 +25,7 @@ local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  local out = vim.fn.system({ 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath })
+  local out = vim.fn.system({ 'git', 'clone', '--filter=blob:none', '--branch=main', lazyrepo, lazypath })
   if vim.v.shell_error ~= 0 then
     vim.api.nvim_echo({
       { 'Failed to clone lazy.nvim:\n', 'ErrorMsg' },
@@ -44,37 +44,75 @@ require('lazy').setup(
     { 'williamboman/mason.nvim' },
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
-    {
-      'saghen/blink.cmp',
-      version = '*',
-    }
+    { 'saghen/blink.cmp', version = '*', }
   },
   {
+    install = { missing = true },
+    checker = { enabled = true },
     defaults = { lazy = true },
   }
 )
 
+vim.diagnostic.config({
+  virtual_text = { current_line = true }
+})
+
+local treesitter_configs = { 'c', 'cpp' }
+local lsp_configs = {
+  clangd = {
+    cmd = { 'clangd', '--background-index' },
+    root_markers = { '.clangd', 'compile_commands.json' },
+    filetypes = { 'c', 'cpp' },
+  }
+}
+
 require('mason').setup()
 require('mason-tool-installer').setup({
-  ensure_installed = {
-    'clangd',
-  },
+  ensure_installed = vim.tbl_keys(lsp_configs),
   auto_update = true,
   run_on_start = true,
 })
 
+for name, config in pairs(lsp_configs) do
+  vim.lsp.config(name, config)
+end
+
+vim.lsp.enable(vim.tbl_keys(lsp_configs))
+
+if vim.g.lsp_on_demands then
+  vim.lsp.enable(vim.g.lsp_on_demands)
+end
+
 require("nvim-treesitter.install").prefer_git = true
 require('nvim-treesitter.configs').setup {
-  ensure_installed = { 'c' },
+  ensure_installed = treesitter_configs,
   highlight = {
     enable = true,
     additional_vim_regex_highlighting = false,
   },
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = "gnn",
+      node_incremental = "grn",
+      scope_incremental = "grc",
+      node_decremental = "grm",
+    },
+  },
+   indent = {
+    enable = true
+  }
 }
 
 require('blink.cmp').setup({
-  signature = { enabled = true },
+  signature = {
+    enabled = true,
+  },
   completion = {
+    trigger = {
+      show_on_keyword = true,
+      show_on_trigger_character = true,
+    },
     menu = {
       auto_show = true,
       draw = {
@@ -82,38 +120,29 @@ require('blink.cmp').setup({
           { "label", "label_description", gap = 1 },
           { "kind_icon", "kind" }
         },
+        treesitter = { 'lsp' }
       }
     },
-    keyword = { range = 'full' },
-    accept = { auto_brackets = { enabled = true }, },
-    list = { selection = { preselect = true, auto_insert = true } },
-    documentation = { auto_show = true },
-    ghost_text = { enabled = true },
+    keyword = {
+      range = 'full'
+    },
+    accept = {
+      auto_brackets = {
+        enabled = true,
+      },
+    },
+    list = {
+      selection = {
+        preselect = true,
+        auto_insert = true,
+      },
+    },
+    documentation = {
+      auto_show = true,
+    },
+    ghost_text = {
+      enabled = true
+    },
   },
   sources = { default = { 'lsp', 'path', 'buffer' } },
 })
-
-vim.diagnostic.config({
-  virtual_text = { current_line = true }
-})
-
---vim.api.nvim_create_autocmd('LspAttach', {
---  callback = function(ev)
---    local client = vim.lsp.get_client_by_id(ev.data.client_id)
---    if client:supports_method('textDocument/completion') then
---      vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
---    end
---  end,
---})
-
-vim.lsp.config('clangd', {
-  cmd = { 'clangd', '--background-index' },
-  root_markers = { '.clangd', 'compile_commands.json' },
-  filetypes = { 'c', 'cpp' },
-})
-
-vim.lsp.enable { 'clangd' }
-
-if vim.g.lsp_on_demands then
-  vim.lsp.enable(vim.g.lsp_on_demands)
-end
