@@ -1,8 +1,6 @@
 vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'popup' }
-vim.opt.foldcolumn = '1'
 vim.opt.foldlevel = 99
 vim.opt.foldlevelstart = 99
-vim.opt.foldenable = true
 vim.opt.tabstop = 4
 vim.opt.softtabstop = 4
 vim.opt.shiftwidth = 2
@@ -18,8 +16,13 @@ vim.opt.isfname:append("@-@")
 
 vim.wo.signcolumn = 'yes'
 vim.wo.number = true
-vim.wo.foldmethod = 'expr'
-vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+
+vim.opt.foldenable = true
+vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.o.foldcolumn = "1"
+vim.o.foldlevel = 99
+vim.o.foldlevelstart = 99
+vim.o.foldenable = true
 
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 
@@ -44,7 +47,8 @@ require('lazy').setup(
     { 'williamboman/mason.nvim' },
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
-    { 'saghen/blink.cmp', version = '*', }
+    { 'saghen/blink.cmp', version = '*', },
+    { 'chrisgrieser/nvim-origami', event = 'VeryLazy', opts = {} },
   },
   {
     install = { missing = true },
@@ -52,6 +56,8 @@ require('lazy').setup(
     defaults = { lazy = true },
   }
 )
+
+vim.keymap.set('i', '<c-space>', vim.lsp.completion.get)
 
 vim.diagnostic.config({
   virtual_text = { current_line = true }
@@ -66,11 +72,19 @@ local lsp_configs = {
   }
 }
 
-require('mason').setup()
-require('mason-tool-installer').setup({
-  ensure_installed = vim.tbl_keys(lsp_configs),
-  auto_update = true,
-  run_on_start = true,
+vim.lsp.config('*', {
+  capabilities = {
+    textDocument = {
+      semanticTokens = {
+        multilineTokenSupport = true,
+      }
+    },
+    foldingRange = {
+        dynamicRegistration = false,
+        lineFoldingOnly = true,
+    }
+  },
+  root_markers = { '.git' },
 })
 
 for name, config in pairs(lsp_configs) do
@@ -82,6 +96,20 @@ vim.lsp.enable(vim.tbl_keys(lsp_configs))
 if vim.g.lsp_on_demands then
   vim.lsp.enable(vim.g.lsp_on_demands)
 end
+
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('lsp-attach', { clear = true }),
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client:supports_method('textDocument/foldingRange') then
+      local win = vim.api.nvim_get_current_win()
+      vim.wo[win][0].foldmethod = 'expr'
+      vim.wo[win][0].foldexpr = 'v:lua.vim.lsp.foldexpr()'
+    end
+  end,
+ })
+
+vim.api.nvim_create_autocmd('LspDetach', { command = 'setl foldexpr<' })
 
 require("nvim-treesitter.install").prefer_git = true
 require('nvim-treesitter.configs').setup {
@@ -104,7 +132,20 @@ require('nvim-treesitter.configs').setup {
   }
 }
 
+require('mason').setup()
+require('mason-tool-installer').setup({
+  ensure_installed = vim.tbl_keys(lsp_configs),
+  auto_update = true,
+  run_on_start = true,
+})
+
 require('blink.cmp').setup({
+  keymap = {
+    ['<CR>'] = { 'accept', 'fallback' },
+    ['<Tab>'] = { 'accept', 'fallback' },
+    ['<Right>'] = { 'accept', 'fallback' },
+    ['<Esc>'] = { 'hide', 'fallback' },
+  },
   signature = {
     enabled = true,
   },
@@ -145,4 +186,12 @@ require('blink.cmp').setup({
     },
   },
   sources = { default = { 'lsp', 'path', 'buffer' } },
+  fuzzy = {
+    sorts = {
+      'exact',
+      -- defaults
+      'score',
+      'sort_text',
+    },
+  }
 })
