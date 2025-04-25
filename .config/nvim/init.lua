@@ -48,6 +48,11 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup(
   {
     {
+      "vhyrro/luarocks.nvim",
+      priority = 1000,
+      config = true,
+    },
+    {
       "folke/tokyonight.nvim",
       lazy = false,
       priority = 1000,
