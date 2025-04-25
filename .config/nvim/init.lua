@@ -17,7 +17,10 @@ vim.opt.isfname:append("@-@")
 vim.wo.signcolumn = 'yes'
 vim.wo.number = true
 
-vim.opt.foldenable = true
+
+vim.opt.termguicolors = true
+
+vim.o.foldenable = true
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldcolumn = "1"
 vim.o.foldlevel = 99
@@ -44,6 +47,15 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup(
   {
+    {
+      "folke/tokyonight.nvim",
+      lazy = false,
+      priority = 1000,
+      opts = {},
+    },
+    {
+      "f-person/auto-dark-mode.nvim"
+    },
     { 'williamboman/mason.nvim' },
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
@@ -51,8 +63,6 @@ require('lazy').setup(
         'MeanderingProgrammer/render-markdown.nvim',
         ft = { 'markdown', 'octo' },
         dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' }, -- if you use the mini.nvim suite
-        ---@module 'render-markdown'
-        ---@type render.md.UserConfig
         opts = {},
     },
     { 'saghen/blink.cmp', version = '*', },
@@ -84,6 +94,22 @@ require('lazy').setup(
     defaults = { lazy = true },
   }
 )
+
+vim.cmd[[colorscheme tokyonight]]
+
+require('auto-dark-mode').setup({
+  update_interval = 1000,
+  set_dark_mode = function()
+    vim.api.nvim_set_option("background", "dark")
+    vim.cmd("colorscheme tokyonight")
+  end,
+  set_light_mode = function()
+    vim.api.nvim_set_option("background", "light")
+    vim.cmd("colorscheme tokyonight")
+  end,
+})
+
+require('tokyonight').setup({})
 
 vim.keymap.set('i', '<c-space>', vim.lsp.completion.get)
 
