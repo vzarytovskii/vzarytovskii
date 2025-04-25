@@ -47,8 +47,36 @@ require('lazy').setup(
     { 'williamboman/mason.nvim' },
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        ft = { 'markdown', 'octo' },
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' }, -- if you use the mini.nvim suite
+        ---@module 'render-markdown'
+        ---@type render.md.UserConfig
+        opts = {},
+    },
     { 'saghen/blink.cmp', version = '*', },
+    {
+      'pwntester/octo.nvim',
+      cmd = { 'Octo' },
+      event = 'VeryLazy',
+      dependencies = {
+        'nvim-lua/plenary.nvim',
+        'nvim-telescope/telescope.nvim',
+        'nvim-tree/nvim-web-devicons',
+      },
+    },
+    {
+      "NeogitOrg/neogit",
+      event = 'VeryLazy',
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+        "sindrets/diffview.nvim",
+        "nvim-telescope/telescope.nvim",
+      },
+    },
     { 'chrisgrieser/nvim-origami', event = 'VeryLazy', opts = {} },
+    { 'shortcuts/no-neck-pain.nvim' }
   },
   {
     install = { missing = true },
@@ -63,7 +91,7 @@ vim.diagnostic.config({
   virtual_text = { current_line = true }
 })
 
-local treesitter_configs = { 'c', 'cpp' }
+local treesitter_configs = { 'c', 'cpp', 'markdown', 'latex', 'html' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index' },
@@ -111,7 +139,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 vim.api.nvim_create_autocmd('LspDetach', { command = 'setl foldexpr<' })
 
-require("nvim-treesitter.install").prefer_git = true
+vim.treesitter.language.register('markdown', 'octo')
+
+require('nvim-treesitter.install').prefer_git = true
 require('nvim-treesitter.configs').setup {
   ensure_installed = treesitter_configs,
   highlight = {
@@ -137,6 +167,24 @@ require('mason-tool-installer').setup({
   ensure_installed = vim.tbl_keys(lsp_configs),
   auto_update = true,
   run_on_start = true,
+})
+
+require('render-markdown').setup({
+  enabled = true,
+  file_types = { "markdown", "octo" },
+  completions = { blink = { enabled = true } },
+  render_modes = true,
+  injections = {
+      gitcommit = {
+          enabled = true,
+          query = [[
+              ((message) @injection.content
+                  (#set! injection.combined)
+                  (#set! injection.include-children)
+                  (#set! injection.language "markdown"))
+          ]],
+      },
+  },
 })
 
 require('blink.cmp').setup({
@@ -195,3 +243,8 @@ require('blink.cmp').setup({
     },
   }
 })
+
+require('octo').setup({})
+require('neogit').setup({})
+
+require("no-neck-pain").setup({})
