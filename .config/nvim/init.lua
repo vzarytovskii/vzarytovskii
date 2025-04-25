@@ -117,7 +117,7 @@ vim.diagnostic.config({
   virtual_text = { current_line = true }
 })
 
-local treesitter_configs = { 'c', 'cpp', 'markdown', 'latex', 'html' }
+local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index' },
@@ -152,7 +152,6 @@ if vim.g.lsp_on_demands then
 end
 
 vim.api.nvim_create_autocmd('LspAttach', {
-  group = vim.api.nvim_create_augroup('lsp-attach', { clear = true }),
   callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)
     if client:supports_method('textDocument/foldingRange') then
@@ -160,8 +159,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
       vim.wo[win][0].foldmethod = 'expr'
       vim.wo[win][0].foldexpr = 'v:lua.vim.lsp.foldexpr()'
     end
+    if client:supports_method('textDocument/documentColor') then
+      vim.lsp.document_color.enable(true, args.buf)
+    end
   end,
  })
+
 
 vim.api.nvim_create_autocmd('LspDetach', { command = 'setl foldexpr<' })
 
