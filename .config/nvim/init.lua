@@ -14,6 +14,9 @@ vim.opt.scrolloff = 8
 vim.opt.signcolumn = "number"
 vim.opt.isfname:append("@-@")
 
+vim.opt.undofile = true
+vim.opt.undodir = vim.fn.expand("~/.undodir")
+
 vim.wo.signcolumn = 'yes'
 vim.wo.number = true
 
@@ -61,16 +64,23 @@ require('lazy').setup(
     {
       "f-person/auto-dark-mode.nvim"
     },
-    { 'williamboman/mason.nvim' },
+    { 'williamboman/mason.nvim', build = ":MasonToolsUpdate" },
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
     {
         'MeanderingProgrammer/render-markdown.nvim',
+        event = 'VeryLazy',
         ft = { 'markdown', 'octo' },
-        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' }, -- if you use the mini.nvim suite
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
         opts = {},
     },
     { 'saghen/blink.cmp', version = '*', },
+    { 'j-hui/fidget.nvim' },
+    {
+      "y3owk1n/time-machine.nvim",
+      opts = {
+      }
+    },
     {
       'pwntester/octo.nvim',
       cmd = { 'Octo' },
@@ -91,7 +101,7 @@ require('lazy').setup(
       },
     },
     { 'chrisgrieser/nvim-origami', event = 'VeryLazy', opts = {} },
-    { 'shortcuts/no-neck-pain.nvim' }
+    { 'shortcuts/no-neck-pain.nvim', event = 'VeryLazy' }
   },
   {
     install = { missing = true },
@@ -122,12 +132,19 @@ vim.diagnostic.config({
   virtual_text = { current_line = true }
 })
 
-local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html' }
+local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index' },
     root_markers = { '.clangd', 'compile_commands.json' },
     filetypes = { 'c', 'cpp' },
+    single_file_support = true,
+  },
+  ['typescript-language-server'] = {
+    cmd = { 'typescript-language-server', '--stdio' },
+    root_markers = { 'package.json', 'jsconfig.json' },
+    filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' },
+    single_file_support = true,
   }
 }
 
@@ -277,6 +294,11 @@ require('blink.cmp').setup({
     },
   }
 })
+
+require"fidget".setup({})
+
+
+require("time-machine").setup({})
 
 require('octo').setup({})
 require('neogit').setup({})
