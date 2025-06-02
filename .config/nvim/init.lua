@@ -46,6 +46,21 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   end
 end
 
+local merge_table = function (t1, t2)
+    for k,v in pairs(t2) do
+        if type(v) == "table" then
+            if type(t1[k] or false) == "table" then
+                merge_table(t1[k] or {}, t2[k] or {})
+            else
+                t1[k] = v
+            end
+        else
+            t1[k] = v
+        end
+    end
+    return t1
+end
+
 vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup(
@@ -64,7 +79,7 @@ require('lazy').setup(
     {
       "f-person/auto-dark-mode.nvim"
     },
-    { 'williamboman/mason.nvim', build = ":MasonToolsUpdate" },
+    { 'mason-org/mason.nvim', build = ":MasonToolsUpdate", opts = {} },
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
     {
@@ -74,7 +89,7 @@ require('lazy').setup(
         dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
         opts = {},
     },
-    { 'saghen/blink.cmp', version = '*', },
+    { 'saghen/blink.cmp', version = '*', lazy=true, event='VeryLazy'},
     { 'j-hui/fidget.nvim' },
     {
       "y3owk1n/time-machine.nvim",
@@ -129,14 +144,17 @@ require('tokyonight').setup({})
 vim.keymap.set('i', '<c-space>', vim.lsp.completion.get)
 
 vim.diagnostic.config({
-  virtual_text = { current_line = true }
+  virtual_text = { current_line = true },
+  update_in_insert = true,
+  underline = true,
+  severity_sort = true,
 })
 
 local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript' }
 local lsp_configs = {
   clangd = {
-    cmd = { 'clangd', '--background-index' },
-    root_markers = { '.clangd', 'compile_commands.json' },
+    cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory' },
+    root_markers = { '.clangd', 'compile_commands.json', '.git', 'CMakeLists.txt' },
     filetypes = { 'c', 'cpp' },
     single_file_support = true,
   },
@@ -145,8 +163,31 @@ local lsp_configs = {
     root_markers = { 'package.json', 'jsconfig.json' },
     filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' },
     single_file_support = true,
+  },
+  ['rust-analyzer'] = {
+    cmd = { "rust-analyzer" },
+    filetypes = { "rust" },
+    root_markers = {
+        "Cargo.toml",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        ".git",
+        ".cargo"
+    },
+    settings = {
+        ["rust-analyzer"] = {
+            procMacro = { enable = true },
+            cargo = { allFeatures = true },
+            checkOnSave = true,
+            check = {
+                command = "clippy",
+                extraArgs = { "--no-deps" },
+            },
+        },
+    },
   }
 }
+local tools = { 'clang-format', 'codelldb' }
 
 vim.lsp.config('*', {
   capabilities = {
@@ -167,12 +208,6 @@ for name, config in pairs(lsp_configs) do
   vim.lsp.config(name, config)
 end
 
-vim.lsp.enable(vim.tbl_keys(lsp_configs))
-
-if vim.g.lsp_on_demands then
-  vim.lsp.enable(vim.g.lsp_on_demands)
-end
-
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)
@@ -186,9 +221,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end
   end,
  })
-
-
 vim.api.nvim_create_autocmd('LspDetach', { command = 'setl foldexpr<' })
+vim.api.nvim_create_autocmd("VimLeavePre", { callback = function() vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
+
 
 vim.treesitter.language.register('markdown', 'octo')
 
@@ -214,11 +249,26 @@ require('nvim-treesitter.configs').setup {
 }
 
 require('mason').setup()
-require('mason-tool-installer').setup({
-  ensure_installed = vim.tbl_keys(lsp_configs),
-  auto_update = true,
-  run_on_start = true,
-})
+local all_tools = merge_table(vim.tbl_keys(lsp_configs), tools)
+for _, tool in pairs(all_tools) do
+    if vim.fn.executable(tool) == 0 then
+        vim.cmd("MasonInstall " .. tool)
+    end
+end
+
+--require('mason-tool-installer').setup({
+--  ensure_installed = merge_table(vim.tbl_keys(lsp_configs), tools),
+--  auto_update = true,
+--  run_on_start = true,
+--})
+
+
+vim.lsp.enable(vim.tbl_keys(lsp_configs))
+
+if vim.g.lsp_on_demands then
+  vim.lsp.enable(vim.g.lsp_on_demands)
+end
+
 
 require('render-markdown').setup({
   enabled = true,
@@ -239,6 +289,10 @@ require('render-markdown').setup({
 })
 
 require('blink.cmp').setup({
+  appearance = {
+    use_nvim_cmp_as_default = false,
+    nerd_font_variant = "normal",
+  },
   keymap = {
     ['<CR>'] = { 'accept', 'fallback' },
     ['<Tab>'] = { 'accept', 'fallback' },
@@ -256,9 +310,16 @@ require('blink.cmp').setup({
     menu = {
       auto_show = true,
       draw = {
-        columns = {
-          { "label", "label_description", gap = 1 },
-          { "kind_icon", "kind" }
+        border = nil,
+        scrolloff = 1,
+        scrollbar = false,
+        draw = {
+            columns = {
+                { "kind_icon" },
+                { "label",      "label_description", gap = 1 },
+                { "kind" },
+                { "source_name" },
+            },
         },
         treesitter = { 'lsp' }
       }
@@ -279,6 +340,11 @@ require('blink.cmp').setup({
     },
     documentation = {
       auto_show = true,
+      window = {
+        border = nil,
+        scrollbar = false,
+        winhighlight = 'Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,EndOfBuffer:BlinkCmpDoc',
+      },
     },
     ghost_text = {
       enabled = true
