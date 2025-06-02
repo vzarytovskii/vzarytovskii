@@ -185,6 +185,12 @@ local lsp_configs = {
             },
         },
     },
+  },
+  marksman = {
+    cmd = { 'marksman' },
+    root_markers = { '.marksman.toml', '.git', '*.md' },
+    filetypes = { 'markdown', 'octo' },
+    single_file_support = true,
   }
 }
 local tools = { 'clang-format', 'codelldb' }
@@ -252,6 +258,7 @@ require('mason').setup()
 local all_tools = merge_table(vim.tbl_keys(lsp_configs), tools)
 for _, tool in pairs(all_tools) do
     if vim.fn.executable(tool) == 0 then
+        print("Installing tool: " .. tool)
         vim.cmd("MasonInstall " .. tool)
     end
 end
@@ -309,17 +316,15 @@ require('blink.cmp').setup({
     },
     menu = {
       auto_show = true,
+      scrolloff = 1,
+      scrollbar = false,
+      border = nil,
       draw = {
-        border = nil,
-        scrolloff = 1,
-        scrollbar = false,
-        draw = {
-            columns = {
-                { "kind_icon" },
-                { "label",      "label_description", gap = 1 },
-                { "kind" },
-                { "source_name" },
-            },
+        columns = {
+            { "kind_icon" },
+            { "label",      "label_description", gap = 1 },
+            { "kind" },
+            { "source_name" },
         },
         treesitter = { 'lsp' }
       }
