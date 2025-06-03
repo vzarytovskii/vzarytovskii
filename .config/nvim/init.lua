@@ -83,16 +83,35 @@ require('lazy').setup(
     { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
     { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
     {
-        'MeanderingProgrammer/render-markdown.nvim',
-        event = 'VeryLazy',
-        ft = { 'markdown', 'octo' },
-        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
-        opts = {},
+      'MeanderingProgrammer/render-markdown.nvim',
+      event = 'VeryLazy',
+      ft = { 'markdown', 'octo' },
+      dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
+      opts = {},
     },
-    { 'saghen/blink.cmp', version = '*', lazy=true, event='VeryLazy'},
-    { 'j-hui/fidget.nvim' },
+    {
+      'zbirenbaum/copilot.lua',
+      cmd = "Copilot",
+      event = "InsertEnter",
+      opts = {
+        suggestion = { enabled = false },
+        panel = { enabled = false },
+        filetypes = {
+          cmdline = false,
+          ["*"] = true,
+        },
+      },
+    },
+    { 'saghen/blink.cmp', version = '*', event='VeryLazy'},
+    {
+      'fang2hou/blink-copilot',
+      dependencies = { 'saghen/blink.cmp', 'zbirenbaum/copilot.lua' },
+    },
+
+    { 'j-hui/fidget.nvim', event='VeryLazy' },
     {
       "y3owk1n/time-machine.nvim",
+      event = 'VeryLazy',
       opts = {
       }
     },
@@ -115,8 +134,18 @@ require('lazy').setup(
         "nvim-telescope/telescope.nvim",
       },
     },
+    {
+      "folke/noice.nvim",
+      event = "VeryLazy",
+      opts = {
+      },
+      dependencies = {
+        "MunifTanjim/nui.nvim",
+        "rcarriga/nvim-notify",
+        }
+    },
     { 'chrisgrieser/nvim-origami', event = 'VeryLazy', opts = {} },
-    { 'shortcuts/no-neck-pain.nvim', event = 'VeryLazy' }
+    { 'shortcuts/no-neck-pain.nvim', event = 'VeryLazy' },
   },
   {
     install = { missing = true },
@@ -150,7 +179,7 @@ vim.diagnostic.config({
   severity_sort = true,
 })
 
-local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript' }
+local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript', 'regex', 'bash' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory' },
@@ -193,7 +222,8 @@ local lsp_configs = {
     single_file_support = true,
   }
 }
-local tools = { 'clang-format', 'codelldb' }
+
+local tools = { 'clang-format', 'codelldb', 'copilot-language-server' }
 
 vim.lsp.config('*', {
   capabilities = {
@@ -355,23 +385,51 @@ require('blink.cmp').setup({
       enabled = true
     },
   },
-  sources = { default = { 'lsp', 'path', 'buffer' } },
+  sources = {
+    default = { 'copilot', 'lsp', 'path', 'buffer' },
+    providers = {
+      copilot = {
+        name = "copilot",
+        module = "blink-copilot",
+        score_offset = 100,
+        async = true,
+      },
+    },
+  },
+  cmdline = {
+    keymap = { preset = 'inherit' },
+    completion = { menu = { auto_show = true } },
+  },
   fuzzy = {
     sorts = {
       'exact',
-      -- defaults
       'score',
       'sort_text',
     },
   }
 })
 
-require"fidget".setup({})
+require("copilot").setup({})
 
+require("fidget").setup({})
 
 require("time-machine").setup({})
 
 require('octo').setup({})
 require('neogit').setup({})
+
+require("noice").setup({
+  lsp = {
+    override = {
+      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+      ["vim.lsp.util.stylize_markdown"] = true,
+    },
+  },
+  presets = {
+    bottom_search = true,
+    command_palette = true,
+    long_message_to_split = true,
+  },
+})
 
 require("no-neck-pain").setup({})
