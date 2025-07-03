@@ -1,6 +1,5 @@
-;;; init.el --- Emacs configuration bootstrap.
-;; -*- lexical-binding: t; -*-
-;; -*-no-byte-compile: t; -*-
+;;; -*- lexical-binding: t; -*-
+;;; -*- no-byte-compile: t; -*-
 
 ;;; Commentary:
 
@@ -8,7 +7,7 @@
 
 ;; Setup package system
 
-(defvar elpaca-installer-version 0.10)
+(defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -120,6 +119,9 @@
   (gcmh-idle-delay 10)
   (gcmh-high-cons-threshold #x6400000))
 
+(use-package llama)
+(use-package closql)
+(use-package emacsql)
 
 (use-package exec-path-from-shell
   :when (eq system-type 'darwin)
@@ -261,7 +263,7 @@
         tab-width 4
 
         display-raw-bytes-as-hex t
-	      redisplay-skip-fontification-on-input t
+        redisplay-skip-fontification-on-input t
 
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
@@ -269,7 +271,7 @@
 
         blink-cursor-mode nil
 
-	      show-trailing-whitespace t
+        show-trailing-whitespace t
         whitespace-style '(face trailing)
         make-backup-files t
         backup-directory-alist '(("." . "~/.saves"))
@@ -301,8 +303,6 @@
             (border-mode-line-inactive unspecified)
             ,@modus-themes-preset-overrides-intense)))
 
-(use-package llama)
-
 (use-package auto-dark
   :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :ref "478d10238a85cdda72ffbb529fc78d8a5a4322ff")
   :delight auto-dark-mode
@@ -325,7 +325,7 @@
         '(
           (consult-imenu buffer indexed)
           (consult-grep buffer indexed)
-	      (execute-extended-command flat)))
+          (execute-extended-command flat)))
   (setq vertico-multiform-categories
       '((file grid)
         (consult-grep buffer))))
@@ -365,7 +365,7 @@
       (unless (treesit-language-available-p (car grammar))
         (treesit-install-language-grammar (car grammar))
         ; (message "`%s' parser was installed." lang)
-	      (sit-for 0.75))))
+        (sit-for 0.75))))
 
   (dolist (mapping
            '((python-mode . python-ts-mode)
@@ -419,7 +419,7 @@
     (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
       "Prepend emacs-lsp-booster command to lsp CMD."
       (let ((orig-result (funcall old-fn cmd test?)))
-        (if (and (not test?)                             ;; for check lsp-server-present?
+        (if (and (not test?)                            ;; for check lsp-server-present?
                 (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
                 lsp-use-plists
                 (not (functionp 'json-rpc-connection))  ;; native json-rpc
@@ -443,13 +443,6 @@
     :init
     (global-lsp-bridge-mode))
 
-  (use-package fsharp-mode
-    :defer t
-    :mode "\\.fs[iylx]?$"
-    :config
-    (setq indent-tabs-mode nil
-          truncate-lines t
-          tab-width 4))
 
   (use-package magit
     :defer t
@@ -471,13 +464,15 @@
   (use-package forge
     :defer t
     :after (:all magit llama))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7"
+   '("77f281064ea1c8b14938866e21c4e51e4168e05db98863bd7430f1352cab294a"
+     "2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7"
      default)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

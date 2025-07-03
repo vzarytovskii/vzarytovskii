@@ -1,6 +1,6 @@
-;;; early-init.el --- Emacs 27+ early init.
-;; -*- lexical-binding: t; -*-
-;; -*-no-byte-compile: t; -*-
+;;; -*- lexical-binding: t; -*-
+;;; -*- no-byte-compile: t; -*-
+
 ;;; Commentary:
 ;; Emacs 27+ early init, for main configuration, see init.el.
 
@@ -70,12 +70,13 @@
       idle-update-delay 1.1
       site-run-file nil
       package-install-upgrade-built-in t
+      compilation-safety 0
       native-comp-speed 3
       native-comp-debug 0
       native-comp-verbose 0
       native-comp-deferred-compilation nil
       native-comp-async-report-warnings-errors nil
-      native-comp-async-jobs-number 20
+      native-comp-async-jobs-number 24
       native-comp-jit-compilation t
       native-comp-enable-subr-trampolines t
       native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only")
