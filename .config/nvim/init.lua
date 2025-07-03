@@ -30,6 +30,33 @@ vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
 vim.o.foldenable = true
 
+if vim.g.neovide then
+  vim.g.neovide_position_animation_length = 0
+  vim.g.neovide_cursor_animation_length = 0.00
+  vim.g.neovide_cursor_trail_size = 0
+  vim.g.neovide_cursor_animate_in_insert_mode = false
+  vim.g.neovide_cursor_animate_command_line = false
+  vim.g.neovide_scroll_animation_far_lines = 0
+  vim.g.neovide_scroll_animation_length = 0.00
+  vim.g.neovide_padding_top = 0
+  vim.g.neovide_padding_bottom = 0
+  vim.g.neovide_padding_right = 0
+  vim.g.neovide_padding_left = 0
+  vim.g.neovide_opacity = 0.5
+  vim.g.neovide_window_blurred = true
+  vim.g.neovide_title_background_color = string.format(
+    "%x",
+    vim.api.nvim_get_hl(0, {id=vim.api.nvim_get_hl_id_by_name("Normal")}).bg
+  )
+  vim.g.neovide_show_border = true
+  vim.g.neovide_theme = 'auto'
+  vim.g.neovide_refresh_rate = 60
+  vim.g.experimental_layer_grouping = true
+  vim.g.neovide_refresh_rate_idle = 1
+  vim.g.neovide_fullscreen = false
+  vim.g.neovide_macos_simple_fullscreen = true
+end
+
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -102,7 +129,13 @@ require('lazy').setup(
         },
       },
     },
-    { 'saghen/blink.cmp', version = '*', event='VeryLazy'},
+    {
+      'saghen/blink.cmp', version = '*', event='VeryLazy',
+      dependencies = {
+        'nvim-tree/nvim-web-devicons',
+        'onsails/lspkind.nvim'
+      }
+    },
     {
       'fang2hou/blink-copilot',
       dependencies = { 'saghen/blink.cmp', 'zbirenbaum/copilot.lua' },
@@ -146,6 +179,11 @@ require('lazy').setup(
     },
     { 'chrisgrieser/nvim-origami', event = 'VeryLazy', opts = {} },
     { 'shortcuts/no-neck-pain.nvim', event = 'VeryLazy' },
+    {
+      "rachartier/tiny-inline-diagnostic.nvim",
+      event = "VeryLazy", -- Or `LspAttach`
+      priority = 1000,
+    }
   },
   {
     install = { missing = true },
@@ -170,10 +208,14 @@ require('auto-dark-mode').setup({
 
 require('tokyonight').setup({})
 
+require('nvim-web-devicons').setup({
+  default = true
+})
+
 vim.keymap.set('i', '<c-space>', vim.lsp.completion.get)
 
 vim.diagnostic.config({
-  virtual_text = { current_line = true },
+  virtual_text = false, --{ current_line = false },
   update_in_insert = true,
   underline = true,
   severity_sort = true,
@@ -335,6 +377,8 @@ require('blink.cmp').setup({
     ['<Tab>'] = { 'accept', 'fallback' },
     ['<Right>'] = { 'accept', 'fallback' },
     ['<Esc>'] = { 'hide', 'fallback' },
+    ['<Up>'] = { 'select_prev', 'fallback' },
+    ['<Down>'] = { 'select_next', 'fallback' },
   },
   signature = {
     enabled = true,
@@ -350,8 +394,41 @@ require('blink.cmp').setup({
       scrollbar = false,
       border = nil,
       draw = {
+        components = {
+          kind_icon = {
+            text = function(ctx)
+              local icon = ctx.kind_icon
+              if vim.tbl_contains({ "Path" }, ctx.source_name) then
+                  local dev_icon, _ = require("nvim-web-devicons").get_icon(ctx.label)
+                  if dev_icon then
+                      icon = dev_icon
+                  end
+              else
+                  icon = require("lspkind").symbolic(ctx.kind, {
+                      mode = "symbol",
+                  })
+              end
+
+              return icon .. ctx.icon_gap
+            end,
+
+            -- Optionally, use the highlight groups from nvim-web-devicons
+            -- You can also add the same function for `kind.highlight` if you want to
+            -- keep the highlight groups in sync with the icons.
+            highlight = function(ctx)
+              local hl = ctx.kind_hl
+              if vim.tbl_contains({ "Path" }, ctx.source_name) then
+                local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
+                if dev_icon then
+                  hl = dev_hl
+                end
+              end
+              return hl
+            end,
+          }
+        },
         columns = {
-            { "kind_icon" },
+            --{ "kind_icon" },
             { "label",      "label_description", gap = 1 },
             { "kind" },
             { "source_name" },
@@ -397,8 +474,13 @@ require('blink.cmp').setup({
     },
   },
   cmdline = {
-    keymap = { preset = 'inherit' },
-    completion = { menu = { auto_show = true } },
+    keymap = {
+      ['<Up>'] = { 'select_prev', 'fallback' },
+      ['<Down>'] = { 'select_next', 'fallback' },
+      ['<Right>'] = { 'accept', 'fallback' },
+      ['<Esc>'] = { 'hide', 'fallback' },
+    },
+    completion = { menu = { auto_show = false }, ghost_text = { enabled = true } },
   },
   fuzzy = {
     sorts = {
@@ -407,6 +489,26 @@ require('blink.cmp').setup({
       'sort_text',
     },
   }
+})
+
+require('tiny-inline-diagnostic').setup({
+  preset = 'minimal',
+  transparent_bg = true,
+  set_arrow_to_diag_color = true,
+  throttle = 0,
+  enable_on_insert = true,
+  multilines = {
+      enabled = true,
+  },
+  signs = {
+      --left = "",
+      --right = "",
+      --diag = "●",
+      arrow = " <- ",
+      --up_arrow = "    ",
+      --vertical = " │",
+      --vertical_end = " └",
+  },
 })
 
 require("copilot").setup({})
