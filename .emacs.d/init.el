@@ -318,6 +318,7 @@
    :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
   (("C-c f" . dirvish)
    :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
+   ("/"   . dirvish-fd)
    (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
    ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
    ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
