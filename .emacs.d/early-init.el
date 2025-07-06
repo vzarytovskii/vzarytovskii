@@ -106,5 +106,7 @@
         (let (garbage-collection-messages)
           (garbage-collect))))))))
 
+(setq initial-buffer-choice (expand-file-name "~"))
+
 (provide 'early-init)
 ;;; early-init.el ends here

@@ -296,6 +296,16 @@
         frame-resize-pixelwise t
         use-short-answers t))
 
+(use-package dired
+  :ensure nil
+  :config
+  (setq dired-dwim-target t
+        dired-listing-switches "-Alpvh"
+        dired-recursive-copies 'always
+        dired-recursive-deletes 'top
+        dired-create-destination-dirs 'ask)
+  :hook ((dired-after-readin . hl-line-mode)))
+
 (use-package modus-themes
   :ensure '(modus-themes
     :host github
@@ -329,33 +339,33 @@
   :when (display-graphic-p)
   :hook (after-init-hook . global-hl-line-mode))
 
-;; (use-package vertico
-;;   :init
-;;   (vertico-mode)
-;;   (vertico-multiform-mode)
-;;   (setq vertico-multiform-commands
-;;         '(
-;;           (consult-imenu buffer indexed)
-;;           (consult-grep buffer indexed)
-;;           (execute-extended-command flat)))
-;;   (setq vertico-multiform-categories
-;;       '((file grid)
-;;         (consult-grep buffer))))
-;;
-;; (use-package orderless
-;;   :custom
-;;   (completion-styles '(orderless basic))
-;;   (completion-category-defaults nil)
-;;   (completion-category-overrides '((file (styles partial-completion)))))
-;;
-;; (use-package consult
-;;   :bind (
-;;          ("M-s"   . consult-ripgrep)
-;;          ("C-x b" . consult-buffer))
-;;   :hook (completion-list-mode . consult-preview-at-point-mode)
-;;   :init
-;;   (setq xref-show-xrefs-function #'consult-xref
-;;         xref-show-definitions-function #'consult-xref))
+ (use-package vertico
+   :init
+   (vertico-mode)
+   (vertico-multiform-mode)
+   (setq vertico-multiform-commands
+         '(
+           (consult-imenu buffer indexed)
+           (consult-grep buffer indexed)
+           (execute-extended-command flat)))
+   (setq vertico-multiform-categories
+       '((file grid)
+         (consult-grep buffer))))
+
+ (use-package orderless
+   :custom
+   (completion-styles '(orderless basic))
+   (completion-category-defaults nil)
+   (completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package consult
+  :bind (
+         ("M-s"   . consult-ripgrep)
+         ("C-x b" . consult-buffer))
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :init
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref))
 
 ;; ---
 
