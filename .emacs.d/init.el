@@ -149,8 +149,8 @@
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
          ("C-g"             . 'keyboard-quit)
-         ;; ("C-k"             . 'kill-buffer)
-         ;; ("C-K"             . 'kill-this-buffer)
+         ;; ("C-k"          . 'kill-buffer)
+         ;; ("C-K"          . 'kill-this-buffer)
          ("C-c o"           . 'switch-to-minibuffer)
          ([remap keyboard-quit] . 'keyboard-quit-ex))
   :hook (after-init-hook . window-divider-mode)
@@ -304,6 +304,12 @@
         dired-recursive-copies 'always
         dired-recursive-deletes 'top
         dired-create-destination-dirs 'ask)
+  (when (eq system-type 'darwin)
+    (let ((gls (executable-find "gls")))
+      (when gls
+        (setq dired-use-ls-dired t
+              insert-directory-program gls
+              dired-listing-switches "-aBhl  --group-directories-first"))))
   (put 'dired-find-alternate-file 'disabled nil)
   :hook ((dired-after-readin . hl-line-mode)))
 
