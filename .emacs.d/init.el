@@ -24,9 +24,9 @@
     (make-directory repo t)
     (when (< emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+        (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                ,@(when-let ((depth (plist-get order :depth)))
+                                                ,@(when-let* ((depth (plist-get order :depth)))
                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
                                                 ,(plist-get order :repo) ,repo))))
                 ((zerop (call-process "git" nil buffer t "checkout"
@@ -114,6 +114,7 @@
         browse-url-browser-function #'browse-url-generic))
 
 (use-package gcmh
+  :disabled t
   :hook (after-init-hook . gcmh-mode)
   :custom
   (gcmh-idle-delay 10)
@@ -150,11 +151,22 @@
          ("C-g"             . 'keyboard-quit)
          ;; ("C-k"             . 'kill-buffer)
          ;; ("C-K"             . 'kill-this-buffer)
-         ("C-c o"           . 'switch-to-minibuffer))
+         ("C-c o"           . 'switch-to-minibuffer)
+         ([remap keyboard-quit] . 'keyboard-quit-ex))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
   :preface
-
+  (defun keyboard-quit-ex ()
+    (interactive)
+    (cond
+    ((region-active-p)
+      (keyboard-quit))
+    ((derived-mode-p 'completion-list-mode)
+      (delete-completion-window))
+    ((> (minibuffer-depth) 0)
+      (abort-recursive-edit))
+    (t
+      (keyboard-quit))))
   (defun switch-to-minibuffer ()
     "Switch to minibuffer window."
     (interactive)
@@ -317,40 +329,40 @@
   :when (display-graphic-p)
   :hook (after-init-hook . global-hl-line-mode))
 
-(use-package vertico
-  :init
-  (vertico-mode)
-  (vertico-multiform-mode)
-  (setq vertico-multiform-commands
-        '(
-          (consult-imenu buffer indexed)
-          (consult-grep buffer indexed)
-          (execute-extended-command flat)))
-  (setq vertico-multiform-categories
-      '((file grid)
-        (consult-grep buffer))))
-
-(use-package orderless
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion)))))
-
-(use-package consult
-  :bind (
-         ("M-s"   . consult-ripgrep)
-         ("C-x b" . consult-buffer))
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-  :init
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref))
+;; (use-package vertico
+;;   :init
+;;   (vertico-mode)
+;;   (vertico-multiform-mode)
+;;   (setq vertico-multiform-commands
+;;         '(
+;;           (consult-imenu buffer indexed)
+;;           (consult-grep buffer indexed)
+;;           (execute-extended-command flat)))
+;;   (setq vertico-multiform-categories
+;;       '((file grid)
+;;         (consult-grep buffer))))
+;;
+;; (use-package orderless
+;;   :custom
+;;   (completion-styles '(orderless basic))
+;;   (completion-category-defaults nil)
+;;   (completion-category-overrides '((file (styles partial-completion)))))
+;;
+;; (use-package consult
+;;   :bind (
+;;          ("M-s"   . consult-ripgrep)
+;;          ("C-x b" . consult-buffer))
+;;   :hook (completion-list-mode . consult-preview-at-point-mode)
+;;   :init
+;;   (setq xref-show-xrefs-function #'consult-xref
+;;         xref-show-definitions-function #'consult-xref))
 
 ;; ---
 
 (use-package treesit
   :ensure nil
   :preface
-  (defun mp-setup-install-grammars ()
+  (defun ts-install-grammars ()
     "Install Tree-sitter grammars if they are absent."
     (interactive)
     (dolist (grammar
@@ -376,13 +388,7 @@
     (add-to-list 'major-mode-remap-alist mapping))
 
   :config
-  (mp-setup-install-grammars))
-
-(use-package scopeline
-  :config (add-hook 'prog-mode-hook #'scopeline-mode))
-
-(use-package yasnippet
-  :defer t)
+  (ts-install-grammars))
 
 (use-package markdown-mode
   :defer t)
@@ -443,7 +449,6 @@
     :init
     (global-lsp-bridge-mode))
 
-
   (use-package magit
     :defer t
     :commands magit-status
@@ -464,6 +469,10 @@
   (use-package forge
     :defer t
     :after (:all magit llama))
+
+  (use-package ghub
+    :defer t
+    :after (:all magit))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

@@ -49,14 +49,15 @@
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
 
-(set-face-attribute 'default nil :family "Consolas" :height 140)
-(set-face-attribute 'fixed-pitch nil :family "Consolas" :height 130 :weight 'semi-light :width 'expanded)
-(set-face-attribute 'variable-pitch nil :family "Consolas" :height 130 :weight 'regular)
+(set-face-attribute 'default nil :family "Iosevka" :height 140)
+(set-face-attribute 'fixed-pitch nil :family "Iosevka" :height 130 :weight 'semi-light :width 'expanded)
+(set-face-attribute 'variable-pitch nil :family "Iosevka" :height 130 :weight 'regular)
 
 (defvar default-file-name-handler-alist file-name-handler-alist)
 
-(setq gc-cons-percentage 0.6
+(setq ;; gc-cons-percentage 0.6
       gc-cons-threshold most-positive-fixnum
+      garbage-collection-messages t
       file-name-handler-alist nil
       inhibit-default-init t
       inhibit-message t
@@ -92,12 +93,18 @@
 
 (defun emacs-startup ()
   (setq file-name-handler-alist default-file-name-handler-alist
-        gc-cons-threshold (* 1024 1024 64)
+        gc-cons-threshold (* 1024 1024 50)
         inhibit-redisplay nil
         inhibit-message nil)
   (makunbound 'default-file-name-handler-alist))
 
-(add-hook 'emacs-startup-hook #'emacs-startup 100)
+ (add-hook 'emacs-startup-hook #'emacs-startup 100)
+ (add-function :after after-focus-change-function (lambda ()
+  (unless (frame-focus-state)
+    (run-with-timer 3.0 nil (lambda ()
+      (unless (frame-focus-state)
+        (let (garbage-collection-messages)
+          (garbage-collect))))))))
 
 (provide 'early-init)
 ;;; early-init.el ends here
