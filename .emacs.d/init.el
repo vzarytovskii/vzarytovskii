@@ -82,7 +82,7 @@
 
 ;; Setup use-package
 (setq-default use-package-always-demand t
-              use-package-always-defer nil
+              use-package-always-defer t
               use-package-always-ensure t
               use-package-expand-minimally nil
               use-package-enable-imenu-support t
@@ -113,17 +113,19 @@
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
 
-(use-package llama)
-(use-package closql)
-(use-package emacsql)
+(use-package esup :defer t)
+
+(use-package llama :defer t)
+(use-package closql :defer t)
+(use-package emacsql :defer t)
 
 (use-package exec-path-from-shell
   :when (eq system-type 'darwin)
   :hook (after-init-hook . exec-path-from-shell-initialize))
 
-(use-package delight)
+(use-package delight :defer t)
 
-(use-package transient)
+(use-package transient :defer t)
 
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
@@ -311,11 +313,12 @@
   (dirvish-override-dired-mode)
   :config
   (setq dirvish-mode-line-format '(:left (sort symlink) :right (omit yank index))
-        dirvish-attributes '(vc-state subtree-state collapse git-msg file-time file-size)
+        dirvish-attributes '(vc-state subtree-state collapse file-time file-size)
         dirvish-side-attributes '(vc-state collapse file-size)
         dirvish-large-directory-threshold 20000)
    :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
-   (("C-c f" . dirvish)
+   (("C-x d" . dirvish)
+    ("C-c f" . dirvish)
     :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
     ("/"   . dirvish-fd)
     (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
@@ -385,24 +388,24 @@
   :when (display-graphic-p)
   :hook (after-init-hook . global-hl-line-mode))
 
- (use-package vertico
-   :init
-   (vertico-mode)
-   (vertico-multiform-mode)
-   (setq vertico-multiform-commands
-         '(
-           (consult-imenu buffer indexed)
-           (consult-grep buffer indexed)
-           (execute-extended-command flat)))
-   (setq vertico-multiform-categories
-       '((file grid)
-         (consult-grep buffer))))
+(use-package vertico
+  :init
+  (vertico-mode)
+  (vertico-multiform-mode)
+  (setq vertico-multiform-commands
+        '(
+          (consult-imenu buffer indexed)
+          (consult-grep buffer indexed)
+          (execute-extended-command flat)))
+  (setq vertico-multiform-categories
+      '((file grid)
+        (consult-grep buffer))))
 
- (use-package orderless
-   :custom
-   (completion-styles '(orderless basic))
-   (completion-category-defaults nil)
-   (completion-category-overrides '((file (styles partial-completion)))))
+(use-package orderless
+  :init
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil)
+        completion-category-overrides '((file (styles partial-completion))))
 
 (use-package consult
   :bind (("M-s"   . consult-ripgrep))
@@ -453,11 +456,9 @@
   :config
   (ts-install-grammars))
 
-(use-package markdown-mode
-  :defer t)
+(use-package markdown-mode)
 
 (use-package lsp-mode
-  :defer t
   :hook (prog-mode-hook . (lambda ()
                             (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode)
                               (lsp-deferred))))
@@ -500,12 +501,10 @@
     (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)))
 
   (use-package lsp-ui
-    :after lsp-mode
-    :defer t)
+    :after lsp-mode)
 
   (use-package lsp-bridge
     :disabled t ;; Until I sort out global python packages installation on macOS 14+
-    :defer t
     :ensure '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
               :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
               :build (:not compile))
@@ -542,7 +541,6 @@
                     '(diff-hl-margin-mode nil))))))
 
   (use-package magit
-    :defer t
     :commands magit-status
     :ensure '(magit :type git :host github :repo "magit/magit" :branch "main")
     :preface
@@ -572,11 +570,9 @@
     (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header))
 
   (use-package forge
-    :defer t
     :after (:all magit llama))
 
   (use-package ghub
-    :defer t
     :config
     (setq ghub-default-host "github.com")
     :after (:all magit))
