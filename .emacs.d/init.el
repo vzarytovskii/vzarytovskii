@@ -113,13 +113,6 @@
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
 
-(use-package gcmh
-  :disabled t
-  :hook (after-init-hook . gcmh-mode)
-  :custom
-  (gcmh-idle-delay 10)
-  (gcmh-high-cons-threshold #x6400000))
-
 (use-package llama)
 (use-package closql)
 (use-package emacsql)
@@ -311,7 +304,7 @@
               insert-directory-program gls
               dired-listing-switches "-aBhl  --group-directories-first"))))
   (put 'dired-find-alternate-file 'disabled nil)
-  :hook ((dired-after-readin . hl-line-mode)))
+  :hook ((dired-after-readin-hook . hl-line-mode)))
 
 (use-package dirvish
   :init
@@ -322,46 +315,61 @@
         dirvish-side-attributes '(vc-state collapse file-size)
         dirvish-large-directory-threshold 20000)
    :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
-  (("C-c f" . dirvish)
-   :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
-   ("/"   . dirvish-fd)
-   (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
-   ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
-   ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
-   ("f"   . dirvish-file-info-menu)    ; [f]ile info
-   ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
-   ("s"   . dirvish-quicksort)         ; [s]ort flie list
-   ("r"   . dirvish-history-jump)      ; [r]ecent visited
-   ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
-   ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
-   ("*"   . dirvish-mark-menu)
-   ("y"   . dirvish-yank-menu)
-   ("N"   . dirvish-narrow)
-   ("^"   . dirvish-history-last)
-   ("TAB" . dirvish-subtree-toggle)
-   ("M-f" . dirvish-history-go-forward)
-   ("M-b" . dirvish-history-go-backward)
-   ("M-e" . dirvish-emerge-menu))
+   (("C-c f" . dirvish)
+    :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
+    ("/"   . dirvish-fd)
+    (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
+    ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
+    ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
+    ("f"   . dirvish-file-info-menu)    ; [f]ile info
+    ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
+    ("s"   . dirvish-quicksort)         ; [s]ort flie list
+    ("r"   . dirvish-history-jump)      ; [r]ecent visited
+    ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
+    ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
+    ("*"   . dirvish-mark-menu)
+    ("y"   . dirvish-yank-menu)
+    ("N"   . dirvish-narrow)
+    ("^"   . dirvish-history-last)
+    ("TAB" . dirvish-subtree-toggle)
+    ("M-f" . dirvish-history-go-forward)
+    ("M-b" . dirvish-history-go-backward)
+    ("M-e" . dirvish-emerge-menu))
   :after dired)
 
-(use-package modus-themes
-  :ensure '(modus-themes
+(use-package ibuffer
+  :ensure nil
+  :custom
+  (ibuffer-saved-filter-groups
+    (quote (("default"
+             ("Org" (or
+                     (mode . org-mode)
+                     (name . "^\\*Org Src")
+                     (name . "^\\*Org Agenda\\*$")))
+             ("C" (or
+                   (mode . c-mode)))
+             ("LISP" (or
+                      (mode . emacs-lisp-mode)
+                      (mode . ielm-mode)
+                      (name . "^\\*scratch\\*$")
+                      (mode . lisp-mode)))
+             ("Dired" (or
+                        (mode . dired-mode)
+                        (mod . dirvish-mode)))
+             ("Term" (or
+                      (mode . term-mode)
+                      (mode . eshell-mode)))))))
+  :bind
+  (("C-x C-b" . ibuffer))
+  :hook ((ibuffer-mode-hook . (lambda () (ibuffer-switch-to-saved-filter-groups "default")))))
+
+(use-package doom-two-tone-themes
+  :ensure '(doom-two-tone-themes
     :host github
-    :repo "protesilaos/modus-themes"
-    :branch "main"
-    :files (:defaults "*.el")
-    :main "modus-themes.el")
-  :config
-  (setq modus-themes-italic-constructs nil
-        modus-themes-bold-constructs nil
-        modus-themes-mixed-fonts t
-        modus-themes-variable-pitch-ui t
-        modus-themes-disable-other-themes t
-        modus-themes-common-palette-overrides
-          `(
-            (border-mode-line-active unspecified)
-            (border-mode-line-inactive unspecified)
-            ,@modus-themes-preset-overrides-intense)))
+    :repo "eliraz-refael/doom-two-tone-themes"
+    :branch "master"
+    :files ("doom-two-tone-themes.el" "themes/*.el")
+    :main "doom-two-tone-themes.el"))
 
 (use-package auto-dark
   :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :ref "478d10238a85cdda72ffbb529fc78d8a5a4322ff")
@@ -370,7 +378,7 @@
   :init (auto-dark-mode)
   :config
   (setq auto-dark-allow-osascript t)
-  (setq auto-dark-themes '((modus-vivendi) (modus-operandi))))
+  (setq auto-dark-themes '((doom-silver-slate) (doom-slate-mushroom))))
 
 (use-package hl-line
   :ensure nil
@@ -397,13 +405,21 @@
    (completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package consult
-  :bind (
-         ("M-s"   . consult-ripgrep)
-         ("C-x b" . consult-buffer))
-  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :bind (("M-s"   . consult-ripgrep))
+  :hook (completion-list-mode-hook . consult-preview-at-point-mode)
   :init
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref))
+
+(use-package consult-gh
+  :ensure `(consult-gh :type git :host github :repo "armindarvish/consult-gh")
+  :after consult)
+
+(use-package consult-gh-forge
+  :after consult-gh
+  :config
+  (require 'consult-gh-transient)
+  (consult-gh-forge-mode +1))
 
 ;; ---
 
@@ -418,7 +434,6 @@
                (markdown . ("https://github.com/ikatyang/tree-sitter-markdown" "master"))
                (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
                (rust . ("https://github.com/tree-sitter/tree-sitter-rust" "master"))
-               (fsharp . ("https://github.com/ionide/tree-sitter-fsharp" "main" "fsharp/src"))
                (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
                (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
       (add-to-list 'treesit-language-source-alist grammar)
@@ -447,7 +462,7 @@
                             (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode)
                               (lsp-deferred))))
   :preface
-  (setq read-process-output-max (* 64 1024)) ; 1MB
+  (setq read-process-output-max (* 64 1024))
   (setenv "LSP_USE_PLISTS" "false") ;; enable if using booster
   :init
   (setq lsp-use-plists nil) ;; enable if using booster
@@ -497,6 +512,35 @@
     :init
     (global-lsp-bridge-mode))
 
+  ;; Git
+
+  (use-package diff-hl
+    :config
+    (setq diff-hl-draw-borders nil
+      diff-hl-disable-on-remote t)
+    :custom
+    (defun enable-diff-hl-dired-locally ()
+    (if (file-remote-p default-directory)
+        (diff-hl-dired-mode -1)
+      (diff-hl-dired-mode 1)))
+
+    (add-hook 'prog-mode-hook #'diff-hl-mode)
+    (add-hook 'conf-mode-hook #'diff-hl-mode)
+    (add-hook 'dired-mode-hook #'enable-diff-hl-dired-locally)
+
+    (with-eval-after-load 'diff-hl
+    (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
+    (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
+    ;; Highlight on-the-fly
+    (diff-hl-flydiff-mode 1)
+    (unless (display-graphic-p)
+      ;; Fall back to the display margin since the fringe is unavailable in tty
+      (diff-hl-margin-mode 1)
+      ;; Avoid restoring `diff-hl-margin-mode'
+      (with-eval-after-load 'desktop
+        (add-to-list 'desktop-minor-mode-table
+                    '(diff-hl-margin-mode nil))))))
+
   (use-package magit
     :defer t
     :commands magit-status
@@ -509,8 +553,21 @@
     :config
 
     (setq magit-ellipsis (get-byte 0 ".")
-          magit-revision-insert-related-refs nil)
+          magit-revision-insert-related-refs nil
+          magit-diff-refine-hunk t
+          magit-diff-paint-whitespace nil
+          magit-commit-show-diff nil
+          magit-branch-direct-configure nil
+          magit-refresh-status-buffer t
+          magit-tramp-pipe-stty-settings 'pty)
 
+    :custom
+    (defvar magit-toplevel-cache nil)
+    (defun memoize-magit-toplevel (orig &optional directory)
+      (memoize-remote (or directory default-directory)
+                      'magit-toplevel-cache orig directory))
+    (with-eval-after-load 'magit
+      (advice-add 'magit-toplevel :around #'memoize-magit-toplevel))
     (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
     (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header))
 
@@ -520,6 +577,8 @@
 
   (use-package ghub
     :defer t
+    :config
+    (setq ghub-default-host "github.com")
     :after (:all magit))
 
 (custom-set-variables
@@ -528,7 +587,8 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("77f281064ea1c8b14938866e21c4e51e4168e05db98863bd7430f1352cab294a"
+   '("01c64d818433031bcdaef3b0ce836980f640a13673c0ca5df888760f240d5f4d"
+     "77f281064ea1c8b14938866e21c4e51e4168e05db98863bd7430f1352cab294a"
      "2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7"
      default)))
 (custom-set-faces

@@ -48,15 +48,24 @@
 (set-terminal-coding-system 'utf-8)
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
+(set-language-environment "UTF-8")
 
-(set-face-attribute 'default nil :family "Iosevka" :height 140)
-(set-face-attribute 'fixed-pitch nil :family "Iosevka" :height 130 :weight 'semi-light :width 'expanded)
-(set-face-attribute 'variable-pitch nil :family "Iosevka" :height 130 :weight 'regular)
+(setopt bidi-inhibit-bpa t)
+(setq-default bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right)
+
+(defvar default-font-name "Hack")
+(set-face-attribute 'default nil :family default-font-name :height 140)
+(set-face-attribute 'fixed-pitch nil :family default-font-name :height 130 :weight 'semi-light :width 'expanded)
+(set-face-attribute 'variable-pitch nil :family default-font-name :height 130 :weight 'regular)
 
 (defvar default-file-name-handler-alist file-name-handler-alist)
 
+(defvar max-gc-cons-threshold most-positive-fixnum)
+(defvar default-gc-cons-threshold (* 1024 1024 50))
+
 (setq ;; gc-cons-percentage 0.6
-      gc-cons-threshold most-positive-fixnum
+      gc-cons-threshold max-gc-cons-threshold
       garbage-collection-messages t
       file-name-handler-alist nil
       inhibit-default-init t
@@ -78,6 +87,7 @@
       native-comp-deferred-compilation nil
       native-comp-async-report-warnings-errors nil
       native-comp-async-jobs-number 24
+      native-comp-async-on-battery-power nil
       native-comp-jit-compilation t
       native-comp-enable-subr-trampolines t
       native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only")
@@ -91,13 +101,22 @@
 (setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
 (setq exec-path (append exec-path '("~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
 
+(defun my-minibuffer-setup-hook ()
+   (setq gc-cons-threshold max-gc-cons-threshold))
+ (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+
+ (defun my-minibuffer-exit-hook ()
+   (setq gc-cons-threshold default-gc-cons-threshold))
+ (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+
 (defun emacs-startup ()
   (setq file-name-handler-alist default-file-name-handler-alist
-        gc-cons-threshold (* 1024 1024 50)
+        gc-cons-threshold default-gc-cons-threshold
         inhibit-redisplay nil
         inhibit-message nil)
   (makunbound 'default-file-name-handler-alist))
 
+ (run-with-idle-timer 15 t 'garbage-collect)
  (add-hook 'emacs-startup-hook #'emacs-startup 100)
  (add-function :after after-focus-change-function (lambda ()
   (unless (frame-focus-state)
