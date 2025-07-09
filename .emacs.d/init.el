@@ -1,5 +1,4 @@
-;;; -*- lexical-binding: t; -*-
-;;; -*- no-byte-compile: t; -*-
+;;; -*- lexical-binding: t; -*- no-byte-compile: t; -*-
 
 ;;; Commentary:
 
@@ -100,6 +99,14 @@
     (interactive)
     (load-file user-init-file))
 
+(defun emacs-recompile ()
+  "Recompile all .elc files."
+  (interactive)
+  (message "Recompiling ...")
+  (if (functionp 'async-byte-recompile-directory)
+      (async-byte-recompile-directory package-user-dir)
+    (byte-recompile-directory package-user-dir 0 'force)))
+
 (defconst *sys/gui* (display-graphic-p))
 (defconst *sys/is-mac* (eq system-type 'darwin))
 (defconst *sys/is-linux* (or (eq system-type 'gnu/linux) (eq system-type 'linux)))
@@ -113,6 +120,11 @@
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
 
+(use-package auto-compile
+  :config
+  (auto-compile-on-load-mode)
+  (auto-compile-on-save-mode))
+
 (use-package esup)
 
 (use-package llama)
@@ -122,6 +134,7 @@
 (use-package hydra)
 
 (use-package exec-path-from-shell
+  :defer nil
   :when (eq system-type 'darwin)
   :hook (after-init-hook . exec-path-from-shell-initialize))
 
@@ -291,7 +304,8 @@
         truncate-lines t
         show-paren-style 'parenthesis
         frame-resize-pixelwise t
-        use-short-answers t))
+        use-short-answers t
+        initial-buffer-choice (expand-file-name "~")))
 
 (use-package dired
   :ensure nil
@@ -309,6 +323,8 @@
               dired-listing-switches "-aBhl  --group-directories-first"))))
   (put 'dired-find-alternate-file 'disabled nil)
   :hook ((dired-after-readin-hook . hl-line-mode)))
+
+(use-package dired-x :ensure nil :after dired)
 
 (use-package dirvish
   :init
@@ -435,24 +451,42 @@
     "Install Tree-sitter grammars if they are absent."
     (interactive)
     (dolist (grammar
-             '((json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
-               (markdown . ("https://github.com/ikatyang/tree-sitter-markdown" "master"))
-               (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-               (rust . ("https://github.com/tree-sitter/tree-sitter-rust" "master"))
-               (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
-               (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
-      (add-to-list 'treesit-language-source-alist grammar)
+             '(
+                (bash "https://github.com/tree-sitter/tree-sitter-bash")
+                (cmake "https://github.com/uyha/tree-sitter-cmake")
+                (css "https://github.com/tree-sitter/tree-sitter-css")
+                (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+                (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+                (html "https://github.com/tree-sitter/tree-sitter-html")
+                (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+                (json "https://github.com/tree-sitter/tree-sitter-json")
+                (make "https://github.com/alemuller/tree-sitter-make")
+                (python "https://github.com/tree-sitter/tree-sitter-python")
+                (rust "https://github.com/tree-sitter/tree-sitter-rust")
+                (toml "https://github.com/tree-sitter/tree-sitter-toml")
+                (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+                (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+                (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+            (add-to-list 'treesit-language-source-alist grammar)
       (unless (treesit-language-available-p (car grammar))
         (treesit-install-language-grammar (car grammar))
         ; (message "`%s' parser was installed." lang)
         (sit-for 0.75))))
 
   (dolist (mapping
-           '((python-mode . python-ts-mode)
-             (bash-mode . bash-ts-mode)
-             (conf-toml-mode . toml-ts-mode)
-             (json-mode . json-ts-mode)
-             (js-json-mode . json-ts-mode)))
+           '(
+              (bash-mode . bash-ts-mode)
+              (css-mode . css-ts-mode)
+              (elisp-mode . elisp-ts-mode)
+              (html-mode . html-ts-mode)
+              (js2-mode . js-ts-mode)
+              (json-mode . json-ts-mode)
+              (makefile-mode . make-ts-mode)
+              (python-mode . python-ts-mode)
+              (toml-mode . toml-ts-mode)
+              (typescript-mode . typescript-ts-mode)
+              (rust-mode . rust-ts-mode)
+              (yaml-mode . yaml-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping))
 
   :config
@@ -460,19 +494,23 @@
 
 (use-package markdown-mode)
 
+(use-package flycheck
+  :hook (after-init-hook . global-flycheck-mode))
+
 (use-package lsp-mode
   :hook (prog-mode-hook . (lambda ()
                             (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode)
                               (lsp-deferred))))
   :preface
   (setq read-process-output-max (* 64 1024))
-  (setenv "LSP_USE_PLISTS" "false") ;; enable if using booster
   :init
+  (setenv "LSP_USE_PLISTS" "false") ;; enable if using booster
   (setq lsp-use-plists nil) ;; enable if using booster
   :config
+  (setq lsp-log-io t)
   ;; Emacs LSP booster
   ;; @seee https://github.com/blahgeek/emacs-lsp-booster
-  (when (executable-find "emacs-lsp-booster-disabled")
+  (when (executable-find "emacs-lsp-booster-disable")
     (defun lsp-booster--advice-json-parse (old-fn &rest args)
       "Try to parse bytecode instead of json."
       (or
@@ -632,6 +670,18 @@
     :config
     (setq ghub-default-host "github.com")
     :after (:all magit))
+
+(use-package rust-mode
+  :hook (rust-mode-hook . lsp)
+  :custom
+  (rust-format-on-save t)
+  (rust-mode-treesitter-derive t))
+
+(use-package cargo-mode
+  :hook
+  (rust-mode-hook . cargo-minor-mode)
+  :config
+  (setq compilation-scroll-output t))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

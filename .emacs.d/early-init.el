@@ -1,5 +1,4 @@
-;;; -*- lexical-binding: t; -*-
-;;; -*- no-byte-compile: t; -*-
+;;; -*- lexical-binding: t; -*- no-byte-compile: t; -*-
 
 ;;; Commentary:
 ;; Emacs 27+ early init, for main configuration, see init.el.
@@ -116,11 +115,13 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 
 (defvar default-file-name-handler-alist file-name-handler-alist)
 
-(defvar max-gc-cons-threshold most-positive-fixnum)
-(defvar default-gc-cons-threshold (* 1024 1024 100))
+(defvar gc-cons-higher-threshold most-positive-fixnum)
+(defvar gc-cons-lower-threshold (* 1024 1024 100))
+(defvar gc-cons-higher-percentage 0.9)
+(defvar gc-cons-lower-percentage 0.6)
 
-(setq gc-cons-percentage 0.6
-      gc-cons-threshold max-gc-cons-threshold
+(setq gc-cons-percentage gc-cons-higher-percentage
+      gc-cons-threshold gc-cons-higher-threshold
       garbage-collection-messages t
       file-name-handler-alist nil
       inhibit-default-init t
@@ -153,34 +154,129 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
       warning-suppress-log-types '((comp) (bytecomp))
       native-comp-async-report-warnings-errors 'silent)
 
-(setenv "PATH" (concat (getenv "PATH") ":~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
-(setq exec-path (append exec-path '("~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
+(setenv "PATH" (concat (getenv "PATH") ":~/.cargo/bin:~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
+(setq exec-path (append exec-path '("~/.cargo/bin" "~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
 
 (defun my-minibuffer-setup-hook ()
-   (setq gc-cons-threshold max-gc-cons-threshold))
- (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+   (setq gc-cons-threshold gc-cons-higher-threshold
+         gc-cons-percentage gc-cons-higher-percentage))
+(add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
 
- (defun my-minibuffer-exit-hook ()
-   (setq gc-cons-threshold default-gc-cons-threshold))
- (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+(defun my-minibuffer-exit-hook ()
+   (setq gc-cons-threshold gc-cons-lower-threshold
+         gc-cons-percentage gc-cons-lower-percentage))
+(add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 
 (defun emacs-startup ()
   (setq file-name-handler-alist default-file-name-handler-alist
-        gc-cons-threshold default-gc-cons-threshold
+        gc-cons-percentage gc-cons-higher-percentage
+        gc-cons-threshold gc-cons-higher-threshold
+        file-name-handler-alist nil
         inhibit-redisplay nil
         inhibit-message nil)
   (makunbound 'default-file-name-handler-alist))
 
- (run-with-idle-timer 15 t 'garbage-collect)
  (add-hook 'emacs-startup-hook #'emacs-startup 100)
- (add-function :after after-focus-change-function (lambda ()
-  (unless (frame-focus-state)
-    (run-with-timer 3.0 nil (lambda ()
-      (unless (frame-focus-state)
-        (let (garbage-collection-messages)
-          (garbage-collect))))))))
 
-(setq initial-buffer-choice (expand-file-name "~"))
+(run-with-idle-timer 30 t 'garbage-collect)
+(add-function :after after-focus-change-function (lambda ()
+(unless (frame-focus-state)
+  (run-with-timer 3.0 nil (lambda ()
+    (unless (frame-focus-state)
+      (let (garbage-collection-messages)
+        (garbage-collect))))))))
+
+;; Experimental opportunistic GC:
+(defvar gc--opportunistic-last-gcs gcs-done)
+(defvar gc--opportunistic-state 'noncmd)
+(defvar gc--opportunistic-counters nil)
+(defvar gc--opportunistic-single-gc-cmds 0)
+
+(defun gc--check ()
+  (let ((gcs-counted
+         (+ (alist-get 'multi-gcs gc--opportunistic-counters 0)
+                   (alist-get 'earlier-gcs gc--opportunistic-counters 0)
+                   (alist-get 'single-gc-cmds gc--opportunistic-counters 0)
+                   (alist-get 'noncmds-gcs gc--opportunistic-counters 0)
+                   (alist-get 'opportunistic-gcs gc--opportunistic-counters 0)
+                   (or (car (alist-get 'error-gcs gc--opportunistic-counters))
+0))))
+    (unless (= gcs-done gcs-counted)
+      (push (+ (- gcs-done gcs-counted)
+               (or (car (alist-get 'error-gcs gc--opportunistic-counters)) 0))
+            (alist-get 'error-gcs gc--opportunistic-counters)))))
+
+(defun gc--opportunistic-record (nextstate)
+  (let ((counts (alist-get gc--opportunistic-state gc--opportunistic-counters)))
+    (unless counts
+      (setf (alist-get gc--opportunistic-state gc--opportunistic-counters)
+            (setq counts (list 0 0 0))))
+    (pcase (prog1 (- gcs-done gc--opportunistic-last-gcs)
+             (setq gc--opportunistic-last-gcs gcs-done))
+      ((pred (>= 0)) nil)
+      (1 (cl-incf (nth 0 counts)))
+      (gcs (cl-incf (nth 1 counts))
+           (cl-incf (nth 2 counts) gcs))))
+  (setq gc--opportunistic-state nextstate))
+
+(defun gc--opportunistic-postch ()
+  (cl-incf (alist-get 'commands gc--opportunistic-counters 0))
+  (gc--opportunistic-record 'noncmd))
+
+(defun gc--opportunistic-prech ()
+  (cl-callf identity
+      (alist-get 'earlier-gcs gc--opportunistic-counters gcs-done))
+  (gc--opportunistic-record 'cmd)
+  ;; (gc--check)
+  )
+
+(defun gc--opportunistic-jitlock (orig-fun start)
+  (if (eq gc--opportunistic-state 'cmd)
+      ;; Count jit-lock execution which happens during a command as
+      ;; being part of command execution rather than as part of jit-lock!
+      (funcall orig-fun start)
+    (let ((gc--opportunistic-state gc--opportunistic-state))
+      (gc--opportunistic-record 'jit)
+      (unwind-protect
+          (funcall orig-fun start)
+        (gc--opportunistic-record 'postjit)))))
+
+(add-hook 'pre-command-hook #'gc--opportunistic-prech)
+(add-hook 'post-command-hook #'gc--opportunistic-postch)
+(advice-add 'jit-lock-function :around #'gc--opportunistic-jitlock)
+
+(defun gc--opportunistic ()
+  "Run the GC during idle time."
+  ;; This is good for two reasons:
+  ;; - It reduces the number of times we have to GC in the middle of
+  ;;   an operation.
+  ;; - It means we GC when the C stack is short, reducing the risk of false
+  ;;   positives from the conservative stack scanning.
+  (when (garbage-collect-maybe 3)
+    (cl-incf (alist-get 'opportunistic-gcs gc--opportunistic-counters 0))
+    ;; Don't double count this GC in other categories.
+    (cl-incf gc--opportunistic-last-gcs)
+    ;; Recalibrate the timer.
+    (cancel-function-timers #'gc--opportunistic)
+    (run-with-idle-timer
+     ;; FIXME: Magic formula!
+     (+ 1 (* 10 (/ gc-elapsed gcs-done))) t #'gc--opportunistic)))
+
+(defun gc--opportunistic-score ()
+  "Show the current counters's that keep track of GC behavior."
+  (interactive)
+  (message "%S" gc--opportunistic-counters))
+
+(run-with-idle-timer 1 t #'gc--opportunistic)
+(let ((last-gcs nil))
+      (add-hook 'pre-command-hook (lambda () (setq last-gcs gcs-done)))
+      (add-hook 'post-command-hook
+                (lambda ()
+                  (if (eq (1- gcs-done) last-gcs)
+                      (setq gc--opportunistic-single-gc-cmds
+                            (1+ gc--opportunistic-single-gc-cmds))))))
+;;
+
 
 (provide 'early-init)
 ;;; early-init.el ends here
