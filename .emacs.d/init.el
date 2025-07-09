@@ -498,49 +498,50 @@
   :hook (after-init-hook . global-flycheck-mode))
 
 (use-package lsp-mode
-  :hook (prog-mode-hook . (lambda ()
-                            (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode)
-                              (lsp-deferred))))
+  :hook (
+    (lsp-mode-hook . lsp-diagnostics-mode)
+    (lsp-mode-hook . lsp-enable-which-key-integration)
+    (prog-mode-hook . (lambda () (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode) (lsp-deferred)))))
   :preface
   (setq read-process-output-max (* 64 1024))
-  :init
-  (setenv "LSP_USE_PLISTS" "false") ;; enable if using booster
-  (setq lsp-use-plists nil) ;; enable if using booster
-  :config
-  (setq lsp-log-io t)
-  ;; Emacs LSP booster
-  ;; @seee https://github.com/blahgeek/emacs-lsp-booster
-  (when (executable-find "emacs-lsp-booster-disable")
-    (defun lsp-booster--advice-json-parse (old-fn &rest args)
-      "Try to parse bytecode instead of json."
-      (or
-      (when (equal (following-char) ?#)
-        (let ((bytecode (read (current-buffer))))
-          (when (byte-code-function-p bytecode)
-            (funcall bytecode))))
-      (apply old-fn args)))
-    (advice-add (if (progn (require 'json)
-                          (fboundp 'json-parse-buffer))
-                    'json-parse-buffer
-                  'json-read)
-                :around
-                #'lsp-booster--advice-json-parse)
+  (setq lsp-use-plists t)
+  (defun lsp-booster--advice-json-parse (old-fn &rest args)
+    "Try to parse bytecode instead of json."
+    (or
+     (when (equal (following-char) ?#)
 
-    (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-      "Prepend emacs-lsp-booster command to lsp CMD."
-      (let ((orig-result (funcall old-fn cmd test?)))
-        (if (and (not test?)                            ;; for check lsp-server-present?
-                (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-                lsp-use-plists
-                (not (functionp 'json-rpc-connection))  ;; native json-rpc
-                (executable-find "emacs-lsp-booster"))
-            (progn
-              (message "Using emacs-lsp-booster for %s!" orig-result)
-              (cons "emacs-lsp-booster" orig-result))
-          orig-result)))
-    (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)))
+       (let ((bytecode (read (current-buffer))))
+         (when (byte-code-function-p bytecode)
+           (funcall bytecode))))
+     (apply old-fn args)))
+  (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+               (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+               lsp-use-plists
+               (not (functionp 'json-rpc-connection))  ;; native json-rpc
+               (executable-find "emacs-lsp-booster"))
+          (progn
+            (message "Using emacs-lsp-booster for %s!" orig-result)
+            (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
+  :init
+  (setq lsp-use-plists t)
+  (advice-add (if (progn (require 'json)
+                         (fboundp 'json-parse-buffer))
+                  'json-parse-buffer
+                'json-read)
+              :around
+              #'lsp-booster--advice-json-parse)
+  (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command))
+
+  (use-package lsp-completion
+    :ensure nil
+    :hook ((lsp-mode-hook . lsp-completion-mode)))
 
   (use-package lsp-ui
+    :hook ((lsp-mode-hook . lsp-ui-mode))
     :after lsp-mode)
 
   (use-package lsp-bridge
