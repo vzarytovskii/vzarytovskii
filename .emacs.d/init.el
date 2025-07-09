@@ -527,7 +527,24 @@
             (cons "emacs-lsp-booster" orig-result))
         orig-result)))
   :init
-  (setq lsp-use-plists t)
+  (setq lsp-use-plists t
+        lsp-log-io nil ; use only for debugging as it drastically affects performance
+        lsp-keep-workspace-alive nil ; close LSP server if all project buffers are closed
+        lsp-idle-delay 0.5
+        lsp-diagnostics-provider :flycheck
+        lsp-enable-xref t
+        lsp-auto-configure t
+        lsp-eldoc-enable-hover t
+        lsp-enable-dap-auto-configure t
+        lsp-enable-file-watchers nil
+        lsp-enable-folding nil
+        lsp-enable-imenu t
+        lsp-enable-indentation nil
+        lsp-enable-links nil
+        lsp-enable-on-type-formatting nil
+        lsp-enable-suggest-server-download t
+        lsp-enable-symbol-highlighting t
+        lsp-enable-text-document-color nil)
   (advice-add (if (progn (require 'json)
                          (fboundp 'json-parse-buffer))
                   'json-parse-buffer
@@ -538,11 +555,24 @@
 
   (use-package lsp-completion
     :ensure nil
-    :hook ((lsp-mode-hook . lsp-completion-mode)))
+    :hook ((lsp-mode-hook . lsp-completion-mode))
+    :after lsp-mode
+    :init
+    (setq lsp-completion-provider :none
+          lsp-completion-enable t
+          lsp-completion-enable-additional-text-edit t
+          lsp-enable-snippet t
+          lsp-completion-show-kind t))
 
   (use-package lsp-ui
     :hook ((lsp-mode-hook . lsp-ui-mode))
-    :after lsp-mode)
+    :after lsp-mode
+    :init
+    (setq
+      lsp-ui-doc-enable t
+      lsp-ui-doc-show-with-cursor nil
+      lsp-ui-doc-include-signature t
+      lsp-ui-doc-position 'at-point))
 
   (use-package lsp-bridge
     :disabled t ;; Until I sort out global python packages installation on macOS 14+
