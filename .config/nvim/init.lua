@@ -4,6 +4,7 @@ vim.opt.foldlevelstart = 99
 vim.opt.tabstop = 4
 vim.opt.softtabstop = 4
 vim.opt.shiftwidth = 2
+vim.opt.showtabline = 0
 vim.opt.expandtab = true
 vim.opt.exrc = true
 vim.opt.smartindent = true
@@ -23,12 +24,12 @@ vim.wo.number = true
 
 vim.opt.termguicolors = true
 
-vim.o.foldenable = true
-vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-vim.o.foldcolumn = "1"
-vim.o.foldlevel = 99
-vim.o.foldlevelstart = 99
-vim.o.foldenable = true
+vim.opt.foldenable = true
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldcolumn = "1"
+vim.opt.foldlevel = 99
+vim.opt.foldlevelstart = 99
+vim.opt.foldenable = true
 
 if vim.g.neovide then
   vim.g.neovide_position_animation_length = 0
@@ -90,105 +91,49 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
-require('lazy').setup(
+vim.pack.add(
   {
-    {
-      "vhyrro/luarocks.nvim",
-      priority = 1000,
-      config = true,
-    },
-    {
-      "folke/tokyonight.nvim",
-      lazy = false,
-      priority = 1000,
-      opts = {},
-    },
-    {
-      "f-person/auto-dark-mode.nvim"
-    },
-    { 'mason-org/mason.nvim', build = ":MasonToolsUpdate", opts = {} },
-    { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
-    { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
-    {
-      'MeanderingProgrammer/render-markdown.nvim',
-      event = 'VeryLazy',
-      ft = { 'markdown', 'octo' },
-      dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
-      opts = {},
-    },
-    {
-      'zbirenbaum/copilot.lua',
-      cmd = "Copilot",
-      event = "InsertEnter",
-      opts = {
-        suggestion = { enabled = false },
-        panel = { enabled = false },
-        filetypes = {
-          cmdline = false,
-          ["*"] = true,
-        },
-      },
-    },
-    {
-      'saghen/blink.cmp', version = '*', event='VeryLazy',
-      dependencies = {
-        'nvim-tree/nvim-web-devicons',
-        'onsails/lspkind.nvim'
-      }
-    },
-    {
-      'fang2hou/blink-copilot',
-      dependencies = { 'saghen/blink.cmp', 'zbirenbaum/copilot.lua' },
-    },
+    { src = 'https://github.com/vhyrro/luarocks.nvim' },
+    { src = 'https://github.com/echasnovski/mini.nvim' },
+    { src = 'https://github.com/nvim-lua/plenary.nvim' },
+    { src = 'https://github.com/nvim-telescope/telescope.nvim' },
 
-    { 'j-hui/fidget.nvim', event='VeryLazy' },
-    {
-      "y3owk1n/time-machine.nvim",
-      event = 'VeryLazy',
-      opts = {
-      }
-    },
-    {
-      'pwntester/octo.nvim',
-      cmd = { 'Octo' },
-      event = 'VeryLazy',
-      dependencies = {
-        'nvim-lua/plenary.nvim',
-        'nvim-telescope/telescope.nvim',
-        'nvim-tree/nvim-web-devicons',
-      },
-    },
-    {
-      "NeogitOrg/neogit",
-      event = 'VeryLazy',
-      dependencies = {
-        "nvim-lua/plenary.nvim",
-        "sindrets/diffview.nvim",
-        "nvim-telescope/telescope.nvim",
-      },
-    },
-    {
-      "folke/noice.nvim",
-      event = "VeryLazy",
-      opts = {
-      },
-      dependencies = {
-        "MunifTanjim/nui.nvim",
-        "rcarriga/nvim-notify",
-        }
-    },
-    { 'chrisgrieser/nvim-origami', event = 'VeryLazy', opts = {} },
-    { 'shortcuts/no-neck-pain.nvim', event = 'VeryLazy' },
-    {
-      "rachartier/tiny-inline-diagnostic.nvim",
-      event = "VeryLazy", -- Or `LspAttach`
-      priority = 1000,
-    }
-  },
-  {
-    install = { missing = true },
-    checker = { enabled = true },
-    defaults = { lazy = true },
+    { src = 'https://github.com/MunifTanjim/nui.nvim' },
+    { src = 'https://github.com/rcarriga/nvim-notify' },
+    { src = 'https://github.com/folke/noice.nvim' },
+
+
+    { src = 'https://github.com/folke/tokyonight.nvim' },
+    { src = 'https://github.com/f-person/auto-dark-mode.nvim' },
+    { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+
+    { src = 'https://github.com/mason-org/mason.nvim' },
+    { src = 'https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim' },
+
+    { src = 'https://github.com/nvim-treesitter/nvim-treesitter' },
+    { src = 'https://github.com/nvim-treesitter/nvim-treesitter-context' },
+
+    { src = 'https://github.com/MeanderingProgrammer/render-markdown.nvim' },
+
+    { src = 'https://github.com/onsails/lspkind.nvim' },
+    { src = 'https://github.com/zbirenbaum/copilot.lua' },
+    { src = 'https://github.com/saghen/blink.cmp', version = 'main' },
+    { src = 'https://github.com/fang2hou/blink-copilot' },
+    { src = 'https://github.com/j-hui/fidget.nvim' },
+
+    { src = 'https://github.com/y3owk1n/time-machine.nvim' },
+
+    { src = 'https://github.com/sindrets/diffview.nvim' },
+    { src = 'https://github.com/pwntester/octo.nvim' },
+    { src = 'https://github.com/NeogitOrg/neogit' },
+
+    { src = 'https://github.com/chrisgrieser/nvim-origami' },
+
+    { src = 'https://github.com/shortcuts/no-neck-pain.nvim' },
+
+    { src = 'https://github.com/code-biscuits/nvim-biscuits' },
+
+    { src = 'https://github.com/rachartier/tiny-inline-diagnostic.nvim' }
   }
 )
 
@@ -325,6 +270,7 @@ require('nvim-treesitter.configs').setup {
     enable = true
   }
 }
+require('treesitter-context').setup({enable = true})
 
 require('mason').setup()
 local all_tools = merge_table(vim.tbl_keys(lsp_configs), tools)
@@ -483,6 +429,11 @@ require('blink.cmp').setup({
     completion = { menu = { auto_show = false }, ghost_text = { enabled = true } },
   },
   fuzzy = {
+    implementation = 'prefer_rust',
+    prebuilt_binaries = {
+      download = true,
+      ignore_version_mismatch = true,
+    },
     sorts = {
       'exact',
       'score',
@@ -511,7 +462,14 @@ require('tiny-inline-diagnostic').setup({
   },
 })
 
-require("copilot").setup({})
+require("copilot").setup({
+  suggestion = { enabled = false },
+  panel = { enabled = false },
+  filetypes = {
+    cmdline = false,
+    ["*"] = true,
+  },
+})
 
 require("fidget").setup({})
 
@@ -535,3 +493,5 @@ require("noice").setup({
 })
 
 require("no-neck-pain").setup({})
+
+require('nvim-biscuits').setup({})

@@ -351,6 +351,7 @@
     ("*"   . dirvish-mark-menu)
     ("y"   . dirvish-yank-menu)
     ("N"   . dirvish-narrow)
+    ("C-s" . dirvish-narrow)
     ("^"   . dirvish-history-last)
     ("TAB" . dirvish-subtree-toggle)
     ("M-f" . dirvish-history-go-forward)
@@ -527,7 +528,8 @@
             (cons "emacs-lsp-booster" orig-result))
         orig-result)))
   :init
-  (setq lsp-use-plists t
+  (setq lsp-keymap-prefix "C-c l"
+        lsp-use-plists t
         lsp-log-io nil ; use only for debugging as it drastically affects performance
         lsp-keep-workspace-alive nil ; close LSP server if all project buffers are closed
         lsp-idle-delay 0.5
@@ -535,6 +537,7 @@
         lsp-enable-xref t
         lsp-auto-configure t
         lsp-eldoc-enable-hover t
+        lsp-lens-enable nil
         lsp-enable-dap-auto-configure t
         lsp-enable-file-watchers nil
         lsp-enable-folding nil
@@ -555,10 +558,14 @@
 
   (use-package lsp-completion
     :ensure nil
-    :hook ((lsp-mode-hook . lsp-completion-mode))
+    :hook ((lsp-mode-hook . lsp-completion-mode)
+           (lsp-completion-mode . my/lsp-mode-setup-completion))
     :after lsp-mode
     :init
-    (setq lsp-completion-provider :none
+    (defun my/lsp-mode-setup-completion ()
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless)))
+    (setq lsp-completion-provider :none ;; Corfu
           lsp-completion-enable t
           lsp-completion-enable-additional-text-edit t
           lsp-enable-snippet t
@@ -566,13 +573,26 @@
 
   (use-package lsp-ui
     :hook ((lsp-mode-hook . lsp-ui-mode))
+    :after lsp-mode)
+
+  (use-package lsp-ui-doc
+    :ensure nil
+    :hook ((lsp-mode-hook . lsp-ui-doc-mode))
     :after lsp-mode
     :init
     (setq
       lsp-ui-doc-enable t
-      lsp-ui-doc-show-with-cursor nil
+      lsp-ui-doc-show-with-cursor t
       lsp-ui-doc-include-signature t
       lsp-ui-doc-position 'at-point))
+
+  (use-package lsp-ui-sideline
+    :ensure nil
+    :init
+    (setq lsp-ui-sideline-show-diagnostics t
+          lsp-ui-sideline-show-hover t
+          lsp-ui-sideline-show-code-actions nil
+          lsp-ui-sideline-update-mode 'line))
 
   (use-package lsp-bridge
     :disabled t ;; Until I sort out global python packages installation on macOS 14+
@@ -581,6 +601,32 @@
               :build (:not compile))
     :init
     (global-lsp-bridge-mode))
+
+  (use-package prescient)
+
+  (use-package cape)
+  (use-package corfu
+    :custom
+    (corfu-cycle t)
+    (corfu-preselect 'prompt)
+    :hook((prog-mode-hook . corfu-mode)
+          (shell-mode-hook . corfu-mode)
+          (eshell-mode-hook . corfu-mode)
+          (corfu-mode-hook . (lambda ()
+                              (setq-local completion-styles '(basic)
+                                          completion-category-overrides nil
+                                          completion-category-defaults nil))))
+    :init
+    (global-corfu-mode)
+    (corfu-history-mode)
+    (corfu-popupinfo-mode)
+    :config
+    (setq corfu-auto t
+          corfu-auto-delay 0
+          corfu-auto-prefix 0
+          corfu-quit-no-match 'separator))
+
+  (use-package corfu-prescient :after (:all prescient corfu))
 
   (use-package whitespace-mode :ensure nil)
 
@@ -713,6 +759,10 @@
   (rust-mode-hook . cargo-minor-mode)
   :config
   (setq compilation-scroll-output t))
+
+
+;; Misc, like chat clients, email, hn, etc
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

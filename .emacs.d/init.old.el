@@ -142,7 +142,7 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package diredfl
   :after dired
   :hook
-  (dired-mode-hook . diredfl-mode))
+  (dired-mode-hook-hook . diredfl-mode))
 
 ;; Narrow a dired buffer to the files matching a stringx.
 (use-package dired-narrow
@@ -527,7 +527,7 @@ If ALL is non-nil, `swiper-all' is run."
 (use-package whitespace-cleanup-mode
   :delight
   :disabled t
-  :hook (write-file-hooks . delete-trailing-whitespace)
+  :hook (write-file-hook . delete-trailing-whitespace)
   :hook (prog-mode-hook . whitespace-cleanup-mode)
   :bind (("<remap> <just-one-space>" . cycle-spacing)))
 
