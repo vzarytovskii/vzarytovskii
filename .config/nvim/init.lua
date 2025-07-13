@@ -60,6 +60,9 @@ if vim.g.neovide then
   vim.g.neovide_macos_simple_fullscreen = true
 end
 
+vim.cmd.cabbrev('git', 'Neogit')
+vim.cmd.cabbrev('Git', 'Neogit')
+
 vim.api.nvim_create_user_command(
   'PackUpdate',
   "lua vim.pack.update()",
@@ -85,6 +88,7 @@ vim.pack.add(
   {
     { src = 'https://github.com/vhyrro/luarocks.nvim' },
     { src = 'https://github.com/echasnovski/mini.nvim' },
+    { src = 'https://github.com/echasnovski/mini.pick' },
     { src = 'https://github.com/nvim-lua/plenary.nvim' },
     { src = 'https://github.com/nvim-telescope/telescope.nvim' },
 
@@ -118,6 +122,7 @@ vim.pack.add(
     { src = 'https://github.com/y3owk1n/time-machine.nvim' },
 
     { src = 'https://github.com/sindrets/diffview.nvim' },
+    { src = 'https://github.com/lewis6991/gitsigns.nvim' },
     { src = 'https://github.com/pwntester/octo.nvim' },
     { src = 'https://github.com/NeogitOrg/neogit' },
 
@@ -249,8 +254,8 @@ require("LspUI").setup({
   code_action = {
     enable = true,
     command_enable = true,
-    gitsigns = false,
-    extend_gitsigns = false,
+    gitsigns = true,
+    extend_gitsigns = true,
     ui = {
       title = "Code Action",
       border = "rounded",
@@ -640,9 +645,36 @@ require("copilot").setup({
 require("fidget").setup({})
 
 require("time-machine").setup({})
-
+require('diffview').setup({})
+require('gitsigns').setup {
+  signs_staged_enable = true,
+  signcolumn = true,
+  numhl      = true,
+  linehl     = true,
+  word_diff  = true,
+  watch_gitdir = {
+    follow_files = true
+  },
+  auto_attach = true,
+  attach_to_untracked = false,
+  preview_config = {
+    style = 'minimal',
+    relative = 'cursor',
+    row = 0,
+    col = 1
+  },
+}
 require('octo').setup({})
-require('neogit').setup({})
+require('neogit').setup({
+  graph_style = 'unicode',
+  process_spinner = true,
+  highlight = {
+    italic = false,
+    bold = true,
+    underline = true
+  },
+  initial_branch_name = 'main',
+})
 
 require("noice").setup({
   lsp = {
