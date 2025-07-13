@@ -1,3 +1,5 @@
+vim.g.mapleader = " "
+
 vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'popup' }
 vim.opt.foldlevel = 99
 vim.opt.foldlevelstart = 99
@@ -116,9 +118,13 @@ vim.pack.add(
     { src = 'https://github.com/MeanderingProgrammer/render-markdown.nvim' },
 
     { src = 'https://github.com/onsails/lspkind.nvim' },
+    { src = 'https://github.com/jinzhongjia/LspUI.nvim', version = 'main' },
+
     { src = 'https://github.com/zbirenbaum/copilot.lua' },
+
     { src = 'https://github.com/saghen/blink.cmp', version = 'main' },
     { src = 'https://github.com/fang2hou/blink-copilot' },
+
     { src = 'https://github.com/j-hui/fidget.nvim' },
 
     { src = 'https://github.com/y3owk1n/time-machine.nvim' },
@@ -133,7 +139,7 @@ vim.pack.add(
 
     { src = 'https://github.com/code-biscuits/nvim-biscuits' },
 
-    { src = 'https://github.com/rachartier/tiny-inline-diagnostic.nvim' }
+    { src = 'https://github.com/dgagn/diagflow.nvim' }
   }
 )
 
@@ -247,6 +253,203 @@ vim.api.nvim_create_autocmd('LspAttach', {
 vim.api.nvim_create_autocmd('LspDetach', { command = 'setl foldexpr<' })
 vim.api.nvim_create_autocmd("VimLeavePre", { callback = function() vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
 
+require("LspUI").setup({
+  prompt = {
+    border = true,
+    borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+  },
+  code_action = {
+    enable = true,
+    command_enable = true,
+    gitsigns = false,
+    extend_gitsigns = false,
+    ui = {
+      title = "Code Action",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+    },
+  },
+  hover = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Hover",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+    },
+  },
+  rename = {
+    enable = true,
+    command_enable = true,
+    auto_save = false,
+    ui = {
+      title = "Rename",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "<C-c>",
+      exec = "<CR>",
+    },
+  },
+  diagnostic = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Diagnostic",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+    },
+  },
+  definition = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Definition",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+      vsplit = "v",
+      split = "s",
+      tabe = "t",
+    },
+  },
+  reference = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Reference",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+      vsplit = "v",
+      split = "s",
+      tabe = "t",
+    },
+  },
+  implementation = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Implementation",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+      vsplit = "v",
+      split = "s",
+      tabe = "t",
+    },
+  },
+  type_definition = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Type Definition",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+      vsplit = "v",
+      split = "s",
+      tabe = "t",
+    },
+  },
+  declaration = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Declaration",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+      vsplit = "v",
+      split = "s",
+      tabe = "t",
+    },
+  },
+  call_hierarchy = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Call Hierarchy",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+      exec = "<CR>",
+      expand = "o",
+      jump = "e",
+      vsplit = "v",
+      split = "s",
+      tabe = "t",
+    },
+  },
+  lightbulb = {
+    enable = true,
+    command_enable = true,
+    icon = "💡",
+    action_kind = {
+      QuickFix = "🔧",
+      Refactor = "♻️",
+      RefactorExtract = "📤",
+      RefactorInline = "📥",
+      RefactorRewrite = "✏️",
+      Source = "📄",
+      SourceOrganizeImports = "📦",
+    },
+  },
+  inlay_hint = {
+    enable = false,
+    command_enable = true,
+  },
+  signature = {
+    enable = true,
+    command_enable = true,
+    ui = {
+      title = "Signature Help",
+      border = "rounded",
+      winblend = 0,
+    },
+    keys = {
+      quit = "q",
+    },
+  },
+})
+vim.keymap.set("n", "K", "<cmd>LspUI hover<CR>")
+vim.keymap.set("n", "gr", "<cmd>LspUI reference<CR>")
+vim.keymap.set("n", "gd", "<cmd>LspUI definition<CR>")
+vim.keymap.set("n", "gt", "<cmd>LspUI type_definition<CR>")
+vim.keymap.set("n", "gi", "<cmd>LspUI implementation<CR>")
+vim.keymap.set("n", "<leader>rn", "<cmd>LspUI rename<CR>")
+vim.keymap.set("n", "<leader>ca", "<cmd>LspUI code_action<CR>")
+vim.keymap.set("n", "<leader>ci", "<cmd>LspUI call_hierarchy incoming_calls<CR>")
+vim.keymap.set("n", "<leader>co", "<cmd>LspUI call_hierarchy outgoing_calls<CR>")
 
 vim.treesitter.language.register('markdown', 'octo')
 
@@ -442,26 +645,6 @@ require('blink.cmp').setup({
   }
 })
 
-require('tiny-inline-diagnostic').setup({
-  preset = 'minimal',
-  transparent_bg = true,
-  set_arrow_to_diag_color = true,
-  throttle = 0,
-  enable_on_insert = true,
-  multilines = {
-      enabled = true,
-  },
-  signs = {
-      --left = "",
-      --right = "",
-      --diag = "●",
-      arrow = " <- ",
-      --up_arrow = "    ",
-      --vertical = " │",
-      --vertical_end = " └",
-  },
-})
-
 require("copilot").setup({
   suggestion = { enabled = false },
   panel = { enabled = false },
@@ -495,3 +678,38 @@ require("noice").setup({
 require("no-neck-pain").setup({})
 
 require('nvim-biscuits').setup({})
+
+require('diagflow').setup({
+    enable = true,
+    max_width = 60,
+    max_height = 10,
+    severity_colors = {
+        error = "DiagnosticFloatingError",
+        warning = "DiagnosticFloatingWarn",
+        info = "DiagnosticFloatingInfo",
+        hint = "DiagnosticFloatingHint",
+    },
+    format = function(diagnostic)
+      return diagnostic.message
+    end,
+    gap_size = 1,
+    scope = 'line', -- 'cursor', 'line' this changes the scope, so instead of showing errors under the cursor, it shows errors on the entire line.
+    padding_top = 0,
+    padding_right = 0,
+    text_align = 'right',
+    placement = 'top',
+    inline_padding_left = 0,
+    update_event = { 'DiagnosticChanged', 'BufReadPost' },
+    toggle_event = { },
+    show_sign = false,
+    render_event = { 'DiagnosticChanged', 'CursorMoved' },
+    border_chars = {
+      top_left = "┌",
+      top_right = "┐",
+      bottom_left = "└",
+      bottom_right = "┘",
+      horizontal = "─",
+      vertical = "│"
+    },
+    show_borders = false,
+})
