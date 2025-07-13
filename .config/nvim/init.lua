@@ -645,7 +645,22 @@ require("copilot").setup({
 require("fidget").setup({})
 
 require("time-machine").setup({})
-require('diffview').setup({})
+require('diffview').setup({
+  enhanced_diff_hl = true,
+  use_icons = false,
+  show_help_hints = true,
+  watch_index = true,
+  view = {
+    default = {
+      layout = 'diff2_horizontal'
+    },
+    merge_tool = {
+      layout = 'diff4_mixed',
+      disable_diagnostics = true,
+      winbar_info = true
+    }
+  }
+})
 require('gitsigns').setup {
   signs_staged_enable = true,
   signcolumn = true,
