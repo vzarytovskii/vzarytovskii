@@ -60,21 +60,11 @@ if vim.g.neovide then
   vim.g.neovide_macos_simple_fullscreen = true
 end
 
-local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  local out = vim.fn.system({ 'git', 'clone', '--filter=blob:none', '--branch=main', lazyrepo, lazypath })
-  if vim.v.shell_error ~= 0 then
-    vim.api.nvim_echo({
-      { 'Failed to clone lazy.nvim:\n', 'ErrorMsg' },
-      { out, 'WarningMsg' },
-      { '\nPress any key to exit...' },
-    }, true, {})
-    vim.fn.getchar()
-    os.exit(1)
-  end
-end
+vim.api.nvim_create_user_command(
+  'PackUpdate',
+  "lua vim.pack.update()",
+  {bang = true, desc = "Update NVIM plugins"}
+)
 
 local merge_table = function (t1, t2)
     for k,v in pairs(t2) do
@@ -90,8 +80,6 @@ local merge_table = function (t1, t2)
     end
     return t1
 end
-
-vim.opt.rtp:prepend(lazypath)
 
 vim.pack.add(
   {
@@ -484,25 +472,20 @@ for _, tool in pairs(all_tools) do
     end
 end
 
---require('mason-tool-installer').setup({
---  ensure_installed = merge_table(vim.tbl_keys(lsp_configs), tools),
---  auto_update = true,
---  run_on_start = true,
---})
-
-
 vim.lsp.enable(vim.tbl_keys(lsp_configs))
 
 if vim.g.lsp_on_demands then
   vim.lsp.enable(vim.g.lsp_on_demands)
 end
 
-
 require('render-markdown').setup({
   enabled = true,
-  file_types = { "markdown", "octo" },
+  file_types = { "markdown", "octo", "quarto" },
   completions = { blink = { enabled = true } },
   render_modes = true,
+  anti_conceal = {
+        enabled = true
+  },
   injections = {
       gitcommit = {
           enabled = true,
