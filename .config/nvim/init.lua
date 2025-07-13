@@ -113,6 +113,7 @@ vim.pack.add(
     { src = 'https://github.com/jinzhongjia/LspUI.nvim', version = 'main' },
 
     { src = 'https://github.com/zbirenbaum/copilot.lua' },
+    { src = 'https://github.com/yetone/avante.nvim' },
 
     { src = 'https://github.com/saghen/blink.cmp', version = 'main' },
     { src = 'https://github.com/fang2hou/blink-copilot' },
@@ -485,7 +486,7 @@ end
 
 require('render-markdown').setup({
   enabled = true,
-  file_types = { "markdown", "octo", "quarto" },
+  file_types = { "markdown", "octo", "quarto", "Avante" },
   completions = { blink = { enabled = true } },
   render_modes = true,
   anti_conceal = {
@@ -640,6 +641,23 @@ require("copilot").setup({
     cmdline = false,
     ["*"] = true,
   },
+})
+
+require('avante').setup({
+  provider = 'copilot',
+  mode = 'agentic',
+  auto_suggestions_provider = 'copilot',
+  behaviour = {
+    auto_suggestions = true,
+    auto_set_highlight_group = true,
+    auto_set_keymaps = true,
+    auto_apply_diff_after_generation = false,
+    support_paste_from_clipboard = false,
+    minimize_diff = true,
+    enable_token_counting = true,
+    auto_approve_tool_permissions = false,
+  },
+  hints = { enabled = true },
 })
 
 require("fidget").setup({})
