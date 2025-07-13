@@ -407,15 +407,15 @@ require("LspUI").setup({
   lightbulb = {
     enable = true,
     command_enable = true,
-    icon = "💡",
+    icon = "→",
     action_kind = {
-      QuickFix = "🔧",
-      Refactor = "♻️",
-      RefactorExtract = "📤",
-      RefactorInline = "📥",
-      RefactorRewrite = "✏️",
-      Source = "📄",
-      SourceOrganizeImports = "📦",
+      QuickFix = "⚒",
+      Refactor = "⟲",
+      RefactorExtract = "⤴",
+      RefactorInline = "⤵",
+      RefactorRewrite = "✎",
+      Source = "⚑",
+      SourceOrganizeImports = "⚙",
     },
   },
   inlay_hint = {
@@ -634,6 +634,8 @@ require('blink.cmp').setup({
   }
 })
 
+require('blink-copilot').setup({})
+
 require("copilot").setup({
   suggestion = { enabled = false },
   panel = { enabled = false },
@@ -644,11 +646,17 @@ require("copilot").setup({
 })
 
 require('avante').setup({
-  provider = 'copilot',
   mode = 'agentic',
+  provider = 'copilot',
+  cursor_applying_provider = 'copilot',
   auto_suggestions_provider = 'copilot',
+  providers = {
+    copilot = {
+      model = "claude-sonnet-4",
+    }
+  },
   behaviour = {
-    auto_suggestions = true,
+    auto_suggestions = false,
     auto_set_highlight_group = true,
     auto_set_keymaps = true,
     auto_apply_diff_after_generation = false,
@@ -656,6 +664,7 @@ require('avante').setup({
     minimize_diff = true,
     enable_token_counting = true,
     auto_approve_tool_permissions = false,
+    enable_cursor_planning_mode = true,
   },
   hints = { enabled = true },
 })
