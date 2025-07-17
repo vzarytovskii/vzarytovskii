@@ -305,7 +305,7 @@
         show-paren-style 'parenthesis
         frame-resize-pixelwise t
         use-short-answers t
-        ;;initial-buffer-choice (expand-file-name "~")
+        initial-buffer-choice (expand-file-name "~")
         ))
 
 (use-package dired
@@ -386,26 +386,22 @@
   (("C-x C-b" . ibuffer))
   :hook ((ibuffer-mode-hook . (lambda () (ibuffer-switch-to-saved-filter-groups "default")))))
 
-(use-package doom-themes :demand t)
-(use-package doom-two-tone-themes
+(use-package doom-themes
   :demand t
-  :ensure '(doom-two-tone-themes
-    :host github
-    :repo "eliraz-refael/doom-two-tone-themes"
-    :branch "master"
-    :files ("doom-two-tone-themes.el" "themes/*.el")
-    :main "doom-two-tone-themes.el")
-  :after doom-themes)
+  :custom
+  (doom-themes-enable-bold t)
+  (doom-themes-enable-italic nil))
 
 (use-package auto-dark
   :demand t
   :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :branch "master")
   :delight auto-dark-mode
+  :after doom-themes
   :hook (after-init-hook . auto-dark-mode)
   :init (auto-dark-mode)
   :config
   (setq auto-dark-allow-osascript t)
-  (setq auto-dark-themes '((doom-silver-slate) (doom-slate-mushroom))))
+  (setq auto-dark-themes '((doom-one) (doom-one-light))))
 
 (use-package hl-line
   :ensure nil
@@ -431,6 +427,29 @@
         completion-category-defaults nil)
         completion-category-overrides '((file (styles partial-completion))))
 
+(use-package marginalia
+  :config
+  (marginalia-mode))
+
+(use-package embark
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings))
+
+  :init
+
+  (setq prefix-help-command #'embark-prefix-help-command)
+  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
 (use-package consult
   :bind (("M-s"   . consult-ripgrep))
   :hook (completion-list-mode-hook . consult-preview-at-point-mode)
@@ -447,6 +466,10 @@
   :config
   (require 'consult-gh-transient)
   (consult-gh-forge-mode +1))
+
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; ---
 
@@ -764,16 +787,13 @@
   (rust-mode-hook . cargo-minor-mode)
   :config
   (setq compilation-scroll-output t))
-
-
-;; Misc, like chat clients, email, hn, etc
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("01c64d818433031bcdaef3b0ce836980f640a13673c0ca5df888760f240d5f4d"
+   '("5c7720c63b729140ed88cf35413f36c728ab7c70f8cd8422d9ee1cedeb618de5"
      default)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
