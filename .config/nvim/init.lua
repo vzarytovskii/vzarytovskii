@@ -119,6 +119,7 @@ vim.pack.add(
     { src = 'https://github.com/fang2hou/blink-copilot' },
 
     { src = 'https://github.com/j-hui/fidget.nvim' },
+    { src = 'https://github.com/Bekaboo/dropbar.nvim' },
 
     { src = 'https://github.com/y3owk1n/time-machine.nvim' },
 
@@ -670,6 +671,92 @@ require('avante').setup({
 })
 
 require("fidget").setup({})
+require('dropbar').setup({
+  icons = {
+    enable = true,
+    ui = {
+      bar = {
+        separator = ' → ',
+        extends = '…',
+      }
+    },
+    kinds = {
+      symbols = {
+        Array = '[] ',
+        BlockMappingPair = '{} ',
+        Boolean = 'ß ',
+        BreakStatement = '↵ ',
+        Call = '⟐ ',
+        CaseStatement = '⇒ ',
+        Class = 'C ',
+        Color = '# ',
+        Constant = 'K ',
+        Constructor = '⊕ ',
+        ContinueStatement = '→ ',
+        Copilot = '© ',
+        Declaration = 'D ',
+        Delete = '✗ ',
+        DoStatement = '∞ ',
+        Element = '⊙ ',
+        Enum = 'E ',
+        EnumMember = 'E ',
+        Event = '! ',
+        Field = '⌘ ',
+        File = 'f ',
+        Folder = '/ ',
+        ForStatement = '∀ ',
+        Function = 'λ ',
+        GotoStatement = '↪ ',
+        Identifier = 'α ',
+        IfStatement = '? ',
+        Interface = 'I ',
+        Keyword = '$ ',
+        List = '≡ ',
+        Log = '¶ ',
+        Lsp = '⚙ ',
+        Macro = 'μ ',
+        MarkdownH1 = '1 ',
+        MarkdownH2 = '2 ',
+        MarkdownH3 = '3 ',
+        MarkdownH4 = '4 ',
+        MarkdownH5 = '5 ',
+        MarkdownH6 = '6 ',
+        Method = 'ƒ ',
+        Module = '⊞ ',
+        Namespace = '⋯ ',
+        Null = '∅ ',
+        Number = '# ',
+        Object = '○ ',
+        Operator = '± ',
+        Package = 'P ',
+        Pair = '⇔ ',
+        Property = '· ',
+        Reference = '& ',
+        Regex = '/ ',
+        Repeat = '∞ ',
+        Return = '← ',
+        RuleSet = '§ ',
+        Scope = '⊃ ',
+        Section = '¶ ',
+        Snippet = '* ',
+        Specifier = '@ ',
+        Statement = '> ',
+        String = '" ',
+        Struct = 'S ',
+        SwitchStatement = '⤷ ',
+        Table = '⊞ ',
+        Terminal = '>_ ',
+        Text = 'T ',
+        Type = '𝜏 ',
+        TypeParameter = '⟨⟩ ',
+        Unit = '° ',
+        Value = 'V ',
+        Variable = 'x ',
+        WhileStatement = '⥁ ',
+      }
+    }
+  }
+})
 
 require("time-machine").setup({})
 require('diffview').setup({
