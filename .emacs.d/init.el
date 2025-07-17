@@ -134,13 +134,13 @@
 (use-package hydra)
 
 (use-package exec-path-from-shell
-  :defer nil
+  :demand nil
   :when (eq system-type 'darwin)
   :hook (after-init-hook . exec-path-from-shell-initialize))
 
-(use-package delight :defer t)
+(use-package delight)
 
-(use-package transient :defer t)
+(use-package transient)
 
 ;; Configure Emacs' defaults and keybinds;
 (use-package emacs
@@ -305,7 +305,8 @@
         show-paren-style 'parenthesis
         frame-resize-pixelwise t
         use-short-answers t
-        initial-buffer-choice (expand-file-name "~")))
+        ;;initial-buffer-choice (expand-file-name "~")
+        ))
 
 (use-package dired
   :ensure nil
@@ -385,16 +386,20 @@
   (("C-x C-b" . ibuffer))
   :hook ((ibuffer-mode-hook . (lambda () (ibuffer-switch-to-saved-filter-groups "default")))))
 
+(use-package doom-themes :demand t)
 (use-package doom-two-tone-themes
+  :demand t
   :ensure '(doom-two-tone-themes
     :host github
     :repo "eliraz-refael/doom-two-tone-themes"
     :branch "master"
     :files ("doom-two-tone-themes.el" "themes/*.el")
-    :main "doom-two-tone-themes.el"))
+    :main "doom-two-tone-themes.el")
+  :after doom-themes)
 
 (use-package auto-dark
-  :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :ref "478d10238a85cdda72ffbb529fc78d8a5a4322ff")
+  :demand t
+  :ensure '(auto-dark :type git :host github :repo "LionyxML/auto-dark-emacs" :branch "master")
   :delight auto-dark-mode
   :hook (after-init-hook . auto-dark-mode)
   :init (auto-dark-mode)
@@ -762,8 +767,6 @@
 
 
 ;; Misc, like chat clients, email, hn, etc
-
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -771,8 +774,6 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("01c64d818433031bcdaef3b0ce836980f640a13673c0ca5df888760f240d5f4d"
-     "77f281064ea1c8b14938866e21c4e51e4168e05db98863bd7430f1352cab294a"
-     "2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7"
      default)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

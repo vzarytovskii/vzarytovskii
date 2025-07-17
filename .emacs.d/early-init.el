@@ -13,6 +13,17 @@
   (message "Early init: Emacs Version < 27.0")
   (load (expand-file-name "early-init.el" user-emacs-directory)))
 
+;; Some basic checks:
+
+(if (and (fboundp 'native-comp-available-p)
+         (native-comp-available-p))
+    (message "Native compilation is available")
+  (message "Native compilation is *not* available"))
+
+(if (functionp 'json-serialize)
+    (message "Native JSON is available")
+  (message "Native JSON is *not* available"))
+
 (with-eval-after-load 'package
   (setopt package-enable-at-startup nil))
 
@@ -85,16 +96,7 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 (when (eq system-type 'darwin)
   (setup-macos-native-comp-library-paths))
 
-;; Some basic checks:
 
-(if (and (fboundp 'native-comp-available-p)
-         (native-comp-available-p))
-    (message "Native compilation is available")
-  (message "Native compilation is *not* available"))
-
-(if (functionp 'json-serialize)
-    (message "Native JSON is available")
-  (message "Native JSON is *not* available"))
 
 (when (display-graphic-p)
   (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
@@ -118,16 +120,19 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 (set-face-attribute 'variable-pitch nil :family default-font-name :height 130 :weight 'regular)
 
 (defvar default-file-name-handler-alist file-name-handler-alist)
+(defvar default-vc-handled-backends vc-handled-backends)
 
-(defvar gc-cons-higher-threshold most-positive-fixnum)
-(defvar gc-cons-lower-threshold (* 1024 1024 100))
-(defvar gc-cons-higher-percentage 0.9)
-(defvar gc-cons-lower-percentage 0.6)
+(defvar gc-cons-highest-threshold most-positive-fixnum)
+(defvar gc-cons-default-threshold (* 1024 1024 100))
+
+(defvar gc-cons-higher-percentage 1.0)
+(defvar gc-cons-default-percentage 0.1)
 
 (setq gc-cons-percentage gc-cons-higher-percentage
-      gc-cons-threshold gc-cons-higher-threshold
+      gc-cons-threshold gc-cons-highest-threshold
       garbage-collection-messages t
       file-name-handler-alist nil
+      vc-handled-backends nil
       inhibit-default-init t
       inhibit-message t
       inhibit-redisplay t
@@ -161,34 +166,40 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 (setenv "PATH" (concat (getenv "PATH") ":~/.cargo/bin:~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
 (setq exec-path (append exec-path '("~/.cargo/bin" "~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
 
+;; We want to avoid GC for as long as we can, so when we are in minibuffer (consult, ivy, helm, etc), set percentage to highest (100%) and memory to the max int
 (defun my-minibuffer-setup-hook ()
-   (setq gc-cons-threshold gc-cons-higher-threshold
+   (setq gc-cons-threshold gc-cons-highest-threshold
          gc-cons-percentage gc-cons-higher-percentage))
 (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
 
+;; When we exit, we re-set those settings to defaults ones
 (defun my-minibuffer-exit-hook ()
-   (setq gc-cons-threshold gc-cons-lower-threshold
-         gc-cons-percentage gc-cons-lower-percentage))
+   (setq gc-cons-threshold gc-cons-default-threshold
+         gc-cons-percentage gc-cons-default-percentage))
 (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 
+;; On startup, set the sane defaults
 (defun emacs-startup ()
   (setq file-name-handler-alist default-file-name-handler-alist
-        gc-cons-percentage gc-cons-higher-percentage
-        gc-cons-threshold gc-cons-higher-threshold
-        file-name-handler-alist nil
+        vc-handled-backends default-vc-handled-backends
+        gc-cons-percentage gc-cons-default-percentage
+        gc-cons-threshold gc-cons-default-threshold
         inhibit-redisplay nil
         inhibit-message nil)
   (makunbound 'default-file-name-handler-alist))
 
- (add-hook 'emacs-startup-hook #'emacs-startup 100)
+(add-hook 'emacs-startup-hook #'emacs-startup 100)
 
+;; We GC in two cases:
+;; 1. If emacs is idling for more than 30s
+;; 2. If emacs' window lost focus and didn't regain it in 3s
 (run-with-idle-timer 30 t 'garbage-collect)
 (add-function :after after-focus-change-function (lambda ()
-(unless (frame-focus-state)
-  (run-with-timer 3.0 nil (lambda ()
-    (unless (frame-focus-state)
-      (let (garbage-collection-messages)
-        (garbage-collect))))))))
+  (unless (frame-focus-state)
+    (run-with-timer 3.0 nil (lambda ()
+      (unless (frame-focus-state)
+        (let (garbage-collection-messages)
+          (garbage-collect))))))))
 
 ;; Experimental opportunistic GC:
 (defvar gc--opportunistic-last-gcs gcs-done)
