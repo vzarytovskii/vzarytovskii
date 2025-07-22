@@ -159,8 +159,8 @@
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
          ("C-g"             . 'keyboard-quit)
-         ;; ("C-k"          . 'kill-buffer)
-         ;; ("C-K"          . 'kill-this-buffer)
+         ("C-k"          . 'kill-buffer)
+         ("C-S-k"          . 'kill-this-buffer)
          ("C-c o"           . 'switch-to-minibuffer)
          ([remap keyboard-quit] . 'keyboard-quit-ex))
   :hook (after-init-hook . window-divider-mode)
@@ -308,6 +308,99 @@
         initial-buffer-choice (expand-file-name "~")
         ))
 
+(use-package window
+  :ensure nil
+  :init
+  (setq window-combination-resize t
+        even-window-sizes 'height-only
+        window-sides-slots '(0 1 1 1)
+        window-sides-vertical nil
+        switch-to-buffer-in-dedicated-window 'pop
+        display-buffer-alist
+        '(;; top side window
+          ;;
+          ;; bottom side window
+          ("\\*\\(Flymake\\|Package-Lint\\|vc-git :\\).*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-height . 0.16)
+           (side . bottom)
+           (slot . 0)
+           (window-parameters . ((no-other-window . t))))
+          ("\\*Messages.*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-height . 0.16)
+           (side . bottom)
+           (slot . 1)
+           (window-parameters . ((no-other-window . t))))
+          ("\\*\\(Backtrace\\|Warnings\\|Compile-Log\\)\\*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-height . 0.16)
+           (side . bottom)
+           (slot . 2)
+           (window-parameters . ((no-other-window . t))))
+          ("\\*\\(Output\\|Register Preview\\).*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.16)       ; See the :hook
+           (side . bottom)
+           (slot . -1)
+           (window-parameters . ((no-other-window . t))))
+          ;; left side window
+          ("\\*Help.*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.20)       ; See the :hook
+           (side . left)
+           (slot . 0)
+           (window-parameters . ((no-other-window . t))))
+          ;; right side window
+          ("\\*Faces\\*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.25)
+           (side . right)
+           (slot . 0)
+           (window-parameters
+            . ((no-other-window . t)
+               (mode-line-format
+                . (" "
+                   mode-line-buffer-identification)))))
+          ("\\*Custom.*"
+           (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
+           (window-width . 0.25)
+           (side . right)
+           (slot . 1))
+          ;; bottom buffer (NOT side window)
+          ("\\*\\vc-\\(incoming\\|outgoing\\).*"
+           (display-buffer-at-bottom)))))
+
+(use-package ace-window
+  :bind (("C-x o" . 'ace-window))
+  :config
+  (set-face-attribute
+   'aw-leading-char-face nil
+   :foreground "deep sky blue"
+   :weight 'bold
+   :height 2.0)
+  (set-face-attribute
+   'aw-mode-line-face nil
+   :inherit 'mode-line-buffer-id
+   :foreground "lawn green")
+  (setq aw-keys '(?a ?s ?d ?f ?j ?k ?l)
+        aw-dispatch-always nil
+        aw-dispatch-alist
+        '((?x aw-delete-window "Ace - Delete Window")
+          (?c aw-swap-window "Ace - Swap Window")
+          (?n aw-flip-window)
+          (?v aw-split-window-vert "Ace - Split Vert Window")
+          (?h aw-split-window-horz "Ace - Split Horz Window")
+          (?m delete-other-windows "Ace - Maximize Window")
+          (?g delete-other-windows)
+          (?b balance-windows)
+          (?u (lambda ()
+                (progn
+                  (winner-undo)
+                  (setq this-command 'winner-undo))))
+          (?r winner-redo)))
+  (ace-window-display-mode t))
+
 (use-package dired
   :ensure nil
   :config
@@ -359,6 +452,19 @@
     ("M-b" . dirvish-history-go-backward)
     ("M-e" . dirvish-emerge-menu))
   :after dired)
+
+(use-package vterm
+  :if (not *sys/is-wsl*))
+(use-package vterm-toggle
+  :after vterm
+  :bind (("C-`" . vterm-toggle)
+         ("C-M-`" . vterm-toggle-cd))
+  :config
+  (setq vterm-toggle-cd-auto-create-buffer nil
+        vterm-toggle-fullscreen-p t)
+  (add-to-list 'display-buffer-alist
+               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
+                 (display-buffer-reuse-window display-buffer-same-window))))
 
 (use-package ibuffer
   :ensure nil
@@ -470,6 +576,63 @@
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+
+;; Mostly text manipulation
+
+(use-package undo-tree
+  :delight
+  :ensure (:host gitlab :repo "tsc25/undo-tree" :branch "master")
+  :init
+  (setq undo-tree-auto-save-history t
+        undo-tree-visualizer-diff t
+        undo-tree-visualizer-timestamps t)
+  :bind (("C-x u" . undo-tree-visualize)
+         ("C-z"   . 'undo)
+         ("C-S-z" .'undo-tree-redo))
+  :config
+  (progn
+    (defun my/undo-tree-restore-default ()
+      (setq undo-tree-visualizer-diff t))
+    (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
+  (global-undo-tree-mode t))
+
+(use-package move-text
+  :demand t
+  :config
+  (move-text-default-bindings))
+
+(use-package expand-region
+  :bind (("C-=" . 'er/expand-region)
+         ("C-+" . 'er/contract-region)))
+
+(use-package multiple-cursors
+  :config
+  (add-to-list 'mc/unsupported-minor-modes 'lispy-mode)
+  (setq mc/always-run-for-all t)
+  :bind (("C-S-c C-S-c" . 'mc/edit-lines)
+         ("C-d" . 'mc/mark-next-like-this)
+         ("C-S-d" . 'mc/mark-previous-like-this)
+         ("C->" . 'mc/mark-next-like-this)
+         ("C-<" . 'mc/mark-previous-like-this)
+         ("C-c C-<" . 'mc/mark-all-like-this)))
+
+(use-package crux
+  :bind (("C-x K"        . crux-kill-other-buffers)
+         ("C-k"          . crux-smart-kill-line)
+         ("C-c 2"        . crux-duplicate-current-line-or-region)
+         ("<S-return>"   . crux-smart-open-line)
+         ("<C-S-return>" . crux-smart-open-line-above))
+  :config
+  (crux-with-region-or-buffer indent-region)
+  (crux-with-region-or-buffer untabify)
+  (crux-with-region-or-point-to-eol kill-ring-save)
+  (defalias 'rename-file-and-buffer #'crux-rename-file-and-buffer))
+
+(use-package mwim
+  :bind (("C-a" . 'mwim-beginning-of-code-or-line)
+         ("C-e" . 'mwim-end-of-code-or-line)
+         ("<home>" . 'mwim-beginning-of-code-or-line)
+         ("<end>" . 'mwim-end-of-code-or-line)))
 
 ;; ---
 
@@ -787,13 +950,15 @@
   (rust-mode-hook . cargo-minor-mode)
   :config
   (setq compilation-scroll-output t))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("5c7720c63b729140ed88cf35413f36c728ab7c70f8cd8422d9ee1cedeb618de5"
+   '("0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
+     "5c7720c63b729140ed88cf35413f36c728ab7c70f8cd8422d9ee1cedeb618de5"
      default)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
