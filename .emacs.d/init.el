@@ -984,6 +984,9 @@
   :ensure (:host github :repo "karthink/gptel-quick" :branch "master")
   :after gptel)
 
+;; Denote + org-mode
+(use-package denote)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

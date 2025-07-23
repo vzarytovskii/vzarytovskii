@@ -5,13 +5,9 @@
 
 ;;; Code:
 
-(let ((minver 26))
+(let ((minver 27))
   (unless (>= emacs-major-version minver)
     (error "Your Emacs is too old -- this configuration requires v%s or higher" minver)))
-
-(unless (>= emacs-major-version 27)
-  (message "Early init: Emacs Version < 27.0")
-  (load (expand-file-name "early-init.el" user-emacs-directory)))
 
 ;; Some basic checks:
 
