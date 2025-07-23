@@ -132,6 +132,7 @@
 (use-package emacsql)
 
 (use-package hydra)
+(use-package posframe)
 
 (use-package exec-path-from-shell
   :demand nil
@@ -159,13 +160,20 @@
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
          ("C-g"             . 'keyboard-quit)
-         ("C-k"          . 'kill-buffer)
-         ("C-S-k"          . 'kill-this-buffer)
+         ("C-k"             . 'kill-buffer)
+         ("C-S-k"           . 'kill-buffer-and-window)
          ("C-c o"           . 'switch-to-minibuffer)
          ([remap keyboard-quit] . 'keyboard-quit-ex))
   :hook (after-init-hook . window-divider-mode)
   :delight lisp-interaction-mode
   :preface
+  (defun kill-buffer-and-window (&optional arg)
+    "Kill the current buffer. If there is more than one window on the current frame, also delete the selected window. Otherwise, just kill the buffer."
+      (interactive)
+      (let ((kill-window-p (> (count-windows) 1)))
+        (kill-this-buffer)
+        (when kill-window-p
+          (delete-window))))
   (defun keyboard-quit-ex ()
     (interactive)
     (cond
@@ -305,7 +313,7 @@
         show-paren-style 'parenthesis
         frame-resize-pixelwise t
         use-short-answers t
-        initial-buffer-choice (expand-file-name "~")
+        ;;initial-buffer-choice (expand-file-name "~")
         ))
 
 (use-package window
@@ -317,9 +325,9 @@
         window-sides-vertical nil
         switch-to-buffer-in-dedicated-window 'pop
         display-buffer-alist
-        '(;; top side window
-          ;;
-          ;; bottom side window
+        '(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+            nil
+            (window-parameters (mode-line-format . none)))
           ("\\*\\(Flymake\\|Package-Lint\\|vc-git :\\).*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
@@ -372,7 +380,8 @@
            (display-buffer-at-bottom)))))
 
 (use-package ace-window
-  :bind (("C-x o" . 'ace-window))
+  :bind (("C-x o" . 'ace-window)
+         ("C-<tab>" . 'ace-window))
   :config
   (set-face-attribute
    'aw-leading-char-face nil
@@ -522,6 +531,7 @@
         '(
           (consult-imenu buffer indexed)
           (consult-grep buffer indexed)
+          (consult-ripgrep buffer indexed)
           (execute-extended-command flat)))
   (setq vertico-multiform-categories
       '((file grid)
@@ -544,20 +554,20 @@
    ("C-h B" . embark-bindings))
 
   :init
-
   (setq prefix-help-command #'embark-prefix-help-command)
   (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
   (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
 
   :config
-
+  (keymap-set embark-general-map "?" #'gptel-quick)
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none)))))
 
 (use-package consult
-  :bind (("M-s"   . consult-ripgrep))
+  :bind (("M-s"   . consult-ripgrep)
+         ("C-x b" . consult-buffer))
   :hook (completion-list-mode-hook . consult-preview-at-point-mode)
   :init
   (setq xref-show-xrefs-function #'consult-xref
@@ -950,6 +960,29 @@
   (rust-mode-hook . cargo-minor-mode)
   :config
   (setq compilation-scroll-output t))
+
+;; Gptel and stuff
+(use-package gptel
+  :hook ((gptel-post-stream-hook . gptel-auto-scroll)
+         (gptel-post-response-functions . gptel-end-of-response)
+         (gptel-mode-hook  . (lambda ()
+                              (when (and (derived-mode-p 'org-mode)
+                                        (bound-and-true-p org-indent-mode))
+                                (org-indent-mode -1)))))
+  :commands (gptel gptel-send gptel-menu)
+  :bind (("C-c <enter>"    . gptel-send)
+         ("C-c RET"        . gptel-send)
+         ("C-c C-<return>" . gptel-menu))
+  :init
+  (setopt gptel-default-mode 'org-mode)
+  (setopt gptel-include-reasoning nil)
+  :config
+  (setq gptel-model 'claude-sonnet-4
+        gptel-backend (gptel-make-gh-copilot "Copilot")))
+
+(use-package gptel-quick
+  :ensure (:host github :repo "karthink/gptel-quick" :branch "master")
+  :after gptel)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
