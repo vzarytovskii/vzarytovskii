@@ -122,13 +122,14 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 (defvar gc-cons-default-threshold (* 1024 1024 100))
 
 (defvar gc-cons-higher-percentage 1.0)
-(defvar gc-cons-default-percentage 0.1)
+(defvar gc-cons-default-percentage 0.1) ;; If frequent and slow GCs are experienced, maybe try increasing this. It might, however, affect Emacs' memory usage
 
 (setq gc-cons-percentage gc-cons-higher-percentage
       gc-cons-threshold gc-cons-highest-threshold
       garbage-collection-messages t
       file-name-handler-alist nil
       vc-handled-backends nil
+      read-process-output-max (* 1024 1024)
       inhibit-default-init t
       inhibit-message t
       inhibit-redisplay t
@@ -197,7 +198,7 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
         (let (garbage-collection-messages)
           (garbage-collect))))))))
 
-;; Experimental opportunistic GC:
+;; Experimental opportunistic GC (credit goes to Stefan Monnier - https://lists.gnu.org/archive/html/emacs-devel/2021-03/msg00393.html):
 (defvar gc--opportunistic-last-gcs gcs-done)
 (defvar gc--opportunistic-state 'noncmd)
 (defvar gc--opportunistic-counters nil)

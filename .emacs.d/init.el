@@ -318,6 +318,7 @@
 
 (use-package window
   :ensure nil
+  :bind (("C-x 1" . 'delete-other-windows))
   :init
   (setq window-combination-resize t
         even-window-sizes 'height-only
@@ -705,7 +706,6 @@
     (lsp-mode-hook . lsp-enable-which-key-integration)
     (prog-mode-hook . (lambda () (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode) (lsp-deferred)))))
   :preface
-  (setq read-process-output-max (* 64 1024))
   (setq lsp-use-plists t)
   (defun lsp-booster--advice-json-parse (old-fn &rest args)
     "Try to parse bytecode instead of json."
@@ -737,7 +737,7 @@
         lsp-diagnostics-provider :flycheck
         lsp-enable-xref t
         lsp-auto-configure t
-        lsp-eldoc-enable-hover t
+        lsp-eldoc-enable-hover nil
         lsp-lens-enable nil
         lsp-enable-dap-auto-configure t
         lsp-enable-file-watchers nil
@@ -785,7 +785,8 @@
       lsp-ui-doc-enable t
       lsp-ui-doc-show-with-cursor t
       lsp-ui-doc-include-signature t
-      lsp-ui-doc-position 'at-point))
+      lsp-ui-doc-position 'top
+      lsp-ui-doc-side 'right))
 
   (use-package lsp-ui-sideline
     :ensure nil
@@ -939,7 +940,12 @@
     (with-eval-after-load 'magit
       (advice-add 'magit-toplevel :around #'memoize-magit-toplevel))
     (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
-    (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header))
+    (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header)
+
+    (setq magit-post-display-buffer-hook
+      #'(lambda ()
+          (when (derived-mode-p 'magit-status-mode)
+            (delete-other-windows)))))
 
   (use-package forge
     :after (:all magit llama))
