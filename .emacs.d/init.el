@@ -737,18 +737,18 @@
         lsp-diagnostics-provider :flycheck
         lsp-enable-xref t
         lsp-auto-configure t
-        lsp-eldoc-enable-hover nil
+        lsp-eldoc-enable-hover t
         lsp-lens-enable nil
         lsp-enable-dap-auto-configure t
-        lsp-enable-file-watchers nil
-        lsp-enable-folding nil
+        lsp-enable-file-watchers t
+        lsp-enable-folding t
         lsp-enable-imenu t
-        lsp-enable-indentation nil
-        lsp-enable-links nil
+        lsp-enable-indentation t
+        lsp-enable-links t
         lsp-enable-on-type-formatting nil
         lsp-enable-suggest-server-download t
         lsp-enable-symbol-highlighting t
-        lsp-enable-text-document-color nil)
+        lsp-enable-text-document-color t)
   (advice-add (if (progn (require 'json)
                          (fboundp 'json-parse-buffer))
                   'json-parse-buffer
@@ -787,6 +787,15 @@
       lsp-ui-doc-include-signature t
       lsp-ui-doc-position 'top
       lsp-ui-doc-side 'right))
+
+  (use-package lsp-ui-peek
+    :ensure nil
+    :init
+    (setq lsp-ui-peek-enable t)
+    :after lsp-ui
+    :config
+    (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+    (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
   (use-package lsp-ui-sideline
     :ensure nil
