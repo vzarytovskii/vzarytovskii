@@ -413,6 +413,12 @@
 
 (use-package dired
   :ensure nil
+  :bind (:map dired-mode-map
+         ("M-s f C-s" . nil)
+         ("M-s f C-M-s" . nil)
+         ("M-s a C-s" . nil)
+         ("M-s a C-M-s" . nil)
+         ("M-s" . nil))
   :config
   (setq dired-dwim-target t
         ;; dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group"
@@ -589,6 +595,10 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; Mostly text manipulation
+
+(use-package wgrep
+  :config
+  (setq wgrep-enable-key "e"))
 
 (use-package undo-tree
   :delight
