@@ -471,6 +471,7 @@
 
 (use-package vterm
   :if (not *sys/is-wsl*))
+
 (use-package vterm-toggle
   :after vterm
   :bind (("C-`" . vterm-toggle)
@@ -481,6 +482,16 @@
   (add-to-list 'display-buffer-alist
                '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
                  (display-buffer-reuse-window display-buffer-same-window))))
+
+(use-package tramp
+  :ensure nil
+  :config
+  (put 'temporary-file-directory 'standard-value `(,temporary-file-directory))
+  :custom
+  (tramp-backup-directory-alist backup-directory-alist)
+  (tramp-default-method "ssh")
+  (tramp-default-proxies-alist nil)
+  (tramp-change-syntax 'simplified))
 
 (use-package ibuffer
   :ensure nil

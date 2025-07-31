@@ -69,6 +69,12 @@ vim.api.nvim_create_user_command(
   {bang = true, desc = "Update NVIM plugins"}
 )
 
+vim.api.nvim_create_user_command(
+  'Git',
+  'Neogit',
+  { bang = true, desc = "Alias to Neogit" }
+)
+
 local merge_table = function (t1, t2)
     for k,v in pairs(t2) do
         if type(v) == "table" then
@@ -96,6 +102,11 @@ vim.pack.add(
     { src = 'https://github.com/rcarriga/nvim-notify' },
     { src = 'https://github.com/folke/noice.nvim' },
 
+    { src = 'https://github.com/stevearc/oil.nvim' },
+
+    { src = 'https://github.com/tkancf/narrowing-nvim' },
+
+    { src = 'https://github.com/amitds1997/remote-nvim.nvim' },
 
     { src = 'https://github.com/folke/tokyonight.nvim' },
     { src = 'https://github.com/f-person/auto-dark-mode.nvim' },
@@ -158,6 +169,12 @@ require('nvim-web-devicons').setup({
   default = true
 })
 
+require("oil").setup()
+
+require('narrowing').setup({keymaps = { enabled = true }})
+
+require('remote-nvim').setup({})
+
 vim.keymap.set('i', '<c-space>', vim.lsp.completion.get)
 
 vim.diagnostic.config({
@@ -167,7 +184,7 @@ vim.diagnostic.config({
   severity_sort = true,
 })
 
-local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript', 'regex', 'bash' }
+local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript', 'regex', 'bash', 'lua' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory' },
@@ -208,6 +225,30 @@ local lsp_configs = {
     root_markers = { '.marksman.toml', '.git', '*.md' },
     filetypes = { 'markdown', 'octo' },
     single_file_support = true,
+  },
+  ['lua-language-server'] = {
+    cmd = { 'lua-language-server' },
+    root_markers = { '.luarc.json', '.luarc.jsonc', '.luacheckrc', 'init.lua', 'init.json', 'init.jsonc', '.git', '*.lua' },
+    filetypes = { 'lua' },
+    single_file_support = true,
+    settings = {
+      Lua = {
+        runtime = {
+          version = 'LuaJIT',
+          path = vim.split(package.path, ';'),
+        },
+        diagnostics = {
+          globals = { 'vim' },
+        },
+        workspace = {
+          library = vim.api.nvim_get_runtime_file("", true),
+          checkThirdParty = false,
+        },
+        telemetry = {
+          enable = false,
+        },
+      },
+    },
   }
 }
 
@@ -449,8 +490,11 @@ vim.keymap.set("n", "<leader>co", "<cmd>LspUI call_hierarchy outgoing_calls<CR>"
 vim.treesitter.language.register('markdown', 'octo')
 
 require('nvim-treesitter.install').prefer_git = true
-require('nvim-treesitter.configs').setup {
+require('nvim-treesitter.configs').setup({
   ensure_installed = treesitter_configs,
+  ignore_install = {},
+  auto_install = true,
+  sync_install = false,
   highlight = {
     enable = true,
     additional_vim_regex_highlighting = false,
@@ -464,10 +508,10 @@ require('nvim-treesitter.configs').setup {
       node_decremental = "grm",
     },
   },
-   indent = {
+  indent = {
     enable = true
   }
-}
+})
 require('treesitter-context').setup({enable = true})
 
 require('mason').setup()
