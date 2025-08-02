@@ -154,11 +154,12 @@ vim.cmd[[colorscheme tokyonight]]
 require('auto-dark-mode').setup({
   update_interval = 1000,
   set_dark_mode = function()
-    vim.api.nvim_set_option("background", "dark")
+    vim.api.nvim_set_option_value("background", "dark", {})
+
     vim.cmd("colorscheme tokyonight")
   end,
   set_light_mode = function()
-    vim.api.nvim_set_option("background", "light")
+    vim.api.nvim_set_option_value("background", "light", {})
     vim.cmd("colorscheme tokyonight")
   end,
 })
@@ -187,10 +188,18 @@ vim.diagnostic.config({
 local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'latex', 'html', 'typescript', 'javascript', 'regex', 'bash', 'lua' }
 local lsp_configs = {
   clangd = {
-    cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory' },
+    cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
     root_markers = { '.clangd', 'compile_commands.json', '.git', 'CMakeLists.txt' },
-    filetypes = { 'c', 'cpp' },
+    filetypes = { 'c', 'cpp', 'h', 'hpp', 'cxx', 'c++' },
     single_file_support = true,
+  },
+  ['cmake-language-server'] = {
+    cmd = { 'cmake-language-server' },
+    filetypes = { 'cmake' },
+    root_markers = { 'CMakePresets.json', 'CTestConfig.cmake', '.git', 'build', 'cmake' },
+    init_options = {
+      buildDirectory = 'build',
+    },
   },
   ['typescript-language-server'] = {
     cmd = { 'typescript-language-server', '--stdio' },
@@ -226,29 +235,11 @@ local lsp_configs = {
     filetypes = { 'markdown', 'octo' },
     single_file_support = true,
   },
-  ['lua-language-server'] = {
-    cmd = { 'lua-language-server' },
+  ['emmylua_ls'] = {
+    cmd = { 'emmylua_ls' },
     root_markers = { '.luarc.json', '.luarc.jsonc', '.luacheckrc', 'init.lua', 'init.json', 'init.jsonc', '.git', '*.lua' },
     filetypes = { 'lua' },
     single_file_support = true,
-    settings = {
-      Lua = {
-        runtime = {
-          version = 'LuaJIT',
-          path = vim.split(package.path, ';'),
-        },
-        diagnostics = {
-          globals = { 'vim' },
-        },
-        workspace = {
-          library = vim.api.nvim_get_runtime_file("", true),
-          checkThirdParty = false,
-        },
-        telemetry = {
-          enable = false,
-        },
-      },
-    },
   }
 }
 
