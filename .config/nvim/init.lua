@@ -1,3 +1,5 @@
+local vim = vim
+
 vim.g.mapleader = " "
 
 vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'popup' }
@@ -22,7 +24,6 @@ vim.opt.undodir = vim.fn.expand("~/.undodir")
 
 vim.wo.signcolumn = 'yes'
 vim.wo.number = true
-
 
 vim.opt.termguicolors = true
 
@@ -108,7 +109,8 @@ vim.pack.add(
 
     { src = 'https://github.com/amitds1997/remote-nvim.nvim' },
 
-    { src = 'https://github.com/folke/tokyonight.nvim' },
+    -- { src = 'https://github.com/folke/tokyonight.nvim' },
+    { src = 'https://github.com/projekt0n/github-nvim-theme' },
     { src = 'https://github.com/f-person/auto-dark-mode.nvim' },
     { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
 
@@ -145,26 +147,33 @@ vim.pack.add(
 
     { src = 'https://github.com/code-biscuits/nvim-biscuits' },
 
-    { src = 'https://github.com/dgagn/diagflow.nvim' }
+    { src = 'https://github.com/dgagn/diagflow.nvim' },
+
+    { src = 'https://github.com/MagicDuck/grug-far.nvim' }
   }
 )
 
-vim.cmd[[colorscheme tokyonight]]
+local opts = { noremap = true, silent = true }
+vim.keymap.set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
+vim.keymap.set("n", "<Tab>",   ">>",  opts)
+vim.keymap.set("n", "<S-Tab>", "<<",  opts)
+vim.keymap.set("v", "<Tab>",   ">gv", opts)
+vim.keymap.set("v", "<S-Tab>", "<gv", opts)
+
+require('github-theme').setup({})
 
 require('auto-dark-mode').setup({
   update_interval = 1000,
   set_dark_mode = function()
     vim.api.nvim_set_option_value("background", "dark", {})
-
-    vim.cmd("colorscheme tokyonight")
+    vim.cmd("colorscheme github_dark_high_contrast")
   end,
   set_light_mode = function()
     vim.api.nvim_set_option_value("background", "light", {})
-    vim.cmd("colorscheme tokyonight")
+    vim.cmd("colorscheme github_light_default")
   end,
 })
 
-require('tokyonight').setup({})
 
 require('nvim-web-devicons').setup({
   default = true
@@ -235,12 +244,6 @@ local lsp_configs = {
     filetypes = { 'markdown', 'octo' },
     single_file_support = true,
   },
-  ['emmylua_ls'] = {
-    cmd = { 'emmylua_ls' },
-    root_markers = { '.luarc.json', '.luarc.jsonc', '.luacheckrc', 'init.lua', 'init.json', 'init.jsonc', '.git', '*.lua' },
-    filetypes = { 'lua' },
-    single_file_support = true,
-  }
 }
 
 local tools = { 'clang-format', 'codelldb', 'copilot-language-server' }
@@ -277,8 +280,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end
   end,
  })
-vim.api.nvim_create_autocmd('LspDetach', { command = 'setl foldexpr<' })
-vim.api.nvim_create_autocmd("VimLeavePre", { callback = function() vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
+vim.api.nvim_create_autocmd('LspDetach',   { command = 'setl foldexpr<' })
+vim.api.nvim_create_autocmd("VimLeavePre", { callback = function () vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
+vim.api.nvim_create_autocmd('CursorHold',  { callback = function () vim.lsp.buf.document_highlight() end, })
+vim.api.nvim_create_autocmd('CursorHoldI', { callback = function () vim.lsp.buf.document_highlight() end, })
+vim.api.nvim_create_autocmd('CursorMoved', { callback = function () vim.lsp.buf.clear_references() end, })
 
 require("LspUI").setup({
   prompt = {
@@ -519,6 +525,28 @@ vim.lsp.enable(vim.tbl_keys(lsp_configs))
 if vim.g.lsp_on_demands then
   vim.lsp.enable(vim.g.lsp_on_demands)
 end
+
+require("origami").setup({
+  useLspFoldsWithTreesitterFallback = true,
+  pauseFoldsOnSearch = true,
+  foldtext = {
+    enabled = true,
+    padding = 3,
+    lineCount = {
+        template = "%d lines", -- `%d` is replaced with the number of folded lines
+        hlgroup = "Comment",
+    },
+    diagnosticsCount = true,
+    gitsignsCount = true,
+  },
+  autoFold = {
+    enabled = true,
+    kinds = { "comments", "imports" }
+  } 
+})
+
+vim.keymap.set("n", "<Left>", function() require("origami").h() end)
+vim.keymap.set("n", "<Right>", function() require("origami").l() end)
 
 require('render-markdown').setup({
   enabled = true,
@@ -847,6 +875,9 @@ require("noice").setup({
       ["vim.lsp.util.stylize_markdown"] = true,
     },
   },
+  messages = {
+    view_search = false
+  },
   presets = {
     bottom_search = true,
     command_palette = true,
@@ -892,3 +923,5 @@ require('diagflow').setup({
     },
     show_borders = false,
 })
+
+require('grug-far').setup({})
