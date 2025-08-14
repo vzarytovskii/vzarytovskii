@@ -98,6 +98,7 @@ vim.pack.add(
     { src = 'https://github.com/echasnovski/mini.pick' },
     { src = 'https://github.com/nvim-lua/plenary.nvim' },
     { src = 'https://github.com/nvim-telescope/telescope.nvim' },
+    { src = 'https://github.com/folke/snacks.nvim' },
 
     { src = 'https://github.com/MunifTanjim/nui.nvim' },
     { src = 'https://github.com/rcarriga/nvim-notify' },
@@ -109,7 +110,6 @@ vim.pack.add(
 
     { src = 'https://github.com/amitds1997/remote-nvim.nvim' },
 
-    -- { src = 'https://github.com/folke/tokyonight.nvim' },
     { src = 'https://github.com/projekt0n/github-nvim-theme' },
     { src = 'https://github.com/f-person/auto-dark-mode.nvim' },
     { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
@@ -127,6 +127,7 @@ vim.pack.add(
 
     { src = 'https://github.com/zbirenbaum/copilot.lua' },
     { src = 'https://github.com/yetone/avante.nvim' },
+    { src = 'https://github.com/NickvanDyke/opencode.nvim' },
 
     { src = 'https://github.com/saghen/blink.cmp', version = 'main' },
     { src = 'https://github.com/fang2hou/blink-copilot' },
@@ -178,6 +179,8 @@ require('auto-dark-mode').setup({
 require('nvim-web-devicons').setup({
   default = true
 })
+
+require('mini.pick').setup({})
 
 require("oil").setup()
 
@@ -732,6 +735,16 @@ require('avante').setup({
   },
   hints = { enabled = true },
 })
+
+require('opencode').setup({})
+vim.keymap.set('n', '<leader>ot', function() require('opencode').toggle() end, opts)
+vim.keymap.set('n', '<leader>oa', function() require('opencode').ask() end, opts)
+vim.keymap.set('v', '<leader>oa', function() require('opencode').ask('@selection: ') end, opts)
+vim.keymap.set('n', '<leader>op', function() require('opencode').select_prompt() end, opts)
+vim.keymap.set('n', '<leader>on', function() require('opencode').command('session_new') end, opts)
+vim.keymap.set('n', '<leader>oy', function() require('opencode').command('messages_copy') end, opts)
+vim.keymap.set('n', '<S-C-u>',    function() require('opencode').command('messages_half_page_up') end, opts)
+vim.keymap.set('n', '<S-C-d>',    function() require('opencode').command('messages_half_page_down') end, opts)
 
 require("fidget").setup({})
 require('dropbar').setup({
