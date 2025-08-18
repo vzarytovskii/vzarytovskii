@@ -120,10 +120,29 @@
         browse-url-generic-args     '("/c" "start")
         browse-url-browser-function #'browse-url-generic))
 
-(use-package auto-compile
+(use-package compile-angel
+  :demand t
   :config
-  (auto-compile-on-load-mode)
-  (auto-compile-on-save-mode))
+  (setq compile-angel-verbose t
+        compile-angel-enable-byte-compile t
+        compile-angel-enable-native-compile t)
+
+  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
+
+  (with-eval-after-load "savehist"
+    (push (concat "/" (file-name-nondirectory savehist-file))
+          compile-angel-excluded-files))
+
+  (with-eval-after-load "recentf"
+    (push (concat "/" (file-name-nondirectory recentf-save-file))
+          compile-angel-excluded-files))
+
+  (with-eval-after-load "cus-edit"
+    (when (stringp custom-file)
+      (push (concat "/" (file-name-nondirectory custom-file))
+            compile-angel-excluded-files)))
+
+  (compile-angel-on-load-mode 1))
 
 (use-package esup)
 

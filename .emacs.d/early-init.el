@@ -137,8 +137,7 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
       inhibit-startup-echo-area-message ""
       inhibit-startup-screen t
       initial-scratch-message nil
-      load-prefer-newer noninteractive
-      package-native-compile t
+      load-prefer-newer t
       idle-update-delay 1.1
       site-run-file nil
       package-install-upgrade-built-in t
@@ -146,15 +145,18 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
       native-comp-speed 3
       native-comp-debug 0
       native-comp-verbose 0
-      native-comp-deferred-compilation nil
       native-comp-async-report-warnings-errors nil
       native-comp-async-jobs-number 24
       native-comp-async-on-battery-power nil
       native-comp-jit-compilation t
+      native-comp-deferred-compilation native-comp-jit-compilation
       native-comp-enable-subr-trampolines t
       native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only")
       native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only")
       native-comp-always-compile t
+      native-comp-async-query-on-exit t
+      package-native-compile t
+      confirm-kill-processes t
       warning-minimum-level :warning
       byte-compile-warnings '(not obsolete)
       warning-suppress-log-types '((comp) (bytecomp))
