@@ -142,13 +142,18 @@
       (push (concat "/" (file-name-nondirectory custom-file))
             compile-angel-excluded-files)))
 
+  (push ".emacs.d/init.el" compile-angel-excluded-files)
+  (push ".emacs.d/early-init.el" compile-angel-excluded-files)
+
+  (push "lisp/subdirs.el" compile-angel-excluded-files)
+
   (compile-angel-on-load-mode 1))
 
 (use-package esup)
 
 (use-package llama)
-(use-package closql)
 (use-package emacsql)
+(use-package closql :after emacsql)
 
 (use-package hydra)
 (use-package posframe)
@@ -997,7 +1002,7 @@
             (delete-other-windows)))))
 
   (use-package forge
-    :after (:all magit llama))
+    :after (:all closql magit llama))
 
   (use-package ghub
     :config
