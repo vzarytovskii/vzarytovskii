@@ -6,6 +6,20 @@
 
 ;; Setup package system
 
+(setq-default use-package-always-demand nil
+              use-package-always-defer t
+              use-package-always-ensure t
+              use-package-always-pin nil
+              use-package-vc-prefer-newest t
+              use-package-expand-minimally nil
+              use-package-enable-imenu-support t
+              use-package-compute-statistics t
+              use-package-hook-name-suffix nil
+              use-package-verbose t
+              package-install-upgrade-built-in t
+              load-prefer-newer t
+              ad-redefinition-action 'accept)
+
 (defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
@@ -67,26 +81,17 @@
 (unless (bound-and-true-p package--initialized)
   (package-initialize))
 
-(setq use-package-vc-prefer-newest t
-      package-install-upgrade-built-in t  ; Always upgrade built-in packages
-      load-prefer-newer t                 ; Always load newer compiled files
-      ad-redefinition-action 'accept)     ; Silence advice redefinition warnings
 
 (elpaca elpaca-use-package
   ;; Enable use-package :ensure support for Elpaca.
-  (elpaca-use-package-mode))
+  (elpaca-use-package-mode)
+  (setq elpaca-use-package-by-default t)  )
 
 (setq elpaca-ignored-dependencies
       (delq 'transient elpaca-ignored-dependencies))
 
 ;; Setup use-package
-(setq-default use-package-always-demand t
-              use-package-always-defer t
-              use-package-always-ensure t
-              use-package-expand-minimally nil
-              use-package-enable-imenu-support t
-              use-package-compute-statistics t
-              use-package-hook-name-suffix nil)
+
 
 (setq gnutls-verify-error (not (getenv "INSECURE"))
       tls-checktrust gnutls-verify-error
@@ -94,6 +99,11 @@
                         ;; compatibility fallbacks
                         "gnutls-cli -p %p %h"
                         "openssl s_client -connect %h:%p -no_ssl2 -no_ssl3 -ign_eof"))
+
+(setq vc-handled-backends (eval (car (get 'vc-handled-backends 'standard-value))))
+
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file)
 
 (defun reload-init-file ()
     (interactive)
@@ -151,11 +161,14 @@
 
 (use-package esup)
 
+(use-package cond-let
+  :ensure (:host github :repo "tarsius/cond-let" :branch "main"))
+
 (use-package llama)
 (use-package emacsql)
 (use-package closql :after emacsql)
 
-(use-package hydra)
+(use-package hydra :ensure (:wait t))
 (use-package posframe)
 
 (use-package exec-path-from-shell
@@ -163,7 +176,7 @@
   :when (eq system-type 'darwin)
   :hook (after-init-hook . exec-path-from-shell-initialize))
 
-(use-package delight)
+(use-package delight :ensure (:wait t))
 
 (use-package transient)
 
@@ -637,8 +650,7 @@
 
 (use-package undo-tree
   :delight
-  :ensure (:host gitlab :repo "tsc25/undo-tree" :branch "master")
-  :init
+  :ensure (:host gitlab :repo "tsc25/undo-tree" :branch "master")  :init
   (setq undo-tree-auto-save-history t
         undo-tree-visualizer-diff t
         undo-tree-visualizer-timestamps t)
@@ -969,12 +981,14 @@
 
   (use-package magit
     :commands magit-status
+    :after (:all cond-let)
     :ensure '(magit :type git :host github :repo "magit/magit" :branch "main")
     :preface
     (defun magit-disable-whitespace-mode ()
       (setq-local whitespace-trailing nil))
     :custom
-    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+    ;;(magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+    (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
     :config
 
     (setq magit-ellipsis (get-byte 0 ".")
@@ -984,7 +998,8 @@
           magit-commit-show-diff nil
           magit-branch-direct-configure nil
           magit-refresh-status-buffer t
-          magit-tramp-pipe-stty-settings 'pty)
+          magit-tramp-pipe-stty-settings 'pty
+          magit-status-buffer-switch-function 'switch-to-buffer)
 
     :custom
     (defvar magit-toplevel-cache nil)
@@ -1001,13 +1016,13 @@
           (when (derived-mode-p 'magit-status-mode)
             (delete-other-windows)))))
 
-  (use-package forge
-    :after (:all closql magit llama))
+(use-package forge
+  :after (:all cond-let closql magit llama))
 
-  (use-package ghub
-    :config
-    (setq ghub-default-host "github.com")
-    :after (:all magit))
+(use-package ghub
+  :config
+  (setq ghub-default-host "github.com")
+  :after (:all magit))
 
 (use-package rust-mode
   :hook (rust-mode-hook . lsp)
@@ -1044,21 +1059,14 @@
   :ensure (:host github :repo "karthink/gptel-quick" :branch "master")
   :after gptel)
 
+(use-package claude-code-ide
+  :ensure (:type git :host github :repo "manzaltu/claude-code-ide.el")
+  :bind ("C-c C-'" . claude-code-ide-menu)
+  :config
+  (setq claude-code-ide-use-side-window   nil
+        claude-code-ide-focus-on-open	  t
+        claude-code-ide-enable-mcp-server t)
+  (claude-code-ide-emacs-tools-setup))
+
 ;; Denote + org-mode
 (use-package denote)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
-     "5c7720c63b729140ed88cf35413f36c728ab7c70f8cd8422d9ee1cedeb618de5"
-     default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
