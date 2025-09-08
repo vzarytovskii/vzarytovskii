@@ -382,15 +382,11 @@ If the window doesn't exist, create one additional window by splitting horizonta
          (t
           (message "Cannot select window %d" n)))))
 
-    (defvar window-focus-states (make-hash-table :test 'equal)
-      "Hash table to track window focus states for each window number.")
-
     (defun toggle-focus-window-by-number (n)
-      "Toggle focus mode for the Nth window with 4 states:
-1. Window doesn't exist - create it
-2. Window exists but unfocused - focus it
-3. Window exists and focused - maximize it (minimize others to 20px)
-4. Window exists, focused and maximized - restore balance"
+      "Toggle focus mode for the Nth window with simplified states:
+1. Window doesn't exist or unfocused - create/focus it
+2. Window focused and not maximized - maximize it (minimize all others)
+3. Window focused and maximized - restore balance"
       (interactive "nToggle focus window number: ")
       (let* ((windows (sort (window-list nil 'no-minibuffer)
                            (lambda (w1 w2)
@@ -399,46 +395,52 @@ If the window doesn't exist, create one additional window by splitting horizonta
                                (or (< (cadr edges1) (cadr edges2))
                                    (and (= (cadr edges1) (cadr edges2))
                                         (< (car edges1) (car edges2))))))))
-             (current-count (length windows))
              (target-window (nth (1- n) windows))
              (current-window (selected-window))
-             (state-key (format "window-%d" n))
-             (current-state (gethash state-key window-focus-states 'none)))
+             ;; Check if current window is maximized (largest among all windows)
+             (current-width (window-width current-window))
+             (is-maximized (and (eq target-window current-window)
+                               (> (length windows) 1)
+                               (cl-every (lambda (w)
+                                          (or (eq w current-window)
+                                              (<= (window-width w) current-width)))
+                                        windows)
+                               ;; Also check that at least one other window is significantly smaller
+                               (cl-some (lambda (w)
+                                         (and (not (eq w current-window))
+                                              (< (window-width w) (/ current-width 2))))
+                                       windows))))
 
         (cond
-         ;; State 1: Window doesn't exist - create it using select-or-create-window-by-number
-         ((not target-window)
-          (select-or-create-window-by-number n)  ; This will create and select the window
-          (puthash state-key 'focused window-focus-states)
-          (message "Created and focused window %d" n))
-
-         ;; State 2: Window exists but unfocused - focus it using select-or-create-window-by-number
-         ((not (eq target-window current-window))
-          (select-or-create-window-by-number n)  ; This will select the existing window
-          (puthash state-key 'focused window-focus-states)
+         ;; State 1: Window doesn't exist or unfocused - create/focus it
+         ((or (not target-window) (not (eq target-window current-window)))
+          (select-or-create-window-by-number n)
           (message "Focused window %d" n))
 
-         ;; State 3: Window focused but not maximized - maximize it
-         ((eq current-state 'focused)
-          (dolist (window windows)
-            (unless (eq window target-window)
-              (let ((min-width 8)
-                    (current-width (window-width window)))
-                (window-resize window (- min-width current-width) t))))
-          (puthash state-key 'maximized window-focus-states)
-          (message "Maximized window %d" n))
-
-         ;; State 4: Window focused and maximized - restore balance
-         ((eq current-state 'maximized)
+         ;; State 3: Window focused and maximized - restore balance
+         (is-maximized
           (balance-windows)
-          (puthash state-key 'focused window-focus-states)
           (message "Restored balance for window %d" n))
 
-         ;; Default fallback - use select-or-create-window-by-number
+         ;; State 2: Window focused but not maximized - maximize it
          (t
-          (select-or-create-window-by-number n)
-          (puthash state-key 'focused window-focus-states)
-          (message "Focused window %d" n)))))
+          ;; Minimize all other windows and maximize current
+          (let ((min-width 8)
+                (resize-results '()))
+            (dolist (window windows)
+              (unless (eq window current-window)
+                (let* ((initial-width (window-width window))
+                       (final-width initial-width))
+                  (condition-case nil
+                      (progn
+                        (window-resize window (- min-width initial-width) t)
+                        (setq final-width min-width))
+                    (error nil))
+                  (push (format "%d→%d" initial-width final-width) resize-results))))
+            (message "Maximized window %d (others: %s)" n
+                     (if resize-results
+                         (mapconcat 'identity (reverse resize-results) ", ")
+                       "no changes")))))))
   :bind (
     ("s-1"             . (lambda () (interactive) (toggle-focus-window-by-number 1)))
     ("s-2"             . (lambda () (interactive) (toggle-focus-window-by-number 2)))
