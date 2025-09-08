@@ -420,14 +420,11 @@ If the window doesn't exist, create one additional window by splitting horizonta
 
          ;; State 3: Window focused but not maximized - maximize it
          ((eq current-state 'focused)
-          ;; Minimize all other windows to 20 pixels
           (dolist (window windows)
             (unless (eq window target-window)
-              (let ((min-width 20)
+              (let ((min-width 8)
                     (current-width (window-width window)))
-                (when (and (> current-width min-width)
-                          (window-resizable-p window (- min-width current-width) t))
-                  (window-resize window (- min-width current-width) t)))))
+                (window-resize window (- min-width current-width) t))))
           (puthash state-key 'maximized window-focus-states)
           (message "Maximized window %d" n))
 
