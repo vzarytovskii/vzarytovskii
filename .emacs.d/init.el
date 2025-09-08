@@ -189,11 +189,6 @@
          ("C-h h"           . nil)
          ("<C-backspace>"   . nil)
          ([delete]          . 'delete-forward-char)
-         ("C-x C-2"         . 'vsplit-last-buffer)
-         ("C-x C-2"         . 'vsplit-current-buffer)
-         ("C-x 3"           . 'hsplit-last-buffer)
-         ("C-x C-3"         . 'hsplit-current-buffer)
-         ("C-x |"           . 'toggle-window-split)
          ("C-w"             . 'backward-kill-word)
          ("M-w"             . 'copy-region-or-line)
          ("C-g"             . 'keyboard-quit)
@@ -202,6 +197,7 @@
          ("C-c o"           . 'switch-to-minibuffer)
          ([remap keyboard-quit] . 'keyboard-quit-ex))
   :hook (after-init-hook . window-divider-mode)
+  :config
   :delight lisp-interaction-mode
   :preface
   (defun kill-buffer-and-window (&optional arg)
@@ -334,7 +330,7 @@
 
         window-divider-default-right-width 1
         window-divider-default-bottom-width 1
-        window-divider-default-places 'right-only
+        window-divider-default-places t  ; Show dividers on all sides
 
         blink-cursor-mode nil
 
@@ -355,7 +351,108 @@
 
 (use-package window
   :ensure nil
-  :bind (("C-x 1" . 'delete-other-windows))
+  :preface
+    (defun select-or-create-window-by-number (n)
+      "Select the Nth window in the current frame (1-indexed).
+Windows are ordered from left to right, top to bottom.
+If the window doesn't exist, create one additional window by splitting horizontally."
+      (interactive "nWindow number: ")
+      (let* ((windows (sort (window-list nil 'no-minibuffer)
+                           (lambda (w1 w2)
+                             (let ((edges1 (window-edges w1))
+                                   (edges2 (window-edges w2)))
+                               ;; Sort by top edge first (Y), then left edge (X)
+                               (or (< (cadr edges1) (cadr edges2))
+                                   (and (= (cadr edges1) (cadr edges2))
+                                        (< (car edges1) (car edges2))))))))
+             (current-count (length windows))
+             (target-window (nth (1- n) windows)))
+        (cond
+         ;; Window exists, select it
+         (target-window
+          (select-window target-window))
+         ;; Window doesn't exist, create one more window
+         ((> n current-count)
+          ;; Split the current window horizontally to create one more
+          (split-window-horizontally)
+          ;; Move to the new window
+          (other-window 1)
+          (message "Created window %d" (1+ current-count)))
+         ;; Fallback
+         (t
+          (message "Cannot select window %d" n)))))
+
+    (defvar window-focus-states (make-hash-table :test 'equal)
+      "Hash table to track window focus states for each window number.")
+
+    (defun toggle-focus-window-by-number (n)
+      "Toggle focus mode for the Nth window with 4 states:
+1. Window doesn't exist - create it
+2. Window exists but unfocused - focus it
+3. Window exists and focused - maximize it (minimize others to 20px)
+4. Window exists, focused and maximized - restore balance"
+      (interactive "nToggle focus window number: ")
+      (let* ((windows (sort (window-list nil 'no-minibuffer)
+                           (lambda (w1 w2)
+                             (let ((edges1 (window-edges w1))
+                                   (edges2 (window-edges w2)))
+                               (or (< (cadr edges1) (cadr edges2))
+                                   (and (= (cadr edges1) (cadr edges2))
+                                        (< (car edges1) (car edges2))))))))
+             (current-count (length windows))
+             (target-window (nth (1- n) windows))
+             (current-window (selected-window))
+             (state-key (format "window-%d" n))
+             (current-state (gethash state-key window-focus-states 'none)))
+
+        (cond
+         ;; State 1: Window doesn't exist - create it using select-or-create-window-by-number
+         ((not target-window)
+          (select-or-create-window-by-number n)  ; This will create and select the window
+          (puthash state-key 'focused window-focus-states)
+          (message "Created and focused window %d" n))
+
+         ;; State 2: Window exists but unfocused - focus it using select-or-create-window-by-number
+         ((not (eq target-window current-window))
+          (select-or-create-window-by-number n)  ; This will select the existing window
+          (puthash state-key 'focused window-focus-states)
+          (message "Focused window %d" n))
+
+         ;; State 3: Window focused but not maximized - maximize it
+         ((eq current-state 'focused)
+          ;; Minimize all other windows to 20 pixels
+          (dolist (window windows)
+            (unless (eq window target-window)
+              (let ((min-width 20)
+                    (current-width (window-width window)))
+                (when (and (> current-width min-width)
+                          (window-resizable-p window (- min-width current-width) t))
+                  (window-resize window (- min-width current-width) t)))))
+          (puthash state-key 'maximized window-focus-states)
+          (message "Maximized window %d" n))
+
+         ;; State 4: Window focused and maximized - restore balance
+         ((eq current-state 'maximized)
+          (balance-windows)
+          (puthash state-key 'focused window-focus-states)
+          (message "Restored balance for window %d" n))
+
+         ;; Default fallback - use select-or-create-window-by-number
+         (t
+          (select-or-create-window-by-number n)
+          (puthash state-key 'focused window-focus-states)
+          (message "Focused window %d" n)))))
+  :bind (
+    ("s-1"             . (lambda () (interactive) (toggle-focus-window-by-number 1)))
+    ("s-2"             . (lambda () (interactive) (toggle-focus-window-by-number 2)))
+    ("s-3"             . (lambda () (interactive) (toggle-focus-window-by-number 3)))
+    ("s-4"             . (lambda () (interactive) (toggle-focus-window-by-number 4)))
+    ("C-x 1"           . delete-other-windows)
+    ("C-x 2"           . vsplit-last-buffer)
+    ("C-x C-2"         . vsplit-current-buffer)
+    ("C-x 3"           . hsplit-last-buffer)
+    ("C-x C-3"         . hsplit-current-buffer)
+    ("C-x |"           . toggle-window-split))
   :init
   (setq window-combination-resize t
         even-window-sizes 'height-only
@@ -712,21 +809,23 @@
     (interactive)
     (dolist (grammar
              '(
-                (bash "https://github.com/tree-sitter/tree-sitter-bash")
-                (cmake "https://github.com/uyha/tree-sitter-cmake")
-                (css "https://github.com/tree-sitter/tree-sitter-css")
-                (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-                (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-                (html "https://github.com/tree-sitter/tree-sitter-html")
-                (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-                (json "https://github.com/tree-sitter/tree-sitter-json")
-                (make "https://github.com/alemuller/tree-sitter-make")
-                (python "https://github.com/tree-sitter/tree-sitter-python")
-                (rust "https://github.com/tree-sitter/tree-sitter-rust")
-                (toml "https://github.com/tree-sitter/tree-sitter-toml")
-                (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-                (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-                (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+               (bash "https://github.com/tree-sitter/tree-sitter-bash")
+               (c "https://github.com/tree-sitter/tree-sitter-c")
+               (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+               (cmake "https://github.com/uyha/tree-sitter-cmake")
+               (css "https://github.com/tree-sitter/tree-sitter-css")
+               (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+               (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+               (html "https://github.com/tree-sitter/tree-sitter-html")
+               (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+               (json "https://github.com/tree-sitter/tree-sitter-json")
+               (make "https://github.com/alemuller/tree-sitter-make")
+               (python "https://github.com/tree-sitter/tree-sitter-python")
+               (rust "https://github.com/tree-sitter/tree-sitter-rust")
+               (toml "https://github.com/tree-sitter/tree-sitter-toml")
+               (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+               (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+               (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
             (add-to-list 'treesit-language-source-alist grammar)
       (unless (treesit-language-available-p (car grammar))
         (treesit-install-language-grammar (car grammar))
@@ -737,6 +836,8 @@
            '(
               (bash-mode . bash-ts-mode)
               (css-mode . css-ts-mode)
+              (c-mode . c-ts-mode)
+              (c++-mode . c++-ts-mode)
               (elisp-mode . elisp-ts-mode)
               (html-mode . html-ts-mode)
               (js2-mode . js-ts-mode)
@@ -753,6 +854,19 @@
   (ts-install-grammars))
 
 (use-package markdown-mode)
+
+(use-package c++-mode
+  :ensure nil
+  :mode ("\\.cpp\\'"
+         "\\.hpp\\'"
+         "\\.cxx\\'")
+  :hook ((c++-mode-hook c++-ts-mode-hook) . lsp-deferred))
+
+(use-package c-mode
+  :ensure nil
+  :mode ("\\.c\\'"
+         "\\.h\\'"
+         "\\.cc\\'"))
 
 (use-package flycheck
   :hook (after-init-hook . global-flycheck-mode))
