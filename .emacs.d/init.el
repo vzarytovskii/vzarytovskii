@@ -382,6 +382,14 @@ If the window doesn't exist, create one additional window by splitting horizonta
          (t
           (message "Cannot select window %d" n)))))
 
+    (defun scroll-windows-to-left (&optional windows-list)
+      "Scroll all windows (or specified windows) to show the beginning of lines."
+      (let ((windows (or windows-list (window-list nil 'no-minibuffer))))
+        (dolist (window windows)
+          (with-selected-window window
+            (when (> (window-hscroll) 0)
+              (set-window-hscroll window 0))))))
+
     (defun toggle-focus-window-by-number (n)
       "Toggle focus mode for the Nth window with simplified states:
 1. Window doesn't exist or unfocused - create/focus it
@@ -415,11 +423,13 @@ If the window doesn't exist, create one additional window by splitting horizonta
          ;; State 1: Window doesn't exist or unfocused - create/focus it
          ((or (not target-window) (not (eq target-window current-window)))
           (select-or-create-window-by-number n)
+          (scroll-windows-to-left (list (selected-window)))
           (message "Focused window %d" n))
 
          ;; State 3: Window focused and maximized - restore balance
          (is-maximized
           (balance-windows)
+          (scroll-windows-to-left windows)
           (message "Restored balance for window %d" n))
 
          ;; State 2: Window focused but not maximized - maximize it
@@ -437,6 +447,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
                         (setq final-width min-width))
                     (error nil))
                   (push (format "%d→%d" initial-width final-width) resize-results))))
+            (scroll-windows-to-left (list current-window))
             (message "Maximized window %d (others: %s)" n
                      (if resize-results
                          (mapconcat 'identity (reverse resize-results) ", ")

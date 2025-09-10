@@ -111,8 +111,8 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
               bidi-paragraph-direction 'left-to-right)
 
 
-(setq window-min-height
-      Window-min-width 2)
+(setq window-min-height 1
+      window-min-width 2)
 
 (defvar default-font-name "Hack")
 (set-face-attribute 'default nil :family default-font-name :height 140)
