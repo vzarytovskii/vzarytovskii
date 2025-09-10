@@ -433,7 +433,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
                        (final-width initial-width))
                   (condition-case nil
                       (progn
-                        (window-resize window (- min-width initial-width) t)
+                        (window-resize window (- min-width initial-width) t t)
                         (setq final-width min-width))
                     (error nil))
                   (push (format "%d→%d" initial-width final-width) resize-results))))
