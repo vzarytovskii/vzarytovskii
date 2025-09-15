@@ -11,6 +11,7 @@
               use-package-always-ensure t
               use-package-always-pin nil
               use-package-vc-prefer-newest t
+              package-install-upgrade-built-in t
               use-package-expand-minimally nil
               use-package-enable-imenu-support t
               use-package-compute-statistics t
