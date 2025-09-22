@@ -281,12 +281,19 @@ vim.api.nvim_create_autocmd('LspAttach', {
     if client:supports_method('textDocument/documentColor') then
       vim.lsp.document_color.enable(true, args.buf)
     end
+    if client:supports_method('textDocument/documentHighlight') then
+
+      vim.api.nvim_create_autocmd('CursorHold',  { callback = function () vim.lsp.buf.document_highlight() end, })
+      vim.api.nvim_create_autocmd('CursorHoldI', { callback = function () vim.lsp.buf.document_highlight() end, })
+      vim.api.nvim_create_autocmd('CursorMoved', {
+        buffer = args.buf,
+        callback = function() vim.lsp.buf.clear_references() end,
+      })
+    end
   end,
  })
 vim.api.nvim_create_autocmd('LspDetach',   { command = 'setl foldexpr<' })
 vim.api.nvim_create_autocmd("VimLeavePre", { callback = function () vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
-vim.api.nvim_create_autocmd('CursorHold',  { callback = function () vim.lsp.buf.document_highlight() end, })
-vim.api.nvim_create_autocmd('CursorHoldI', { callback = function () vim.lsp.buf.document_highlight() end, })
 vim.api.nvim_create_autocmd('CursorMoved', { callback = function () vim.lsp.buf.clear_references() end, })
 
 require("LspUI").setup({

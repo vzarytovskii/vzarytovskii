@@ -931,6 +931,8 @@ If the window doesn't exist, create one additional window by splitting horizonta
         lsp-enable-suggest-server-download t
         lsp-enable-symbol-highlighting t
         lsp-enable-text-document-color t)
+  (add-to-list 'warning-suppress-log-types '(lsp-mode))
+  (add-to-list 'warning-suppress-types '(lsp-mode))
   (advice-add (if (progn (require 'json)
                          (fboundp 'json-parse-buffer))
                   'json-parse-buffer
