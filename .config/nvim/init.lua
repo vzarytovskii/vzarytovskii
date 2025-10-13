@@ -61,21 +61,6 @@ if vim.g.neovide then
   vim.g.neovide_macos_simple_fullscreen = true
 end
 
-vim.cmd.cabbrev('git', 'Neogit')
-vim.cmd.cabbrev('Git', 'Neogit')
-
-vim.api.nvim_create_user_command(
-  'PackUpdate',
-  "lua vim.pack.update()",
-  {bang = true, desc = "Update NVIM plugins"}
-)
-
-vim.api.nvim_create_user_command(
-  'Git',
-  'Neogit',
-  { bang = true, desc = "Alias to Neogit" }
-)
-
 local merge_table = function (t1, t2)
     for k,v in pairs(t2) do
         if type(v) == "table" then
@@ -91,68 +76,89 @@ local merge_table = function (t1, t2)
     return t1
 end
 
-vim.pack.add(
-  {
-    { src = 'https://github.com/vhyrro/luarocks.nvim' },
-    { src = 'https://github.com/echasnovski/mini.nvim' },
-    { src = 'https://github.com/echasnovski/mini.pick' },
-    { src = 'https://github.com/nvim-lua/plenary.nvim' },
-    { src = 'https://github.com/nvim-telescope/telescope.nvim' },
-    { src = 'https://github.com/folke/snacks.nvim' },
+local plugins = {
+  { src = 'https://github.com/vhyrro/luarocks.nvim' },
+  { src = 'https://github.com/echasnovski/mini.nvim' },
+  { src = 'https://github.com/echasnovski/mini.pick' },
+  { src = 'https://github.com/nvim-lua/plenary.nvim' },
+  { src = 'https://github.com/nvim-telescope/telescope.nvim' },
+  { src = 'https://github.com/folke/snacks.nvim' },
 
-    { src = 'https://github.com/MunifTanjim/nui.nvim' },
-    { src = 'https://github.com/rcarriga/nvim-notify' },
-    { src = 'https://github.com/folke/noice.nvim' },
+  { src = 'https://github.com/MunifTanjim/nui.nvim' },
+  { src = 'https://github.com/rcarriga/nvim-notify' },
+  { src = 'https://github.com/folke/noice.nvim' },
 
-    { src = 'https://github.com/stevearc/oil.nvim' },
+  { src = 'https://github.com/stevearc/oil.nvim' },
 
-    { src = 'https://github.com/tkancf/narrowing-nvim' },
+  { src = 'https://github.com/tkancf/narrowing-nvim' },
 
-    { src = 'https://github.com/amitds1997/remote-nvim.nvim' },
+  { src = 'https://github.com/amitds1997/remote-nvim.nvim' },
 
-    { src = 'https://github.com/projekt0n/github-nvim-theme' },
-    { src = 'https://github.com/f-person/auto-dark-mode.nvim' },
-    { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+  { src = 'https://github.com/projekt0n/github-nvim-theme' },
+  { src = 'https://github.com/f-person/auto-dark-mode.nvim' },
+  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
 
-    { src = 'https://github.com/mason-org/mason.nvim' },
-    { src = 'https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim' },
+  { src = 'https://github.com/mason-org/mason.nvim' },
+  { src = 'https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim' },
 
-    { src = 'https://github.com/nvim-treesitter/nvim-treesitter' },
-    { src = 'https://github.com/nvim-treesitter/nvim-treesitter-context' },
+  { src = 'https://github.com/nvim-treesitter/nvim-treesitter' },
+  { src = 'https://github.com/nvim-treesitter/nvim-treesitter-context' },
 
-    { src = 'https://github.com/MeanderingProgrammer/render-markdown.nvim' },
+  { src = 'https://github.com/MeanderingProgrammer/render-markdown.nvim' },
 
-    { src = 'https://github.com/onsails/lspkind.nvim' },
-    { src = 'https://github.com/jinzhongjia/LspUI.nvim', version = 'main' },
+  { src = 'https://github.com/onsails/lspkind.nvim' },
+  { src = 'https://github.com/jinzhongjia/LspUI.nvim', version = 'main' },
 
-    { src = 'https://github.com/zbirenbaum/copilot.lua' },
-    { src = 'https://github.com/yetone/avante.nvim' },
-    { src = 'https://github.com/NickvanDyke/opencode.nvim' },
+  { src = 'https://github.com/zbirenbaum/copilot.lua' },
+  { src = 'https://github.com/yetone/avante.nvim' },
 
-    { src = 'https://github.com/saghen/blink.cmp', version = 'main' },
-    { src = 'https://github.com/fang2hou/blink-copilot' },
+  { src = 'https://github.com/saghen/blink.cmp', version = 'main' },
+  { src = 'https://github.com/fang2hou/blink-copilot' },
 
-    { src = 'https://github.com/j-hui/fidget.nvim' },
-    { src = 'https://github.com/Bekaboo/dropbar.nvim' },
+  { src = 'https://github.com/j-hui/fidget.nvim' },
+  { src = 'https://github.com/Bekaboo/dropbar.nvim' },
 
-    { src = 'https://github.com/y3owk1n/time-machine.nvim' },
+  { src = 'https://github.com/y3owk1n/time-machine.nvim' },
 
-    { src = 'https://github.com/sindrets/diffview.nvim' },
-    { src = 'https://github.com/lewis6991/gitsigns.nvim' },
-    { src = 'https://github.com/pwntester/octo.nvim' },
-    { src = 'https://github.com/NeogitOrg/neogit' },
+  { src = 'https://github.com/sindrets/diffview.nvim' },
+  { src = 'https://github.com/lewis6991/gitsigns.nvim' },
+  { src = 'https://github.com/pwntester/octo.nvim' },
+  { src = 'https://github.com/NeogitOrg/neogit' },
 
-    { src = 'https://github.com/chrisgrieser/nvim-origami' },
+  { src = 'https://github.com/chrisgrieser/nvim-origami' },
 
-    { src = 'https://github.com/shortcuts/no-neck-pain.nvim' },
+  { src = 'https://github.com/shortcuts/no-neck-pain.nvim' },
 
-    { src = 'https://github.com/code-biscuits/nvim-biscuits' },
+  { src = 'https://github.com/code-biscuits/nvim-biscuits' },
 
-    { src = 'https://github.com/dgagn/diagflow.nvim' },
+  { src = 'https://github.com/dgagn/diagflow.nvim' },
 
-    { src = 'https://github.com/MagicDuck/grug-far.nvim' }
-  }
+  { src = 'https://github.com/MagicDuck/grug-far.nvim' }
+}
+
+vim.pack.add(plugins)
+
+vim.cmd.cabbrev('git', 'Neogit')
+vim.cmd.cabbrev('Git', 'Neogit')
+
+vim.api.nvim_create_user_command(
+  'PackUpdate',
+  "lua vim.pack.update(nil, { force = false })",
+  { bang = true, desc = "Update NVIM plugins" }
 )
+
+vim.api.nvim_create_user_command(
+  'PackDump',
+  "lua vim.print(vim.inspect(vim.pack.get()))",
+  { bang = true, desc = "Dump NVIM plugins" }
+)
+
+vim.api.nvim_create_user_command(
+  'Git',
+  'Neogit',
+  { bang = true, desc = "Alias to Neogit" }
+)
+
 
 local opts = { noremap = true, silent = true }
 vim.keymap.set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
@@ -552,7 +558,7 @@ require("origami").setup({
   autoFold = {
     enabled = true,
     kinds = { "comments", "imports" }
-  } 
+  }
 })
 
 vim.keymap.set("n", "<Left>", function() require("origami").h() end)
@@ -743,15 +749,6 @@ require('avante').setup({
   hints = { enabled = true },
 })
 
-require('opencode').setup({})
-vim.keymap.set('n', '<leader>ot', function() require('opencode').toggle() end, opts)
-vim.keymap.set('n', '<leader>oa', function() require('opencode').ask() end, opts)
-vim.keymap.set('v', '<leader>oa', function() require('opencode').ask('@selection: ') end, opts)
-vim.keymap.set('n', '<leader>op', function() require('opencode').select_prompt() end, opts)
-vim.keymap.set('n', '<leader>on', function() require('opencode').command('session_new') end, opts)
-vim.keymap.set('n', '<leader>oy', function() require('opencode').command('messages_copy') end, opts)
-vim.keymap.set('n', '<S-C-u>',    function() require('opencode').command('messages_half_page_up') end, opts)
-vim.keymap.set('n', '<S-C-d>',    function() require('opencode').command('messages_half_page_down') end, opts)
 
 require("fidget").setup({})
 require('dropbar').setup({
