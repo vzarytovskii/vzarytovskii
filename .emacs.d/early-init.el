@@ -155,8 +155,8 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
       native-comp-jit-compilation t
       native-comp-deferred-compilation native-comp-jit-compilation
       native-comp-enable-subr-trampolines t
-      native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only")
-      native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only")
+      native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
+      native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
       native-comp-always-compile t
       native-comp-async-query-on-exit t
       package-native-compile t
