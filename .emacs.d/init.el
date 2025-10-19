@@ -866,6 +866,10 @@ If the window doesn't exist, create one additional window by splitting horizonta
 
 (use-package markdown-mode)
 
+(use-package prog-mode
+  :ensure nil
+  :hook (prog-mode-hook . display-line-numbers-mode))
+
 (use-package c++-mode
   :ensure nil
   :mode ("\\.cpp\\'"
@@ -1118,7 +1122,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
     (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
     :config
 
-    (setq magit-ellipsis (get-byte 0 ".")
+    (setq 
           magit-revision-insert-related-refs nil
           magit-diff-refine-hunk t
           magit-diff-paint-whitespace nil
