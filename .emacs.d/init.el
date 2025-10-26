@@ -466,8 +466,8 @@ If the window doesn't exist, create one additional window by splitting horizonta
     ("C-x |"           . toggle-window-split))
   :init
   (setq window-combination-resize t
-        window-min-width 1
-        window-min-height 1
+        ;window-min-width 1
+        ;window-min-height 1
         even-window-sizes 'height-only
         window-sides-slots '(0 1 1 1)
         window-sides-vertical nil
@@ -755,6 +755,8 @@ If the window doesn't exist, create one additional window by splitting horizonta
 ;; Mostly text manipulation
 
 (use-package wgrep
+  :commands wgrep-change-to-wgrep-mode
+  :init (require 'wgrep)
   :config
   (setq wgrep-enable-key "e"))
 
