@@ -1152,6 +1152,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
     :preface
     (defun magit-disable-whitespace-mode ()
       (setq-local whitespace-trailing nil))
+
     :custom
     ;;(magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
     (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
@@ -1167,13 +1168,6 @@ If the window doesn't exist, create one additional window by splitting horizonta
           magit-tramp-pipe-stty-settings 'pty
           magit-status-buffer-switch-function 'switch-to-buffer)
 
-    :custom
-    (defvar magit-toplevel-cache nil)
-    (defun memoize-magit-toplevel (orig &optional directory)
-      (memoize-remote (or directory default-directory)
-                      'magit-toplevel-cache orig directory))
-    (with-eval-after-load 'magit
-      (advice-add 'magit-toplevel :around #'memoize-magit-toplevel))
     (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
     (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header)
 
@@ -1183,7 +1177,42 @@ If the window doesn't exist, create one additional window by splitting horizonta
             (delete-other-windows)))))
 
 (use-package forge
-  :after (:all cond-let closql magit llama))
+  :after (:all cond-let closql magit llama)
+  :config
+  (defun magit-insert-recent-pull-requests ()
+    "Insert a section displaying recent pull requests from Forge."
+    (when-let ((repo (ignore-errors (forge-get-repository nil))))
+      (magit-insert-section (recent-pull-requests)
+        (magit-insert-heading "Recent Pull Requests:")
+        (condition-case err
+            (if-let ((prs (forge-list-pullreqs)))
+                (dolist (pr (seq-take prs 10))
+                  (let* ((number (oref pr number))
+                         (title (oref pr title))
+                         (state (oref pr state))
+                         (author (oref pr author))
+                         (state-face (if (string= state "open")
+                                        'magit-branch-remote
+                                      'magit-tag)))
+                    (magit-insert-section (pull-request pr)
+                      (insert (propertize (format "#%-4d" number) 'face 'magit-hash))
+                      (insert " ")
+                      (insert (propertize (format "[%s]" state) 'face state-face))
+                      (insert " ")
+                      (insert (propertize title 'face 'magit-section-heading))
+                      (insert (propertize (format " @%s" author) 'face 'magit-dimmed))
+                      (insert "\n"))))
+              (insert (propertize "  No pull requests found\n" 'face 'magit-dimmed)))
+          (error
+           (insert (propertize (format "  Error loading PRs: %s\n" (error-message-string err))
+                              'face 'magit-dimmed))))
+        (insert "\n"))))
+
+  ;; Add pull requests section to magit status - append to the end
+  (magit-add-section-hook 'magit-status-sections-hook
+                          'magit-insert-recent-pull-requests
+                          nil
+                          t))
 
 (use-package ghub
   :config
