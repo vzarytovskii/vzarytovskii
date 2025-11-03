@@ -30,26 +30,26 @@
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-      (build (expand-file-name "elpaca/" elpaca-builds-directory))
-      (order (cdr elpaca-order))
-      (default-directory repo))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
     (when (< emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
         (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                ,@(when-let* ((depth (plist-get order :depth)))
-                                                    (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                ,(plist-get order :repo) ,repo))))
-                ((zerop (call-process "git" nil buffer t "checkout"
-                                      (or (plist-get order :ref) "--"))))
-                (emacs (concat invocation-directory invocation-name))
-                ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                      "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                ((require 'elpaca))
-                ((elpaca-generate-autoloads "elpaca" repo)))
+                  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                  ,@(when-let* ((depth (plist-get order :depth)))
+                                                      (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                  ,(plist-get order :repo) ,repo))))
+                  ((zerop (call-process "git" nil buffer t "checkout"
+                                        (or (plist-get order :ref) "--"))))
+                  (emacs (concat invocation-directory invocation-name))
+                  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                        "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                  ((require 'elpaca))
+                  ((elpaca-generate-autoloads "elpaca" repo)))
             (progn (message "%s" (buffer-string)) (kill-buffer buffer))
           (error "%s" (with-current-buffer buffer (buffer-string))))
       ((error) (warn "%s" err) (delete-directory repo 'recursive))))
@@ -107,8 +107,8 @@
 (load custom-file)
 
 (defun reload-init-file ()
-    (interactive)
-    (load-file user-init-file))
+  (interactive)
+  (load-file user-init-file))
 
 (defun emacs-recompile ()
   "Recompile all .elc files."
@@ -203,21 +203,21 @@
   :preface
   (defun kill-buffer-and-window (&optional arg)
     "Kill the current buffer. If there is more than one window on the current frame, also delete the selected window. Otherwise, just kill the buffer."
-      (interactive)
-      (let ((kill-window-p (> (count-windows) 1)))
-        (kill-this-buffer)
-        (when kill-window-p
-          (delete-window))))
+    (interactive)
+    (let ((kill-window-p (> (count-windows) 1)))
+      (kill-this-buffer)
+      (when kill-window-p
+        (delete-window))))
   (defun keyboard-quit-ex ()
     (interactive)
     (cond
-    ((region-active-p)
+     ((region-active-p)
       (keyboard-quit))
-    ((derived-mode-p 'completion-list-mode)
+     ((derived-mode-p 'completion-list-mode)
       (delete-completion-window))
-    ((> (minibuffer-depth) 0)
+     ((> (minibuffer-depth) 0)
       (abort-recursive-edit))
-    (t
+     (t
       (keyboard-quit))))
   (defun switch-to-minibuffer ()
     "Switch to minibuffer window."
@@ -353,129 +353,129 @@
 (use-package window
   :ensure nil
   :preface
-    (defun select-or-create-window-by-number (n)
-      "Select the Nth window in the current frame (1-indexed).
+  (defun select-or-create-window-by-number (n)
+    "Select the Nth window in the current frame (1-indexed).
 Windows are ordered from left to right, top to bottom.
 If the window doesn't exist, create one additional window by splitting horizontally."
-      (interactive "nWindow number: ")
-      (let* ((windows (sort (window-list nil 'no-minibuffer)
-                           (lambda (w1 w2)
-                             (let ((edges1 (window-edges w1))
-                                   (edges2 (window-edges w2)))
-                               ;; Sort by top edge first (Y), then left edge (X)
-                               (or (< (cadr edges1) (cadr edges2))
-                                   (and (= (cadr edges1) (cadr edges2))
-                                        (< (car edges1) (car edges2))))))))
-             (current-count (length windows))
-             (target-window (nth (1- n) windows)))
-        (cond
-         ;; Window exists, select it
-         (target-window
-          (select-window target-window))
-         ;; Window doesn't exist, create one more window
-         ((> n current-count)
-          ;; Split the current window horizontally to create one more
-          (split-window-horizontally)
-          ;; Move to the new window
-          (other-window 1)
-          (message "Created window %d" (1+ current-count)))
-         ;; Fallback
-         (t
-          (message "Cannot select window %d" n)))))
+    (interactive "nWindow number: ")
+    (let* ((windows (sort (window-list nil 'no-minibuffer)
+                          (lambda (w1 w2)
+                            (let ((edges1 (window-edges w1))
+                                  (edges2 (window-edges w2)))
+                              ;; Sort by top edge first (Y), then left edge (X)
+                              (or (< (cadr edges1) (cadr edges2))
+                                  (and (= (cadr edges1) (cadr edges2))
+                                       (< (car edges1) (car edges2))))))))
+           (current-count (length windows))
+           (target-window (nth (1- n) windows)))
+      (cond
+       ;; Window exists, select it
+       (target-window
+        (select-window target-window))
+       ;; Window doesn't exist, create one more window
+       ((> n current-count)
+        ;; Split the current window horizontally to create one more
+        (split-window-horizontally)
+        ;; Move to the new window
+        (other-window 1)
+        (message "Created window %d" (1+ current-count)))
+       ;; Fallback
+       (t
+        (message "Cannot select window %d" n)))))
 
-    (defun scroll-windows-to-left (&optional windows-list)
-      "Scroll all windows (or specified windows) to show the beginning of lines."
-      (let ((windows (or windows-list (window-list nil 'no-minibuffer))))
-        (dolist (window windows)
-          (with-selected-window window
-            (when (> (window-hscroll) 0)
-              (set-window-hscroll window 0))))))
+  (defun scroll-windows-to-left (&optional windows-list)
+    "Scroll all windows (or specified windows) to show the beginning of lines."
+    (let ((windows (or windows-list (window-list nil 'no-minibuffer))))
+      (dolist (window windows)
+        (with-selected-window window
+          (when (> (window-hscroll) 0)
+            (set-window-hscroll window 0))))))
 
-    (defun toggle-focus-window-by-number (n)
-      "Toggle focus mode for the Nth window with simplified states:
+  (defun toggle-focus-window-by-number (n)
+    "Toggle focus mode for the Nth window with simplified states:
 1. Window doesn't exist or unfocused - create/focus it
 2. Window focused and not maximized - maximize it (minimize all others)
 3. Window focused and maximized - restore balance"
-      (interactive "nToggle focus window number: ")
-      (let* ((windows (sort (window-list nil 'no-minibuffer)
-                           (lambda (w1 w2)
-                             (let ((edges1 (window-edges w1))
-                                   (edges2 (window-edges w2)))
-                               (or (< (cadr edges1) (cadr edges2))
-                                   (and (= (cadr edges1) (cadr edges2))
-                                        (< (car edges1) (car edges2))))))))
-             (target-window (nth (1- n) windows))
-             (current-window (selected-window))
-             ;; Check if current window is maximized (largest among all windows)
-             (current-width (window-width current-window))
-             (is-maximized (and (eq target-window current-window)
-                               (> (length windows) 1)
-                               (cl-every (lambda (w)
+    (interactive "nToggle focus window number: ")
+    (let* ((windows (sort (window-list nil 'no-minibuffer)
+                          (lambda (w1 w2)
+                            (let ((edges1 (window-edges w1))
+                                  (edges2 (window-edges w2)))
+                              (or (< (cadr edges1) (cadr edges2))
+                                  (and (= (cadr edges1) (cadr edges2))
+                                       (< (car edges1) (car edges2))))))))
+           (target-window (nth (1- n) windows))
+           (current-window (selected-window))
+           ;; Check if current window is maximized (largest among all windows)
+           (current-width (window-width current-window))
+           (is-maximized (and (eq target-window current-window)
+                              (> (length windows) 1)
+                              (cl-every (lambda (w)
                                           (or (eq w current-window)
                                               (<= (window-width w) current-width)))
                                         windows)
-                               ;; Also check that at least one other window is significantly smaller
-                               (cl-some (lambda (w)
+                              ;; Also check that at least one other window is significantly smaller
+                              (cl-some (lambda (w)
                                          (and (not (eq w current-window))
                                               (< (window-width w) (/ current-width 2))))
                                        windows))))
 
-        (cond
-         ;; State 1: Window doesn't exist or unfocused - create/focus it
-         ((or (not target-window) (not (eq target-window current-window)))
-          (select-or-create-window-by-number n)
-          (scroll-windows-to-left (list (selected-window)))
-          (message "Focused window %d" n))
+      (cond
+       ;; State 1: Window doesn't exist or unfocused - create/focus it
+       ((or (not target-window) (not (eq target-window current-window)))
+        (select-or-create-window-by-number n)
+        (scroll-windows-to-left (list (selected-window)))
+        (message "Focused window %d" n))
 
-         ;; State 3: Window focused and maximized - restore balance
-         (is-maximized
-          (balance-windows)
-          (scroll-windows-to-left windows)
-          (message "Restored balance for window %d" n))
+       ;; State 3: Window focused and maximized - restore balance
+       (is-maximized
+        (balance-windows)
+        (scroll-windows-to-left windows)
+        (message "Restored balance for window %d" n))
 
-         ;; State 2: Window focused but not maximized - maximize it
-         (t
-          ;; Minimize all other windows and maximize current
-          (let ((min-width 8)
-                (resize-results '()))
-            (dolist (window windows)
-              (unless (eq window current-window)
-                (let* ((initial-width (window-width window))
-                       (final-width initial-width))
-                  (condition-case nil
-                      (progn
-                        (window-resize window (- min-width initial-width) t t)
-                        (setq final-width min-width))
-                    (error nil))
-                  (push (format "%d→%d" initial-width final-width) resize-results))))
-            (scroll-windows-to-left (list current-window))
-            (message "Maximized window %d (others: %s)" n
-                     (if resize-results
-                         (mapconcat 'identity (reverse resize-results) ", ")
-                       "no changes")))))))
+       ;; State 2: Window focused but not maximized - maximize it
+       (t
+        ;; Minimize all other windows and maximize current
+        (let ((min-width 8)
+              (resize-results '()))
+          (dolist (window windows)
+            (unless (eq window current-window)
+              (let* ((initial-width (window-width window))
+                     (final-width initial-width))
+                (condition-case nil
+                    (progn
+                      (window-resize window (- min-width initial-width) t t)
+                      (setq final-width min-width))
+                  (error nil))
+                (push (format "%d→%d" initial-width final-width) resize-results))))
+          (scroll-windows-to-left (list current-window))
+          (message "Maximized window %d (others: %s)" n
+                   (if resize-results
+                       (mapconcat 'identity (reverse resize-results) ", ")
+                     "no changes")))))))
   :bind (
-    ("s-1"             . (lambda () (interactive) (toggle-focus-window-by-number 1)))
-    ("s-2"             . (lambda () (interactive) (toggle-focus-window-by-number 2)))
-    ("s-3"             . (lambda () (interactive) (toggle-focus-window-by-number 3)))
-    ("s-4"             . (lambda () (interactive) (toggle-focus-window-by-number 4)))
-    ("C-x 1"           . delete-other-windows)
-    ("C-x 2"           . vsplit-last-buffer)
-    ("C-x C-2"         . vsplit-current-buffer)
-    ("C-x 3"           . hsplit-last-buffer)
-    ("C-x C-3"         . hsplit-current-buffer)
-    ("C-x |"           . toggle-window-split))
+         ("s-1"             . (lambda () (interactive) (toggle-focus-window-by-number 1)))
+         ("s-2"             . (lambda () (interactive) (toggle-focus-window-by-number 2)))
+         ("s-3"             . (lambda () (interactive) (toggle-focus-window-by-number 3)))
+         ("s-4"             . (lambda () (interactive) (toggle-focus-window-by-number 4)))
+         ("C-x 1"           . delete-other-windows)
+         ("C-x 2"           . vsplit-last-buffer)
+         ("C-x C-2"         . vsplit-current-buffer)
+         ("C-x 3"           . hsplit-last-buffer)
+         ("C-x C-3"         . hsplit-current-buffer)
+         ("C-x |"           . toggle-window-split))
   :init
   (setq window-combination-resize t
-        ;window-min-width 1
-        ;window-min-height 1
+                                        ;window-min-width 1
+                                        ;window-min-height 1
         even-window-sizes 'height-only
         window-sides-slots '(0 1 1 1)
         window-sides-vertical nil
         switch-to-buffer-in-dedicated-window 'pop
         display-buffer-alist
         '(("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-            nil
-            (window-parameters (mode-line-format . none)))
+           nil
+           (window-parameters (mode-line-format . none)))
           ("\\*\\(Flymake\\|Package-Lint\\|vc-git :\\).*"
            (display-buffer-reuse-window display-buffer-in-previous-window display-buffer-in-side-window)
            (window-height . 0.16)
@@ -561,11 +561,11 @@ If the window doesn't exist, create one additional window by splitting horizonta
 (use-package dired
   :ensure nil
   :bind (:map dired-mode-map
-         ("M-s f C-s" . nil)
-         ("M-s f C-M-s" . nil)
-         ("M-s a C-s" . nil)
-         ("M-s a C-M-s" . nil)
-         ("M-s" . nil))
+              ("M-s f C-s" . nil)
+              ("M-s f C-M-s" . nil)
+              ("M-s a C-s" . nil)
+              ("M-s a C-M-s" . nil)
+              ("M-s" . nil))
   :config
   (setq dired-dwim-target t
         ;; dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group"
@@ -591,29 +591,29 @@ If the window doesn't exist, create one additional window by splitting horizonta
         dirvish-attributes '(vc-state subtree-state collapse file-time file-size)
         dirvish-side-attributes '(vc-state collapse file-size)
         dirvish-large-directory-threshold 20000)
-   :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
-   (("C-x d" . dirvish)
-    ("C-c f" . dirvish)
-    :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
-    ("/"   . dirvish-fd)
-    (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
-    ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
-    ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
-    ("f"   . dirvish-file-info-menu)    ; [f]ile info
-    ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
-    ("s"   . dirvish-quicksort)         ; [s]ort flie list
-    ("r"   . dirvish-history-jump)      ; [r]ecent visited
-    ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
-    ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
-    ("*"   . dirvish-mark-menu)
-    ("y"   . dirvish-yank-menu)
-    ("N"   . dirvish-narrow)
-    ("C-s" . dirvish-narrow)
-    ("^"   . dirvish-history-last)
-    ("TAB" . dirvish-subtree-toggle)
-    ("M-f" . dirvish-history-go-forward)
-    ("M-b" . dirvish-history-go-backward)
-    ("M-e" . dirvish-emerge-menu))
+  :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
+  (("C-x d" . dirvish)
+   ("C-c f" . dirvish)
+   :map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
+   ("/"   . dirvish-fd)
+   (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
+   ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
+   ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
+   ("f"   . dirvish-file-info-menu)    ; [f]ile info
+   ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
+   ("s"   . dirvish-quicksort)         ; [s]ort flie list
+   ("r"   . dirvish-history-jump)      ; [r]ecent visited
+   ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
+   ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
+   ("*"   . dirvish-mark-menu)
+   ("y"   . dirvish-yank-menu)
+   ("N"   . dirvish-narrow)
+   ("C-s" . dirvish-narrow)
+   ("^"   . dirvish-history-last)
+   ("TAB" . dirvish-subtree-toggle)
+   ("M-f" . dirvish-history-go-forward)
+   ("M-b" . dirvish-history-go-backward)
+   ("M-e" . dirvish-emerge-menu))
   :after dired)
 
 (use-package vterm
@@ -644,24 +644,24 @@ If the window doesn't exist, create one additional window by splitting horizonta
   :ensure nil
   :custom
   (ibuffer-saved-filter-groups
-    (quote (("default"
-             ("Org" (or
-                     (mode . org-mode)
-                     (name . "^\\*Org Src")
-                     (name . "^\\*Org Agenda\\*$")))
-             ("C" (or
-                   (mode . c-mode)))
-             ("LISP" (or
-                      (mode . emacs-lisp-mode)
-                      (mode . ielm-mode)
-                      (name . "^\\*scratch\\*$")
-                      (mode . lisp-mode)))
-             ("Dired" (or
-                        (mode . dired-mode)
-                        (mod . dirvish-mode)))
-             ("Term" (or
-                      (mode . term-mode)
-                      (mode . eshell-mode)))))))
+   (quote (("default"
+            ("Org" (or
+                    (mode . org-mode)
+                    (name . "^\\*Org Src")
+                    (name . "^\\*Org Agenda\\*$")))
+            ("C" (or
+                  (mode . c-mode)))
+            ("LISP" (or
+                     (mode . emacs-lisp-mode)
+                     (mode . ielm-mode)
+                     (name . "^\\*scratch\\*$")
+                     (mode . lisp-mode)))
+            ("Dired" (or
+                      (mode . dired-mode)
+                      (mod . dirvish-mode)))
+            ("Term" (or
+                     (mode . term-mode)
+                     (mode . eshell-mode)))))))
   :bind
   (("C-x C-b" . ibuffer))
   :hook ((ibuffer-mode-hook . (lambda () (ibuffer-switch-to-saved-filter-groups "default")))))
@@ -699,14 +699,14 @@ If the window doesn't exist, create one additional window by splitting horizonta
           (consult-ripgrep buffer indexed)
           (execute-extended-command flat)))
   (setq vertico-multiform-categories
-      '((file grid)
-        (consult-grep buffer))))
+        '((file grid)
+          (consult-grep buffer))))
 
 (use-package orderless
   :init
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil)
-        completion-category-overrides '((file (styles partial-completion))))
+  completion-category-overrides '((file (styles partial-completion))))
 
 (use-package marginalia
   :config
@@ -752,7 +752,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
   (consult-gh-default-interactive-command #'consult-gh-transient)
   (consult-gh-prioritize-local-folder 'nil)
   (consult-gh-group-dashboard-by :reason)
-  ;(consult-gh-repo-preview-major-mode nil) ; show readmes in their original format
+                                        ;(consult-gh-repo-preview-major-mode nil) ; show readmes in their original format
   (consult-gh-preview-major-mode 'org-mode) ; use 'org-mode for editing comments, commit messages, ...
   :config
   (require 'consult-gh-transient)
@@ -872,28 +872,28 @@ If the window doesn't exist, create one additional window by splitting horizonta
                (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
                (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
                (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
-            (add-to-list 'treesit-language-source-alist grammar)
+      (add-to-list 'treesit-language-source-alist grammar)
       (unless (treesit-language-available-p (car grammar))
         (treesit-install-language-grammar (car grammar))
-        ; (message "`%s' parser was installed." lang)
+                                        ; (message "`%s' parser was installed." lang)
         (sit-for 0.75))))
 
   (dolist (mapping
            '(
-              (bash-mode . bash-ts-mode)
-              (css-mode . css-ts-mode)
-              (c-mode . c-ts-mode)
-              (c++-mode . c++-ts-mode)
-              (elisp-mode . elisp-ts-mode)
-              (html-mode . html-ts-mode)
-              (js2-mode . js-ts-mode)
-              (json-mode . json-ts-mode)
-              (makefile-mode . make-ts-mode)
-              (python-mode . python-ts-mode)
-              (toml-mode . toml-ts-mode)
-              (typescript-mode . typescript-ts-mode)
-              (rust-mode . rust-ts-mode)
-              (yaml-mode . yaml-ts-mode)))
+             (bash-mode . bash-ts-mode)
+             (css-mode . css-ts-mode)
+             (c-mode . c-ts-mode)
+             (c++-mode . c++-ts-mode)
+             (elisp-mode . elisp-ts-mode)
+             (html-mode . html-ts-mode)
+             (js2-mode . js-ts-mode)
+             (json-mode . json-ts-mode)
+             (makefile-mode . make-ts-mode)
+             (python-mode . python-ts-mode)
+             (toml-mode . toml-ts-mode)
+             (typescript-mode . typescript-ts-mode)
+             (rust-mode . rust-ts-mode)
+             (yaml-mode . yaml-ts-mode)))
     (add-to-list 'major-mode-remap-alist mapping))
 
   :config
@@ -923,9 +923,9 @@ If the window doesn't exist, create one additional window by splitting horizonta
 
 (use-package lsp-mode
   :hook (
-    (lsp-mode-hook . lsp-diagnostics-mode)
-    (lsp-mode-hook . lsp-enable-which-key-integration)
-    (prog-mode-hook . (lambda () (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode) (lsp-deferred)))))
+         (lsp-mode-hook . lsp-diagnostics-mode)
+         (lsp-mode-hook . lsp-enable-which-key-integration)
+         (prog-mode-hook . (lambda () (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'makefile-mode 'snippet-mode) (lsp-deferred)))))
   :preface
   (setq lsp-use-plists t)
   (defun lsp-booster--advice-json-parse (old-fn &rest args)
@@ -980,119 +980,119 @@ If the window doesn't exist, create one additional window by splitting horizonta
               #'lsp-booster--advice-json-parse)
   (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command))
 
-  (use-package lsp-completion
-    :ensure nil
-    :hook ((lsp-mode-hook . lsp-completion-mode)
-           (lsp-completion-mode . my/lsp-mode-setup-completion))
-    :after lsp-mode
-    :init
-    (defun my/lsp-mode-setup-completion ()
+(use-package lsp-completion
+  :ensure nil
+  :hook ((lsp-mode-hook . lsp-completion-mode)
+         (lsp-completion-mode . my/lsp-mode-setup-completion))
+  :after lsp-mode
+  :init
+  (defun my/lsp-mode-setup-completion ()
     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
           '(orderless)))
-    (setq lsp-completion-provider :none ;; Corfu
-          lsp-completion-enable t
-          lsp-completion-enable-additional-text-edit t
-          lsp-enable-snippet t
-          lsp-completion-show-kind t))
+  (setq lsp-completion-provider :none ;; Corfu
+        lsp-completion-enable t
+        lsp-completion-enable-additional-text-edit t
+        lsp-enable-snippet t
+        lsp-completion-show-kind t))
 
-  (use-package lsp-ui
-    :hook ((lsp-mode-hook . lsp-ui-mode))
-    :after lsp-mode)
+(use-package lsp-ui
+  :hook ((lsp-mode-hook . lsp-ui-mode))
+  :after lsp-mode)
 
-  (use-package lsp-ui-doc
-    :ensure nil
-    :hook ((lsp-mode-hook . lsp-ui-doc-mode))
-    :after lsp-mode
-    :init
-    (setq
-      lsp-ui-doc-enable t
-      lsp-ui-doc-show-with-cursor t
-      lsp-ui-doc-include-signature t
-      lsp-ui-doc-position 'top
-      lsp-ui-doc-side 'right))
+(use-package lsp-ui-doc
+  :ensure nil
+  :hook ((lsp-mode-hook . lsp-ui-doc-mode))
+  :after lsp-mode
+  :init
+  (setq
+   lsp-ui-doc-enable t
+   lsp-ui-doc-show-with-cursor t
+   lsp-ui-doc-include-signature t
+   lsp-ui-doc-position 'top
+   lsp-ui-doc-side 'right))
 
-  (use-package lsp-ui-peek
-    :ensure nil
-    :init
-    (setq lsp-ui-peek-enable t)
-    :after lsp-ui
-    :config
-    (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
-    (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
+(use-package lsp-ui-peek
+  :ensure nil
+  :init
+  (setq lsp-ui-peek-enable t)
+  :after lsp-ui
+  :config
+  (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
 
-  (use-package lsp-ui-sideline
-    :ensure nil
-    :init
-    (setq lsp-ui-sideline-show-diagnostics t
-          lsp-ui-sideline-show-hover t
-          lsp-ui-sideline-show-code-actions nil
-          lsp-ui-sideline-update-mode 'line))
+(use-package lsp-ui-sideline
+  :ensure nil
+  :init
+  (setq lsp-ui-sideline-show-diagnostics t
+        lsp-ui-sideline-show-hover t
+        lsp-ui-sideline-show-code-actions nil
+        lsp-ui-sideline-update-mode 'line))
 
-  (use-package lsp-bridge
-    :disabled t ;; Until I sort out global python packages installation on macOS 14+
-    :ensure '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-              :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-              :build (:not compile))
-    :init
-    (global-lsp-bridge-mode))
+(use-package lsp-bridge
+  :disabled t ;; Until I sort out global python packages installation on macOS 14+
+  :ensure '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+                       :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+                       :build (:not compile))
+  :init
+  (global-lsp-bridge-mode))
 
-  (use-package prescient)
+(use-package prescient)
 
-  (use-package cape)
-  (use-package corfu
-    :custom
-    (corfu-cycle t)
-    (corfu-preselect 'prompt)
-    :hook((prog-mode-hook . corfu-mode)
-          (shell-mode-hook . corfu-mode)
-          (eshell-mode-hook . corfu-mode)
-          (corfu-mode-hook . (lambda ()
-                              (setq-local completion-styles '(basic)
-                                          completion-category-overrides nil
-                                          completion-category-defaults nil))))
-    :init
-    (global-corfu-mode)
-    (corfu-history-mode)
-    (corfu-popupinfo-mode)
-    :config
-    (setq corfu-auto t
-          corfu-auto-delay 0
-          corfu-auto-prefix 0
-          corfu-quit-no-match 'separator))
+(use-package cape)
+(use-package corfu
+  :custom
+  (corfu-cycle t)
+  (corfu-preselect 'prompt)
+  :hook((prog-mode-hook . corfu-mode)
+        (shell-mode-hook . corfu-mode)
+        (eshell-mode-hook . corfu-mode)
+        (corfu-mode-hook . (lambda ()
+                             (setq-local completion-styles '(basic)
+                                         completion-category-overrides nil
+                                         completion-category-defaults nil))))
+  :init
+  (global-corfu-mode)
+  (corfu-history-mode)
+  (corfu-popupinfo-mode)
+  :config
+  (setq corfu-auto t
+        corfu-auto-delay 0
+        corfu-auto-prefix 0
+        corfu-quit-no-match 'separator))
 
-  (use-package corfu-prescient :after (:all prescient corfu))
+(use-package corfu-prescient :after (:all prescient corfu))
 
-  (use-package whitespace-mode :ensure nil)
+(use-package whitespace-mode :ensure nil)
 
-  ;; VC
-  (use-package vc-mode
-    :ensure nil)
+;; VC
+(use-package vc-mode
+  :ensure nil)
 
-  (use-package diff-mode
-    :ensure nil
-    :hook (diff-mode-hook .(lambda ()
-                            (setq-local whitespace-style
-                                        '( face tabs tab-mark spaces space-mark trailing
+(use-package diff-mode
+  :ensure nil
+  :hook (diff-mode-hook .(lambda ()
+                           (setq-local whitespace-style
+                                       '( face tabs tab-mark spaces space-mark trailing
                                           indentation::space indentation::tab
                                           newline newline-mark))
-                            (whitespace-mode)))
-    :after whitespace-mode)
+                           (whitespace-mode)))
+  :after whitespace-mode)
 
-  (use-package diff-hl
-    :config
-    (setq diff-hl-draw-borders nil
-      diff-hl-disable-on-remote t)
-    :custom
-    (defun enable-diff-hl-dired-locally ()
+(use-package diff-hl
+  :config
+  (setq diff-hl-draw-borders nil
+        diff-hl-disable-on-remote t)
+  :custom
+  (defun enable-diff-hl-dired-locally ()
     (if (file-remote-p default-directory)
         (diff-hl-dired-mode -1)
       (diff-hl-dired-mode 1)))
 
-    (add-hook 'prog-mode-hook #'diff-hl-mode)
-    (add-hook 'conf-mode-hook #'diff-hl-mode)
-    (add-hook 'dired-mode-hook #'enable-diff-hl-dired-locally)
+  (add-hook 'prog-mode-hook #'diff-hl-mode)
+  (add-hook 'conf-mode-hook #'diff-hl-mode)
+  (add-hook 'dired-mode-hook #'enable-diff-hl-dired-locally)
 
-    (with-eval-after-load 'diff-hl
+  (with-eval-after-load 'diff-hl
     (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
     (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
     ;; Highlight on-the-fly
@@ -1103,14 +1103,14 @@ If the window doesn't exist, create one additional window by splitting horizonta
       ;; Avoid restoring `diff-hl-margin-mode'
       (with-eval-after-load 'desktop
         (add-to-list 'desktop-minor-mode-table
-                    '(diff-hl-margin-mode nil))))))
+                     '(diff-hl-margin-mode nil))))))
 
-  (use-package smerge-mode
-    :ensure nil
-    :config
-    (defhydra smerge-hydra
-      (:color pink :hint nil :post (smerge-auto-leave))
-      "
+(use-package smerge-mode
+  :ensure nil
+  :config
+  (defhydra smerge-hydra
+    (:color pink :hint nil :post (smerge-auto-leave))
+    "
   ^Move^       ^Keep^               ^Diff^                 ^Other^
   ^^-----------^^-------------------^^---------------------^^-------
   _n_ext       _b_ase               _<_: upper/base        _C_ombine
@@ -1119,64 +1119,65 @@ If the window doesn't exist, create one additional window by splitting horizonta
   ^^           _a_ll                _R_efine
   ^^           _RET_: current       _E_diff
   "
-      ("n" smerge-next)
-      ("p" smerge-prev)
-      ("b" smerge-keep-base)
-      ("u" smerge-keep-upper)
-      ("l" smerge-keep-lower)
-      ("a" smerge-keep-all)
-      ("RET" smerge-keep-current)
-      ("\C-m" smerge-keep-current)
-      ("<" smerge-diff-base-upper)
-      ("=" smerge-diff-upper-lower)
-      (">" smerge-diff-base-lower)
-      ("R" smerge-refine)
-      ("E" smerge-ediff)
-      ("C" smerge-combine-with-next)
-      ("r" smerge-resolve)
-      ("k" smerge-kill-current)
-      ("ZZ" (lambda ()
-              (interactive)
-              (save-buffer)
-              (bury-buffer))
-      "Save and bury buffer" :color blue)
-      ("q" nil "cancel" :color blue))
-    :hook (magit-diff-visit-file . (lambda ()
-                                    (when smerge-mode
-                                      (smerge-hydra/body)))))
+    ("n" smerge-next)
+    ("p" smerge-prev)
+    ("b" smerge-keep-base)
+    ("u" smerge-keep-upper)
+    ("l" smerge-keep-lower)
+    ("a" smerge-keep-all)
+    ("RET" smerge-keep-current)
+    ("\C-m" smerge-keep-current)
+    ("<" smerge-diff-base-upper)
+    ("=" smerge-diff-upper-lower)
+    (">" smerge-diff-base-lower)
+    ("R" smerge-refine)
+    ("E" smerge-ediff)
+    ("C" smerge-combine-with-next)
+    ("r" smerge-resolve)
+    ("k" smerge-kill-current)
+    ("ZZ" (lambda ()
+            (interactive)
+            (save-buffer)
+            (bury-buffer))
+     "Save and bury buffer" :color blue)
+    ("q" nil "cancel" :color blue))
+  :hook (magit-diff-visit-file . (lambda ()
+                                   (when smerge-mode
+                                     (smerge-hydra/body)))))
 
-  (use-package magit
-    :commands magit-status
-    :after (:all cond-let)
-    :ensure '(magit :type git :host github :repo "magit/magit" :branch "main")
-    :preface
-    (defun magit-disable-whitespace-mode ()
-      (setq-local whitespace-trailing nil))
+(use-package magit
+  :ensure '(magit :type git :host github :repo "magit/magit" :branch "main")
+  :commands magit-status
+  :after (:all cond-let)
+  :preface
+  (defun magit-disable-whitespace-mode ()
+    (setq-local whitespace-trailing nil))
 
-    :custom
-    ;;(magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
-    (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-    :config
+  :custom
+  ;;(magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  :config
 
-    (setq
-          magit-revision-insert-related-refs nil
-          magit-diff-refine-hunk t
-          magit-diff-paint-whitespace nil
-          magit-commit-show-diff nil
-          magit-branch-direct-configure nil
-          magit-refresh-status-buffer t
-          magit-tramp-pipe-stty-settings 'pty
-          magit-status-buffer-switch-function 'switch-to-buffer)
+  (setq
+   magit-revision-insert-related-refs nil
+   magit-diff-refine-hunk t
+   magit-diff-paint-whitespace nil
+   magit-commit-show-diff nil
+   magit-branch-direct-configure nil
+   magit-refresh-status-buffer t
+   magit-tramp-pipe-stty-settings 'pty
+   magit-status-buffer-switch-function 'switch-to-buffer)
 
-    (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
-    (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header)
+  (add-hook 'magit-mode-hook 'magit-disable-whitespace-mode)
+  (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header)
 
-    (setq magit-post-display-buffer-hook
-      #'(lambda ()
-          (when (derived-mode-p 'magit-status-mode)
-            (delete-other-windows)))))
+  (setq magit-post-display-buffer-hook
+        #'(lambda ()
+            (when (derived-mode-p 'magit-status-mode)
+              (delete-other-windows)))))
 
 (use-package forge
+  :ensure '(forge :type git :host github :repo "magit/forge" :branch "main")
   :after (:all cond-let closql magit llama)
   :config
   (defun magit-insert-recent-pull-requests ()
@@ -1192,8 +1193,8 @@ If the window doesn't exist, create one additional window by splitting horizonta
                          (state (oref pr state))
                          (author (oref pr author))
                          (state-face (if (string= state "open")
-                                        'magit-branch-remote
-                                      'magit-tag)))
+                                         'magit-branch-remote
+                                       'magit-tag)))
                     (magit-insert-section (pull-request pr)
                       (insert (propertize (format "#%-4d" number) 'face 'magit-hash))
                       (insert " ")
@@ -1205,7 +1206,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
               (insert (propertize "  No pull requests found\n" 'face 'magit-dimmed)))
           (error
            (insert (propertize (format "  Error loading PRs: %s\n" (error-message-string err))
-                              'face 'magit-dimmed))))
+                               'face 'magit-dimmed))))
         (insert "\n"))))
 
   ;; Add pull requests section to magit status - append to the end
@@ -1215,12 +1216,34 @@ If the window doesn't exist, create one additional window by splitting horizonta
                           t))
 
 (use-package ghub
+  :ensure '(ghub :type git :host github :repo "magit/ghub" :branch "main")
   :config
   (setq ghub-default-host "github.com")
   :after (:all magit))
 
 (use-package pr-review
   :after ghub)
+
+(use-package gh-notify
+  :after (:all magit forge))
+
+(use-package github-review
+  :after forge
+  :bind (("C-x r" . github-review-forge-pr-at-point)
+         :map diff-mode-map ("C-c s" . my/github-review-kill-suggestion))
+  :config
+
+  (defun my/github-review-kill-suggestion ()
+    ;; kill a region of diff+ as a review suggestion template
+    (interactive)
+    (setq deactivate-mark t)
+    (let ((s-region
+           (buffer-substring-no-properties
+            (region-beginning)
+            (region-end))))
+      (kill-new
+       (format "# ```suggestion\n%s\n# ```\n"
+               (replace-regexp-in-string "^\\+" "# " s-region))))))
 
 (use-package rust-mode
   :hook (rust-mode-hook . lsp)
@@ -1239,9 +1262,9 @@ If the window doesn't exist, create one additional window by splitting horizonta
   :hook ((gptel-post-stream-hook . gptel-auto-scroll)
          (gptel-post-response-functions . gptel-end-of-response)
          (gptel-mode-hook  . (lambda ()
-                              (when (and (derived-mode-p 'org-mode)
-                                        (bound-and-true-p org-indent-mode))
-                                (org-indent-mode -1)))))
+                               (when (and (derived-mode-p 'org-mode)
+                                          (bound-and-true-p org-indent-mode))
+                                 (org-indent-mode -1)))))
   :commands (gptel gptel-send gptel-menu)
   :bind (("C-c <enter>"    . gptel-send)
          ("C-c RET"        . gptel-send)
