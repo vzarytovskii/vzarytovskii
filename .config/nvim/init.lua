@@ -133,7 +133,10 @@ local plugins = {
 
   { src = 'https://github.com/dgagn/diagflow.nvim' },
 
-  { src = 'https://github.com/MagicDuck/grug-far.nvim' }
+  { src = 'https://github.com/MagicDuck/grug-far.nvim' },
+
+  { src = 'https://github.com/A7Lavinraj/fyler.nvim' },
+  { src = 'https://github.com/stevearc/oil.nvim' }
 }
 
 vim.pack.add(plugins)
@@ -942,3 +945,6 @@ require('diagflow').setup({
 })
 
 require('grug-far').setup({})
+
+require("fyler").setup({})
+require("oil").setup({})
