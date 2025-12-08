@@ -123,6 +123,7 @@ local plugins = {
   { src = 'https://github.com/sindrets/diffview.nvim' },
   { src = 'https://github.com/lewis6991/gitsigns.nvim' },
   { src = 'https://github.com/pwntester/octo.nvim' },
+  { src = 'https://github.com/otavioschwanck/github-pr-reviewer.nvim' },
   { src = 'https://github.com/NeogitOrg/neogit' },
 
   { src = 'https://github.com/chrisgrieser/nvim-origami' },
@@ -877,6 +878,7 @@ require('gitsigns').setup {
   },
 }
 require('octo').setup({})
+require('github-pr-reviewer').setup({})
 require('neogit').setup({
   graph_style = 'unicode',
   process_spinner = true,
