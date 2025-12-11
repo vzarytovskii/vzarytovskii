@@ -209,6 +209,12 @@ local plugins = {
     opts = {}
   },
   {
+    'wsdjeg/rooter.nvim',
+    opts = {
+      root_pattern = { '.git/' },
+    }
+  },
+  {
     'projekt0n/github-nvim-theme',
     lazy = false,
     priority = 1000,
@@ -221,19 +227,30 @@ local plugins = {
     dependncies = { 'projekt0n/github-nvim-theme' },
     lazy = false,
     priority = 1000,
-    config = function ()
-      require('auto-dark-mode').setup({
-        update_interval = 1000,
-        set_dark_mode = function ()
-          vim.api.nvim_set_option_value("background", "dark", {})
-          vim.cmd("colorscheme github_dark_high_contrast")
-        end,
-        set_light_mode = function ()
-          vim.api.nvim_set_option_value("background", "light", {})
-          vim.cmd("colorscheme github_light_default")
-        end,
-      })
-    end
+    opts = {
+      update_interval = 1000,
+      set_dark_mode = function ()
+        vim.api.nvim_set_option_value("background", "dark", {})
+        vim.cmd("colorscheme github_dark_high_contrast")
+      end,
+      set_light_mode = function ()
+        vim.api.nvim_set_option_value("background", "light", {})
+        vim.cmd("colorscheme github_light_default")
+      end,
+    }
+  },
+  {
+    'y3owk1n/time-machine.nvim',
+    cmd = {
+      'TimeMachineToggle',
+      'TimeMachinePurgeBuffer',
+      'TimeMachinePurgeAll',
+      'TimeMachineLogShow',
+      'TimeMachineLogClear',
+    },
+    opts = {
+
+    }
   },
   {
     "stevearc/oil.nvim",
@@ -270,6 +287,26 @@ local plugins = {
       max_threads = vim.uv.available_parallelism()
     }
   },
+  {
+    'wsdjeg/flygrep.nvim',
+    cmd = { 'FlyGrep' },
+    dependencies = { 'wsdjeg/job.nvim' },
+    opts = {
+      enable_preview = true,
+      input = vim.fn.expand('<cword>'),
+      mappings = {
+        next_item = '<Down>',
+        prev_item = '<Up>',
+      }
+    },
+    keys = {
+      {
+        "fg",
+        function() require('flygrep').open() end,
+        desc = 'Grep in files',
+      }
+    },
+  }, { 'wsdjeg/job.nvim' },
   {
     'nvim-treesitter/nvim-treesitter',
     dependncies = { 'nvim-treesitter/nvim-treesitter-context' },
@@ -369,22 +406,20 @@ local plugins = {
     dependncies = { 'copilotlsp-nvim/copilot-lsp' },
     cmd = "Copilot",
     event = "InsertEnter",
-    config = function()
-      require("copilot").setup({
-        suggestion = {
-          enabled = true,
-          auto_trigger = true,
+    opts = {
+      suggestion = {
+        enabled = true,
+        auto_trigger = true,
+      },
+      nes = {
+        enabled = false,
+        keymap = {
+          accept_and_goto = "",
+          accept = false,
+          dismiss = "<Esc>",
         },
-        nes = {
-          enabled = false,
-          keymap = {
-            accept_and_goto = "",
-            accept = false,
-            dismiss = "<Esc>",
-          },
-        },
-      })
-    end,
+      },
+    }
   }, { 'copilotlsp-nvim/copilot-lsp' },
   {
     "chrisgrieser/nvim-origami",
@@ -418,11 +453,6 @@ local plugins = {
     },
   },
   {
-    'qwavies/smart-backspace.nvim',
-    event = {'InsertEnter', 'CmdlineEnter'},
-    opts = {}
-  },
-  {
     'windwp/nvim-autopairs',
     event = "InsertEnter",
     config = true,
@@ -431,6 +461,11 @@ local plugins = {
   {
     'kylechui/nvim-surround',
     event = 'VeryLazy',
+    opts = {}
+  },
+  {
+    'qwavies/smart-backspace.nvim',
+    event = {'InsertEnter', 'CmdlineEnter'},
     opts = {}
   },
   {
