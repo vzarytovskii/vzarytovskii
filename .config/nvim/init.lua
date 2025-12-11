@@ -201,6 +201,13 @@ local lsp_configs = {
 }
 
 local plugins = {
+  { 'nvim-lua/plenary.nvim' },
+  {
+    "folke/snacks.nvim",
+    priority = 1000,
+    lazy = false,
+    opts = {}
+  },
   {
     'projekt0n/github-nvim-theme',
     lazy = false,
@@ -227,6 +234,24 @@ local plugins = {
         end,
       })
     end
+  },
+  {
+    "stevearc/oil.nvim",
+    lazy = false,
+    opts = {
+      default_file_explorer = true,
+      delete_to_trash = true,
+      watch_for_changes = true,
+      columns = {
+        "permissions",
+        "size",
+        "mtime",
+      },
+      view_options = {
+        show_hidden = true
+      }
+
+    }
   },
   {
     'dmtrKovalenko/fff.nvim',
@@ -404,9 +429,82 @@ local plugins = {
     opts = {}
   },
   {
-    "kylechui/nvim-surround",
-    event = "VeryLazy",
+    'kylechui/nvim-surround',
+    event = 'VeryLazy',
     opts = {}
+  },
+  {
+    'lewis6991/gitsigns.nvim',
+    lazy = false,
+    opts = {
+      signs_staged_enable = true,
+      signcolumn = true,
+      numhl      = true,
+      linehl     = true,
+      word_diff  = true,
+      watch_gitdir = {
+        follow_files = true
+      },
+      auto_attach = true,
+      attach_to_untracked = false,
+      preview_config = {
+        style = 'minimal',
+        relative = 'cursor',
+        row = 0,
+        col = 1
+      },
+    }
+  },
+  {
+    'sindrets/diffview.nvim',
+    event = 'VeryLazy',
+    opts = {
+      enhanced_diff_hl = true,
+      use_icons = false,
+      show_help_hints = true,
+      watch_index = true,
+      view = {
+        default = {
+          layout = 'diff2_horizontal'
+        },
+        merge_tool = {
+          layout = 'diff4_mixed',
+          disable_diagnostics = true,
+          winbar_info = true
+        }
+      }
+    }
+  },
+  {
+    'NeogitOrg/neogit',
+    cmd = 'Neogit',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'sindrets/diffview.nvim',
+    },
+    opts = {},
+    config = function ()
+      vim.cmd.cabbrev('git', 'Neogit')
+      vim.cmd.cabbrev('Git', 'Neogit')
+
+      vim.api.nvim_create_user_command(
+        'Git',
+        'Neogit',
+        { bang = true, desc = "Alias to Neogit" }
+      )
+    end
+  },
+  {
+    'pwntester/octo.nvim',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'folke/snacks.nvim'
+    },
+    cmd = 'Octo',
+    opts = {
+      picker = 'snacks',
+      enable_builtin = true,
+    }
   }
 }
 
