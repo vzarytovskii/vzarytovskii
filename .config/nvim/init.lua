@@ -265,6 +265,29 @@ local plugins = {
     end
   }, { 'nvim-treesitter/nvim-treesitter-context' },
   {
+    'aaronik/treewalker.nvim',
+    opts = { },
+    keys = {
+      { '<C-k>', '<cmd>Treewalker Up<cr>',        mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-j>', '<cmd>Treewalker Down<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-h>', '<cmd>Treewalker Left<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-l>', '<cmd>Treewalker Right<cr>',     mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-Up>', '<cmd>Treewalker Up<cr>',       mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-Down>', '<cmd>Treewalker Down<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-Left>', '<cmd>Treewalker Left<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-Right>', '<cmd>Treewalker Right<cr>', mode = { 'n', 'v', 'i' }, silent = true },
+
+      { '<C-S-k>', '<cmd>Treewalker SwapUp<cr>',        mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-j>', '<cmd>Treewalker SwapDown<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-h>', '<cmd>Treewalker SwapLeft<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-l>', '<cmd>Treewalker SwapRight<cr>',     mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-Up>', '<cmd>Treewalker SwapUp<cr>',       mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-Down>', '<cmd>Treewalker SwapDown<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-Left>', '<cmd>Treewalker SwapLeft<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
+      { '<C-S-Right>', '<cmd>Treewalker SwapRight<cr>', mode = { 'n', 'v', 'i' }, silent = true },
+    }
+  },
+  {
     'mason-org/mason.nvim',
     opts = {}
   },
@@ -326,7 +349,8 @@ local plugins = {
   }, { 'copilotlsp-nvim/copilot-lsp' },
   {
     'qwavies/smart-backspace.nvim',
-    event = {'InsertEnter', 'CmdlineEnter'}
+    event = {'InsertEnter', 'CmdlineEnter'},
+    opts = {}
   },
   {
     'windwp/nvim-autopairs',
