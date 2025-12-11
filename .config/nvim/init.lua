@@ -31,6 +31,18 @@ local merge_table = function (t1, t2)
     return t1
 end
 
+local configure_global_keymaps = function ()
+  local opts = { noremap = true, silent = true }
+  local set = vim.keymap.set
+  set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
+  set("n", "<Tab>",   ">>",  opts)
+  set("n", "<S-Tab>", "<<",  opts)
+  set("v", "<Tab>",   ">gv", opts)
+  set("v", "<S-Tab>", "<gv", opts)
+end
+
+configure_global_keymaps()
+
 local configure_defaults = function (vim)
   vim.g.mapleader = " "
 
@@ -50,6 +62,8 @@ local configure_defaults = function (vim)
   vim.opt.scrolloff = 8
   vim.opt.signcolumn = "number"
   vim.opt.isfname:append("@-@")
+
+  vim.opt.keymodel="startsel,stopsel"
 
   vim.opt.undofile = true
   vim.opt.undodir = vim.fn.expand("~/.undodir")
@@ -270,12 +284,12 @@ local plugins = {
     keys = {
       { '<C-k>', '<cmd>Treewalker Up<cr>',        mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-j>', '<cmd>Treewalker Down<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
-      { '<C-h>', '<cmd>Treewalker Left<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
-      { '<C-l>', '<cmd>Treewalker Right<cr>',     mode = { 'n', 'v', 'i' }, silent = true },
+      -- { '<C-h>', '<cmd>Treewalker Left<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
+      -- { '<C-l>', '<cmd>Treewalker Right<cr>',     mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-Up>', '<cmd>Treewalker Up<cr>',       mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-Down>', '<cmd>Treewalker Down<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
-      { '<C-Left>', '<cmd>Treewalker Left<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
-      { '<C-Right>', '<cmd>Treewalker Right<cr>', mode = { 'n', 'v', 'i' }, silent = true },
+      -- { '<C-Left>', '<cmd>Treewalker Left<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
+      -- { '<C-Right>', '<cmd>Treewalker Right<cr>', mode = { 'n', 'v', 'i' }, silent = true },
 
       { '<C-S-k>', '<cmd>Treewalker SwapUp<cr>',        mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-S-j>', '<cmd>Treewalker SwapDown<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
@@ -348,6 +362,37 @@ local plugins = {
     end,
   }, { 'copilotlsp-nvim/copilot-lsp' },
   {
+    "chrisgrieser/nvim-origami",
+    event = "VeryLazy",
+    init = function()
+      vim.opt.foldlevel = 99
+      vim.opt.foldlevelstart = 99
+    end,
+    keys = {
+      { "<Left>",  function() require("origami").h() end, mode = { 'n' } },
+      { "<Right>", function() require("origami").l() end, mode = { 'n' } }
+
+    },
+    opts = {
+      useLspFoldsWithTreesitterFallback = true,
+      pauseFoldsOnSearch = true,
+      foldtext = {
+        enabled = true,
+        padding = 3,
+        lineCount = {
+            template = "%d lines",
+            hlgroup = "Comment",
+        },
+        diagnosticsCount = true,
+        gitsignsCount = true,
+      },
+      autoFold = {
+        enabled = true,
+        kinds = { "comments", "imports" }
+      }
+    },
+  },
+  {
     'qwavies/smart-backspace.nvim',
     event = {'InsertEnter', 'CmdlineEnter'},
     opts = {}
@@ -356,6 +401,11 @@ local plugins = {
     'windwp/nvim-autopairs',
     event = "InsertEnter",
     config = true,
+    opts = {}
+  },
+  {
+    "kylechui/nvim-surround",
+    event = "VeryLazy",
     opts = {}
   }
 }
@@ -495,8 +545,6 @@ local plugins = {
   { src = 'https://github.com/otavioschwanck/github-pr-reviewer.nvim' },
   { src = 'https://github.com/NeogitOrg/neogit' },
 
-  { src = 'https://github.com/chrisgrieser/nvim-origami' },
-
   { src = 'https://github.com/shortcuts/no-neck-pain.nvim' },
 
   { src = 'https://github.com/code-biscuits/nvim-biscuits' },
@@ -521,12 +569,6 @@ vim.api.nvim_create_user_command(
 )
 
 
-local opts = { noremap = true, silent = true }
-vim.keymap.set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
-vim.keymap.set("n", "<Tab>",   ">>",  opts)
-vim.keymap.set("n", "<S-Tab>", "<<",  opts)
-vim.keymap.set("v", "<Tab>",   ">gv", opts)
-vim.keymap.set("v", "<S-Tab>", "<gv", opts)
 
 
 require('nvim-web-devicons').setup({
@@ -744,27 +786,7 @@ vim.keymap.set("n", "<leader>ci", "<cmd>LspUI call_hierarchy incoming_calls<CR>"
 vim.keymap.set("n", "<leader>co", "<cmd>LspUI call_hierarchy outgoing_calls<CR>")
 
 
-require("origami").setup({
-  useLspFoldsWithTreesitterFallback = true,
-  pauseFoldsOnSearch = true,
-  foldtext = {
-    enabled = true,
-    padding = 3,
-    lineCount = {
-        template = "%d lines", -- `%d` is replaced with the number of folded lines
-        hlgroup = "Comment",
-    },
-    diagnosticsCount = true,
-    gitsignsCount = true,
-  },
-  autoFold = {
-    enabled = true,
-    kinds = { "comments", "imports" }
-  }
-})
 
-vim.keymap.set("n", "<Left>", function() require("origami").h() end)
-vim.keymap.set("n", "<Right>", function() require("origami").l() end)
 
 require('render-markdown').setup({
   enabled = true,
