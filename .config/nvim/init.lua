@@ -48,13 +48,18 @@ local window_state = {
   maximized_win = nil,  -- Currently maximized window ID
   saved_widths = {},    -- Saved widths before maximizing
   label_bufs = {},      -- Label buffers for collapsed windows
+  dim_ns = vim.api.nvim_create_namespace('window_dim'),  -- Namespace for dimming
 }
+
+-- Create a dimmed highlight group
+vim.api.nvim_set_hl(0, 'WindowDimmed', { fg = '#666666', bg = 'NONE' })
+vim.api.nvim_set_hl(0, 'WindowDimmedBg', { bg = '#1a1a1a', fg = '#666666' })
 
 local configure_window_management = function()
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
 
-  local collapsed_width = 6  -- Width for collapsed windows (visible with label)
+  local collapsed_width = 3  -- Width for collapsed windows (visible with label)
 
   -- Get only vertical split windows (same row, different columns) in left-to-right order
   local function get_vertical_windows()
@@ -122,12 +127,14 @@ local configure_window_management = function()
   end
 
   -- Show window number labels in collapsed windows using winbar
+  -- Also dim and disable syntax for collapsed windows
   local function update_window_labels()
     local wins = get_vertical_windows()
 
     for i, win in ipairs(wins) do
       if vim.api.nvim_win_is_valid(win) then
         local width = vim.api.nvim_win_get_width(win)
+        local buf = vim.api.nvim_win_get_buf(win)
         -- Show label in collapsed windows
         if width <= collapsed_width + 2 then
           -- Use winbar to show the number prominently
@@ -135,10 +142,21 @@ local configure_window_management = function()
           vim.api.nvim_win_set_option(win, 'number', false)
           vim.api.nvim_win_set_option(win, 'relativenumber', false)
           vim.api.nvim_win_set_option(win, 'signcolumn', 'no')
+          vim.api.nvim_win_call(win, function()
+            vim.cmd('setlocal syntax=OFF')
+          end)
         else
           vim.api.nvim_win_set_option(win, 'winbar', '')
           vim.api.nvim_win_set_option(win, 'number', true)
           vim.api.nvim_win_set_option(win, 'signcolumn', 'yes')
+          -- Restore normal highlighting
+          vim.api.nvim_win_set_option(win, 'winhighlight', '')
+          -- Re-enable syntax
+          vim.api.nvim_win_call(win, function()
+            vim.cmd('setlocal syntax=ON')
+            -- Re-detect filetype to restore treesitter
+            vim.cmd('filetype detect')
+          end)
         end
       end
     end
