@@ -206,7 +206,9 @@ local plugins = {
     "folke/snacks.nvim",
     priority = 1000,
     lazy = false,
-    opts = {}
+    opts = {
+      quickfile = {}
+    }
   },
   {
     'wsdjeg/rooter.nvim',
@@ -253,21 +255,42 @@ local plugins = {
     }
   },
   {
-    "stevearc/oil.nvim",
+    'stevearc/oil.nvim',
     lazy = false,
+    keys = {
+      {
+        'fe',
+        mode = { 'n' },
+        function() require('oil').open() end,
+        desc = 'Open Oil file explorer',
+      }
+    },
     opts = {
       default_file_explorer = true,
       delete_to_trash = true,
       watch_for_changes = true,
       columns = {
-        "permissions",
-        "size",
-        "mtime",
+        'permissions',
+        'size',
+        'mtime',
       },
+      win_options = {
+        signcolumn = 'auto:2'
+      },
+
       view_options = {
         show_hidden = true
       }
 
+    }
+  },
+  {
+    'refractalize/oil-git-status.nvim',
+    dependencies = {
+      'stevearc/oil.nvim',
+    },
+    opts = {
+      show_ignored = true
     }
   },
   {
@@ -278,6 +301,7 @@ local plugins = {
     keys = {
       {
         "ff",
+        mode = { 'n' },
         function() require('fff').find_files() end,
         desc = 'Find files',
       }
