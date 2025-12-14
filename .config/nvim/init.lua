@@ -271,11 +271,20 @@ local configure_window_management = function()
   end
 
   -- Set up keybindings for window management
-  -- Using F1-F9 function keys - works in all modes and terminals
   for i = 1, 9 do
     local fn = function() focus_window_by_number(i) end
     local desc = { desc = 'Focus/toggle window ' .. i }
 
+    if vim.g.neovide then
+      -- Neovide: Use Cmd+number (D = Cmd on macOS in Neovide)
+      set({ 'n', 'i', 'v' }, '<D-' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
+    else
+      -- Terminal: Use Alt/Meta+number (works cross-platform in most terminals)
+      -- Map both <M-n> and the actual characters macOS sends for Option+number
+      set({ 'n', 'i', 'v' }, '<M-' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
+    end
+
+    -- Always keep F1-F9 as fallback
     set({ 'n', 'i', 'v' }, '<F' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
   end
 
