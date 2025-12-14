@@ -35,10 +35,10 @@ local configure_global_keymaps = function ()
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
-  set("n", "<Tab>",   ">>",  opts)
-  set("n", "<S-Tab>", "<<",  opts)
-  set("v", "<Tab>",   ">gv", opts)
-  set("v", "<S-Tab>", "<gv", opts)
+  --set("n", "<Tab>",   ">>",  opts)
+  --set("n", "<S-Tab>", "<<",  opts)
+  --set("v", "<Tab>",   ">gv", opts)
+  --set("v", "<S-Tab>", "<gv", opts)
 end
 
 configure_global_keymaps()
@@ -156,8 +156,6 @@ local configure_window_management = function()
           -- Re-enable syntax
           vim.api.nvim_win_call(win, function()
             vim.cmd('setlocal syntax=ON')
-            -- Re-detect filetype to restore treesitter
-            vim.cmd('filetype detect')
           end)
         end
       end
@@ -271,6 +269,8 @@ local configure_window_management = function()
   end
 
   -- Set up keybindings for window management
+  local is_mac = vim.fn.has('macunix') == 1
+
   for i = 1, 9 do
     local fn = function() focus_window_by_number(i) end
     local desc = { desc = 'Focus/toggle window ' .. i }
@@ -278,14 +278,25 @@ local configure_window_management = function()
     if vim.g.neovide then
       -- Neovide: Use Cmd+number (D = Cmd on macOS in Neovide)
       set({ 'n', 'i', 'v' }, '<D-' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
-    else
-      -- Terminal: Use Alt/Meta+number (works cross-platform in most terminals)
-      -- Map both <M-n> and the actual characters macOS sends for Option+number
+    end
+
+    -- Windows/Linux: Use Alt+number (works in most terminals)
+    if not is_mac then
       set({ 'n', 'i', 'v' }, '<M-' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
     end
 
-    -- Always keep F1-F9 as fallback
+    -- Always keep F1-F9 as fallback (works everywhere)
     set({ 'n', 'i', 'v' }, '<F' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
+  end
+
+  -- macOS terminal: Option+number sends Unicode characters, map them
+  -- Option+1=¡, Option+2=™, Option+3=£, Option+4=¢, Option+5=∞, Option+6=§, Option+7=¶, Option+8=•, Option+9=ª
+  if is_mac and not vim.g.neovide then
+    local mac_opt_chars = { '¡', '™', '£', '¢', '∞', '§', '¶', '•', 'ª' }
+    for i, char in ipairs(mac_opt_chars) do
+      local fn = function() focus_window_by_number(i) end
+      set({ 'n', 'i', 'v' }, char, fn, vim.tbl_extend('force', opts, { desc = 'Focus/toggle window ' .. i }))
+    end
   end
 
   -- Auto-update labels when windows change
@@ -343,11 +354,11 @@ local configure_defaults = function (vim)
     vim.g.neovide_cursor_animate_command_line = false
     vim.g.neovide_scroll_animation_far_lines = 0
     vim.g.neovide_scroll_animation_length = 0.00
-    vim.g.neovide_padding_top = 0
-    vim.g.neovide_padding_bottom = 0
-    vim.g.neovide_padding_right = 0
-    vim.g.neovide_padding_left = 0
-    vim.g.neovide_opacity = 0.5
+    vim.g.neovide_padding_top = 1
+    vim.g.neovide_padding_bottom = 1
+    vim.g.neovide_padding_right = 1
+    vim.g.neovide_padding_left = 1
+    vim.g.neovide_opacity = 0.8
     vim.g.neovide_window_blurred = true
     vim.g.neovide_title_background_color = string.format(
       "%x",
@@ -462,7 +473,41 @@ local plugins = {
     priority = 1000,
     lazy = false,
     opts = {
-      quickfile = {}
+      bigfile = { enabled = false },
+      explorer = { enabled = false },
+      input = { enabled = true },
+      image = { enabled = false },
+      lazygit = { enabled = false },
+      quickfile = { enabled = true },
+      scroll = { enabled = false },
+      statuscolumn = { enabled = false },
+      notifier = { enabled = true },
+      picker = { enabled = true },
+    },
+    keys = {
+      { '<leader><space>', mode = { 'n', 'v' }, function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
+      { '<leader>ff', mode = { 'n', 'v' }, function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
+      { 'ff', mode = { 'n', 'v' }, function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
+
+      { "<leader>/", mode = { 'n', 'v' }, function() Snacks.picker.grep() end, desc = "Grep" },
+      { "<leader>gg", mode = { 'n', 'v' }, function() Snacks.picker.grep() end, desc = "Grep" },
+      { "gg", mode = { 'n', 'v' }, function() Snacks.picker.grep() end, desc = "Grep" },
+      { "ß", mode = { 'n', 'v', 'i' }, function() Snacks.picker.grep() end, desc = "Grep" },
+
+      { "<leader>e", mode = { 'n', 'v' }, function() Snacks.explorer() end, desc = "File Explorer" },
+
+      { 'gd', mode = { 'n', 'v' }, function() Snacks.picker.lsp_definitions() end, desc = 'Goto Definition' },
+      { 'gD', mode = { 'n', 'v' }, function() Snacks.picker.lsp_declarations() end, desc = 'Goto Declaration' },
+      { 'gr', mode = { 'n', 'v' }, function() Snacks.picker.lsp_references() end, nowait = true, desc = 'References' },
+      { 'gI', mode = { 'n', 'v' }, function() Snacks.picker.lsp_implementations() end, desc = 'Goto Implementation' },
+      { 'gy', mode = { 'n', 'v' }, function() Snacks.picker.lsp_type_definitions() end, desc = 'Goto T[y]pe Definition' },
+      { 'gai', mode = { 'n', 'v' }, function() Snacks.picker.lsp_incoming_calls() end, desc = 'C[a]lls Incoming' },
+      { 'gao', mode = { 'n', 'v' }, function() Snacks.picker.lsp_outgoing_calls() end, desc = 'C[a]lls Outgoing' },
+      { '<leader>ss', mode = { 'n', 'v' }, function() Snacks.picker.lsp_symbols() end, desc = 'LSP Symbols' },
+      { '<leader>sS', mode = { 'n', 'v' }, function() Snacks.picker.lsp_workspace_symbols() end, desc = 'LSP Workspace Symbols' },
+
+      { "<leader>sd", mode = { 'n', 'v' }, function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
+
     }
   },
   {
@@ -549,43 +594,15 @@ local plugins = {
     }
   },
   {
-    'dmtrKovalenko/fff.nvim',
-    build = function()
-      require("fff.download").download_or_build_binary()
-    end,
+    'folke/flash.nvim',
+    event = 'VeryLazy',
+    ---@type Flash.Config
+    opts = {},
     keys = {
-      {
-        "ff",
-        mode = { 'n' },
-        function() require('fff').find_files() end,
-        desc = 'Find files',
-      }
+      { 's', mode = { 'n', 'x', 'o' }, function() require('flash').jump() end, desc = 'Flash' },
+      { 'S', mode = { 'n', 'x', 'o' }, function() require('flash').treesitter() end, desc = 'Flash Treesitter' },
     },
-    opts = {
-      prompt = '> ',
-      max_threads = vim.uv.available_parallelism()
-    }
   },
-  {
-    'wsdjeg/flygrep.nvim',
-    cmd = { 'FlyGrep' },
-    dependencies = { 'wsdjeg/job.nvim' },
-    opts = {
-      enable_preview = true,
-      input = vim.fn.expand('<cword>'),
-      mappings = {
-        next_item = '<Down>',
-        prev_item = '<Up>',
-      }
-    },
-    keys = {
-      {
-        "fg",
-        function() require('flygrep').open() end,
-        desc = 'Grep in files',
-      }
-    },
-  }, { 'wsdjeg/job.nvim' },
   {
     'nvim-treesitter/nvim-treesitter',
     dependncies = { 'nvim-treesitter/nvim-treesitter-context' },
@@ -619,6 +636,14 @@ local plugins = {
       require('treesitter-context').setup({enable = true})
     end
   }, { 'nvim-treesitter/nvim-treesitter-context' },
+  {
+    'andersevenrud/nvim_context_vt',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    opts = {
+      enable = true,
+      prefix = '// '
+    }
+  },
   {
     'aaronik/treewalker.nvim',
     opts = { },
@@ -905,681 +930,3 @@ local configure_lsp = function(vim, lsp_configs)
 end
 
 configure_lsp(vim, lsp_configs)
-
---[=====[
-
-local plugins = {
-
-  { 'https://github.com/echasnovski/mini.nvim' },
-  {
-    'https://github.com/echasnovski/mini.pick',
-    config = function ()
-      require('mini.pick').setup({})
-    end,
-  },
-  { 'https://github.com/nvim-lua/plenary.nvim' },
-  { 'https://github.com/nvim-telescope/telescope.nvim' },
-  { 'https://github.com/folke/snacks.nvim' },
-
-
-  { src = 'https://github.com/MunifTanjim/nui.nvim' },
-  { src = 'https://github.com/rcarriga/nvim-notify' },
-  { src = 'https://github.com/folke/noice.nvim' },
-
-  { src = 'https://github.com/stevearc/oil.nvim' },
-
-  { src = 'https://github.com/tkancf/narrowing-nvim' },
-
-  { src = 'https://github.com/amitds1997/remote-nvim.nvim' },
-
-  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
-
-  { src = 'https://github.com/mason-org/mason.nvim' },
-  { src = 'https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim' },
-
-  { src = 'https://github.com/nvim-treesitter/nvim-treesitter' },
-  { src = 'https://github.com/nvim-treesitter/nvim-treesitter-context' },
-
-  { src = 'https://github.com/MeanderingProgrammer/render-markdown.nvim' },
-
-  { src = 'https://github.com/onsails/lspkind.nvim' },
-  { src = 'https://github.com/jinzhongjia/LspUI.nvim', version = 'main' },
-
-  { src = 'https://github.com/yetone/avante.nvim' },
-
-  { src = 'https://github.com/Bekaboo/dropbar.nvim' },
-
-  { src = 'https://github.com/y3owk1n/time-machine.nvim' },
-
-  { src = 'https://github.com/sindrets/diffview.nvim' },
-  { src = 'https://github.com/lewis6991/gitsigns.nvim' },
-  { src = 'https://github.com/pwntester/octo.nvim' },
-  { src = 'https://github.com/otavioschwanck/github-pr-reviewer.nvim' },
-  { src = 'https://github.com/NeogitOrg/neogit' },
-
-  { src = 'https://github.com/shortcuts/no-neck-pain.nvim' },
-
-  { src = 'https://github.com/code-biscuits/nvim-biscuits' },
-
-  { src = 'https://github.com/dgagn/diagflow.nvim' },
-
-  { src = 'https://github.com/MagicDuck/grug-far.nvim' },
-
-  { src = 'https://github.com/A7Lavinraj/fyler.nvim' },
-  { src = 'https://github.com/stevearc/oil.nvim' }
-}
-
-vim.pack.add(plugins)
-
-vim.cmd.cabbrev('git', 'Neogit')
-vim.cmd.cabbrev('Git', 'Neogit')
-
-vim.api.nvim_create_user_command(
-  'Git',
-  'Neogit',
-  { bang = true, desc = "Alias to Neogit" }
-)
-
-
-
-
-require('nvim-web-devicons').setup({
-  default = true
-})
-
-
-require("oil").setup()
-
-require('narrowing').setup({keymaps = { enabled = true }})
-
-require('remote-nvim').setup({})
-
-vim.keymap.set('i', '<c-space>', vim.lsp.completion.get)
-
-
-
-
-require("LspUI").setup({
-  prompt = {
-    border = true,
-    borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-  },
-  code_action = {
-    enable = true,
-    command_enable = true,
-    gitsigns = true,
-    extend_gitsigns = true,
-    ui = {
-      title = "Code Action",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-    },
-  },
-  hover = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Hover",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-    },
-  },
-  rename = {
-    enable = true,
-    command_enable = true,
-    auto_save = false,
-    ui = {
-      title = "Rename",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "<C-c>",
-      exec = "<CR>",
-    },
-  },
-  diagnostic = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Diagnostic",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-    },
-  },
-  definition = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Definition",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-      vsplit = "v",
-      split = "s",
-      tabe = "t",
-    },
-  },
-  reference = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Reference",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-      vsplit = "v",
-      split = "s",
-      tabe = "t",
-    },
-  },
-  implementation = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Implementation",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-      vsplit = "v",
-      split = "s",
-      tabe = "t",
-    },
-  },
-  type_definition = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Type Definition",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-      vsplit = "v",
-      split = "s",
-      tabe = "t",
-    },
-  },
-  declaration = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Declaration",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-      vsplit = "v",
-      split = "s",
-      tabe = "t",
-    },
-  },
-  call_hierarchy = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Call Hierarchy",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-      exec = "<CR>",
-      expand = "o",
-      jump = "e",
-      vsplit = "v",
-      split = "s",
-      tabe = "t",
-    },
-  },
-  lightbulb = {
-    enable = true,
-    command_enable = true,
-    icon = "→",
-    action_kind = {
-      QuickFix = "⚒",
-      Refactor = "⟲",
-      RefactorExtract = "⤴",
-      RefactorInline = "⤵",
-      RefactorRewrite = "✎",
-      Source = "⚑",
-      SourceOrganizeImports = "⚙",
-    },
-  },
-  inlay_hint = {
-    enable = false,
-    command_enable = true,
-  },
-  signature = {
-    enable = true,
-    command_enable = true,
-    ui = {
-      title = "Signature Help",
-      border = "rounded",
-      winblend = 0,
-    },
-    keys = {
-      quit = "q",
-    },
-  },
-})
-vim.keymap.set("n", "K", "<cmd>LspUI hover<CR>")
-vim.keymap.set("n", "gr", "<cmd>LspUI reference<CR>")
-vim.keymap.set("n", "gd", "<cmd>LspUI definition<CR>")
-vim.keymap.set("n", "gt", "<cmd>LspUI type_definition<CR>")
-vim.keymap.set("n", "gi", "<cmd>LspUI implementation<CR>")
-vim.keymap.set("n", "<leader>rn", "<cmd>LspUI rename<CR>")
-vim.keymap.set("n", "<leader>ca", "<cmd>LspUI code_action<CR>")
-vim.keymap.set("n", "<leader>ci", "<cmd>LspUI call_hierarchy incoming_calls<CR>")
-vim.keymap.set("n", "<leader>co", "<cmd>LspUI call_hierarchy outgoing_calls<CR>")
-
-
-
-
-require('render-markdown').setup({
-  enabled = true,
-  file_types = { "markdown", "octo", "quarto", "Avante" },
-  completions = { blink = { enabled = true } },
-  render_modes = true,
-  anti_conceal = {
-        enabled = true
-  },
-  injections = {
-      gitcommit = {
-          enabled = true,
-          query = [[
-              ((message) @injection.content
-                  (#set! injection.combined)
-                  (#set! injection.include-children)
-                  (#set! injection.language "markdown"))
-          ]],
-      },
-  },
-})
-
-require('blink.cmp').setup({
-  appearance = {
-    use_nvim_cmp_as_default = false,
-    nerd_font_variant = "normal",
-  },
-  keymap = {
-    ['<CR>'] = { 'accept', 'fallback' },
-    ['<Tab>'] = { 'accept', 'fallback' },
-    ['<Right>'] = { 'accept', 'fallback' },
-    ['<Esc>'] = { 'hide', 'fallback' },
-    ['<Up>'] = { 'select_prev', 'fallback' },
-    ['<Down>'] = { 'select_next', 'fallback' },
-  },
-  signature = {
-    enabled = true,
-  },
-  completion = {
-    trigger = {
-      show_on_keyword = true,
-      show_on_trigger_character = true,
-    },
-    menu = {
-      auto_show = true,
-      scrolloff = 1,
-      scrollbar = false,
-      border = nil,
-      draw = {
-        components = {
-          kind_icon = {
-            text = function(ctx)
-              local icon = ctx.kind_icon
-              if vim.tbl_contains({ "Path" }, ctx.source_name) then
-                  local dev_icon, _ = require("nvim-web-devicons").get_icon(ctx.label)
-                  if dev_icon then
-                      icon = dev_icon
-                  end
-              else
-                  icon = require("lspkind").symbolic(ctx.kind, {
-                      mode = "symbol",
-                  })
-              end
-
-              return icon .. ctx.icon_gap
-            end,
-
-            -- Optionally, use the highlight groups from nvim-web-devicons
-            -- You can also add the same function for `kind.highlight` if you want to
-            -- keep the highlight groups in sync with the icons.
-            highlight = function(ctx)
-              local hl = ctx.kind_hl
-              if vim.tbl_contains({ "Path" }, ctx.source_name) then
-                local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
-                if dev_icon then
-                  hl = dev_hl
-                end
-              end
-              return hl
-            end,
-          }
-        },
-        columns = {
-            --{ "kind_icon" },
-            { "label",      "label_description", gap = 1 },
-            { "kind" },
-            { "source_name" },
-        },
-        treesitter = { 'lsp' }
-      }
-    },
-    keyword = {
-      range = 'full'
-    },
-    accept = {
-      auto_brackets = {
-        enabled = true,
-      },
-    },
-    list = {
-      selection = {
-        preselect = true,
-        auto_insert = true,
-      },
-    },
-    documentation = {
-      auto_show = true,
-      window = {
-        border = nil,
-        scrollbar = false,
-        winhighlight = 'Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,EndOfBuffer:BlinkCmpDoc',
-      },
-    },
-    ghost_text = {
-      enabled = true
-    },
-  },
-  sources = {
-    default = { 'copilot', 'lsp', 'path', 'buffer' },
-    providers = {
-      copilot = {
-        name = "copilot",
-        module = "blink-copilot",
-        score_offset = 100,
-        async = true,
-      },
-    },
-  },
-  cmdline = {
-    keymap = {
-      ['<Up>'] = { 'select_prev', 'fallback' },
-      ['<Down>'] = { 'select_next', 'fallback' },
-      ['<Right>'] = { 'accept', 'fallback' },
-      ['<Esc>'] = { 'hide', 'fallback' },
-    },
-    completion = { menu = { auto_show = false }, ghost_text = { enabled = true } },
-  },
-  fuzzy = {
-    implementation = 'prefer_rust',
-    prebuilt_binaries = {
-      download = true,
-      ignore_version_mismatch = true,
-    },
-    sorts = {
-      'exact',
-      'score',
-      'sort_text',
-    },
-  }
-})
-
-require('blink-copilot').setup({})
-
-require("copilot").setup({
-  suggestion = { enabled = false },
-  panel = { enabled = false },
-  filetypes = {
-    cmdline = false,
-    ["*"] = true,
-  },
-})
-
-require('avante').setup({
-  mode = 'agentic',
-  provider = 'copilot',
-  cursor_applying_provider = 'copilot',
-  auto_suggestions_provider = 'copilot',
-  providers = {
-    copilot = {
-      model = "claude-sonnet-4",
-    }
-  },
-  behaviour = {
-    auto_suggestions = false,
-    auto_set_highlight_group = true,
-    auto_set_keymaps = true,
-    auto_apply_diff_after_generation = false,
-    support_paste_from_clipboard = false,
-    minimize_diff = true,
-    enable_token_counting = true,
-    auto_approve_tool_permissions = false,
-    enable_cursor_planning_mode = true,
-  },
-  hints = { enabled = true },
-})
-
-
-require("fidget").setup({})
-require('dropbar').setup({
-  icons = {
-    enable = true,
-    ui = {
-      bar = {
-        separator = ' → ',
-        extends = '…',
-      }
-    },
-    kinds = {
-      symbols = {
-        Array = '[] ',
-        BlockMappingPair = '{} ',
-        Boolean = 'ß ',
-        BreakStatement = '↵ ',
-        Call = '⟐ ',
-        CaseStatement = '⇒ ',
-        Class = 'C ',
-        Color = '# ',
-        Constant = 'K ',
-        Constructor = '⊕ ',
-        ContinueStatement = '→ ',
-        Copilot = '© ',
-        Declaration = 'D ',
-        Delete = '✗ ',
-        DoStatement = '∞ ',
-        Element = '⊙ ',
-        Enum = 'E ',
-        EnumMember = 'E ',
-        Event = '! ',
-        Field = '⌘ ',
-        File = 'f ',
-        Folder = '/ ',
-        ForStatement = '∀ ',
-        Function = 'λ ',
-        GotoStatement = '↪ ',
-        Identifier = 'α ',
-        IfStatement = '? ',
-        Interface = 'I ',
-        Keyword = '$ ',
-        List = '≡ ',
-        Log = '¶ ',
-        Lsp = '⚙ ',
-        Macro = 'μ ',
-        MarkdownH1 = '1 ',
-        MarkdownH2 = '2 ',
-        MarkdownH3 = '3 ',
-        MarkdownH4 = '4 ',
-        MarkdownH5 = '5 ',
-        MarkdownH6 = '6 ',
-        Method = 'ƒ ',
-        Module = '⊞ ',
-        Namespace = '⋯ ',
-        Null = '∅ ',
-        Number = '# ',
-        Object = '○ ',
-        Operator = '± ',
-        Package = 'P ',
-        Pair = '⇔ ',
-        Property = '· ',
-        Reference = '& ',
-        Regex = '/ ',
-        Repeat = '∞ ',
-        Return = '← ',
-        RuleSet = '§ ',
-        Scope = '⊃ ',
-        Section = '¶ ',
-        Snippet = '* ',
-        Specifier = '@ ',
-        Statement = '> ',
-        String = '" ',
-        Struct = 'S ',
-        SwitchStatement = '⤷ ',
-        Table = '⊞ ',
-        Terminal = '>_ ',
-        Text = 'T ',
-        Type = '𝜏 ',
-        TypeParameter = '⟨⟩ ',
-        Unit = '° ',
-        Value = 'V ',
-        Variable = 'x ',
-        WhileStatement = '⥁ ',
-      }
-    }
-  }
-})
-
-require("time-machine").setup({})
-require('diffview').setup({
-  enhanced_diff_hl = true,
-  use_icons = false,
-  show_help_hints = true,
-  watch_index = true,
-  view = {
-    default = {
-      layout = 'diff2_horizontal'
-    },
-    merge_tool = {
-      layout = 'diff4_mixed',
-      disable_diagnostics = true,
-      winbar_info = true
-    }
-  }
-})
-require('gitsigns').setup {
-  signs_staged_enable = true,
-  signcolumn = true,
-  numhl      = true,
-  linehl     = true,
-  word_diff  = true,
-  watch_gitdir = {
-    follow_files = true
-  },
-  auto_attach = true,
-  attach_to_untracked = false,
-  preview_config = {
-    style = 'minimal',
-    relative = 'cursor',
-    row = 0,
-    col = 1
-  },
-}
-require('octo').setup({})
-require('github-pr-reviewer').setup({})
-require('neogit').setup({
-  graph_style = 'unicode',
-  process_spinner = true,
-  highlight = {
-    italic = false,
-    bold = true,
-    underline = true
-  },
-  initial_branch_name = 'main',
-})
-
-require("noice").setup({
-  lsp = {
-    override = {
-      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-      ["vim.lsp.util.stylize_markdown"] = true,
-    },
-  },
-  messages = {
-    view_search = false
-  },
-  presets = {
-    bottom_search = true,
-    command_palette = true,
-    long_message_to_split = true,
-  },
-})
-
-require("no-neck-pain").setup({})
-
-require('nvim-biscuits').setup({})
-
-require('diagflow').setup({
-    enable = true,
-    max_width = 60,
-    max_height = 10,
-    severity_colors = {
-        error = "DiagnosticFloatingError",
-        warning = "DiagnosticFloatingWarn",
-        info = "DiagnosticFloatingInfo",
-        hint = "DiagnosticFloatingHint",
-    },
-    format = function(diagnostic)
-      return diagnostic.message
-    end,
-    gap_size = 1,
-    scope = 'line', -- 'cursor', 'line' this changes the scope, so instead of showing errors under the cursor, it shows errors on the entire line.
-    padding_top = 0,
-    padding_right = 0,
-    text_align = 'right',
-    placement = 'top',
-    inline_padding_left = 0,
-    update_event = { 'DiagnosticChanged', 'BufReadPost' },
-    toggle_event = { },
-    show_sign = false,
-    render_event = { 'DiagnosticChanged', 'CursorMoved' },
-    border_chars = {
-      top_left = "┌",
-      top_right = "┐",
-      bottom_left = "└",
-      bottom_right = "┘",
-      horizontal = "─",
-      vertical = "│"
-    },
-    show_borders = false,
-})
-
-require('grug-far').setup({})
-
-require("fyler").setup({})
-require("oil").setup({})
---]=====]
