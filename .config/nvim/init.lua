@@ -43,6 +43,232 @@ end
 
 configure_global_keymaps()
 
+-- Window management state
+local window_state = {
+  maximized_win = nil,  -- Currently maximized window ID
+  saved_widths = {},    -- Saved widths before maximizing
+  label_bufs = {},      -- Label buffers for collapsed windows
+}
+
+local configure_window_management = function()
+  local opts = { noremap = true, silent = true }
+  local set = vim.keymap.set
+
+  local collapsed_width = 6  -- Width for collapsed windows (visible with label)
+
+  -- Get only vertical split windows (same row, different columns) in left-to-right order
+  local function get_vertical_windows()
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    local vertical_wins = {}
+
+    for _, win in ipairs(wins) do
+      local config = vim.api.nvim_win_get_config(win)
+      -- Skip floating windows
+      if config.relative == '' then
+        local pos = vim.api.nvim_win_get_position(win)
+        table.insert(vertical_wins, { win = win, col = pos[2], row = pos[1] })
+      end
+    end
+
+    -- Filter to only windows on the same row (vertical splits)
+    if #vertical_wins > 0 then
+      -- Group by row and take the largest group
+      local row_groups = {}
+      for _, w in ipairs(vertical_wins) do
+        local row = w.row
+        row_groups[row] = row_groups[row] or {}
+        table.insert(row_groups[row], w)
+      end
+
+      -- Find the row with most windows (main vertical split row)
+      local max_count = 0
+      local main_row_wins = {}
+      for _, group in pairs(row_groups) do
+        if #group > max_count then
+          max_count = #group
+          main_row_wins = group
+        end
+      end
+
+      -- Sort by column position (left to right)
+      table.sort(main_row_wins, function(a, b) return a.col < b.col end)
+
+      local result = {}
+      for _, w in ipairs(main_row_wins) do
+        table.insert(result, w.win)
+      end
+      return result
+    end
+
+    return {}
+  end
+
+  -- Create a label buffer showing the window number
+  local function create_label_buffer(num)
+    local buf = vim.api.nvim_create_buf(false, true)  -- nofile, scratch buffer
+    vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
+    vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
+    vim.api.nvim_buf_set_name(buf, '[Window ' .. num .. ']')
+
+    -- Create content with centered number
+    local lines = {}
+    for _ = 1, 50 do  -- Fill with empty lines
+      table.insert(lines, '')
+    end
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+    return buf
+  end
+
+  -- Show window number labels in collapsed windows using winbar
+  local function update_window_labels()
+    local wins = get_vertical_windows()
+
+    for i, win in ipairs(wins) do
+      if vim.api.nvim_win_is_valid(win) then
+        local width = vim.api.nvim_win_get_width(win)
+        -- Show label in collapsed windows
+        if width <= collapsed_width + 2 then
+          -- Use winbar to show the number prominently
+          vim.api.nvim_win_set_option(win, 'winbar', '%=%#Title#[' .. tostring(i) .. ']%=')
+          vim.api.nvim_win_set_option(win, 'number', false)
+          vim.api.nvim_win_set_option(win, 'relativenumber', false)
+          vim.api.nvim_win_set_option(win, 'signcolumn', 'no')
+        else
+          vim.api.nvim_win_set_option(win, 'winbar', '')
+          vim.api.nvim_win_set_option(win, 'number', true)
+          vim.api.nvim_win_set_option(win, 'signcolumn', 'yes')
+        end
+      end
+    end
+  end
+
+  -- Restore all windows to equal width
+  local function equalize_windows()
+    vim.cmd('wincmd =')
+    window_state.maximized_win = nil
+    window_state.saved_widths = {}
+    update_window_labels()
+  end
+
+  -- Maximize a specific window, collapse others
+  local function maximize_window(target_win)
+    local wins = get_vertical_windows()
+    if #wins <= 1 then return end
+
+    local total_width = vim.o.columns
+    local num_collapsed = #wins - 1
+    local max_width = total_width - (num_collapsed * (collapsed_width + 1))  -- +1 for separator
+
+    -- Save current widths if not already saved
+    if vim.tbl_isempty(window_state.saved_widths) then
+      for _, win in ipairs(wins) do
+        if vim.api.nvim_win_is_valid(win) then
+          window_state.saved_widths[win] = vim.api.nvim_win_get_width(win)
+        end
+      end
+    end
+
+    -- Set widths
+    for _, win in ipairs(wins) do
+      if vim.api.nvim_win_is_valid(win) then
+        if win == target_win then
+          vim.api.nvim_win_set_width(win, max_width)
+        else
+          vim.api.nvim_win_set_width(win, collapsed_width)
+        end
+      end
+    end
+
+    window_state.maximized_win = target_win
+    update_window_labels()
+  end
+
+  -- Create new empty window on the right
+  local function create_new_window()
+    vim.cmd('botright vnew')  -- Create new vertical split with empty buffer on the right
+    local new_win = vim.api.nvim_get_current_win()
+    local new_buf = vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_set_option(new_buf, 'buftype', '')  -- Normal buffer
+    vim.api.nvim_buf_set_option(new_buf, 'buflisted', true)
+    return new_win
+  end
+
+  -- Main function to handle window focus/create/maximize
+  local function focus_window_by_number(n)
+    local wins = get_vertical_windows()
+    local current_win = vim.api.nvim_get_current_win()
+    local num_wins = #wins
+
+    -- If requesting a window beyond current count, create ONE new window
+    if n > num_wins then
+      create_new_window()
+      wins = get_vertical_windows()
+      num_wins = #wins
+      -- Focus the new window (last one)
+      local new_win = wins[#wins]
+      if new_win and vim.api.nvim_win_is_valid(new_win) then
+        vim.api.nvim_set_current_win(new_win)
+      end
+      return
+    end
+
+    -- If only one window and n=1, create a second one
+    if num_wins <= 1 and n == 1 then
+      create_new_window()
+      wins = get_vertical_windows()
+      return
+    end
+
+    -- Get target window
+    local target_idx = math.min(n, #wins)
+    local target_win = wins[target_idx]
+
+    if not target_win or not vim.api.nvim_win_is_valid(target_win) then
+      return
+    end
+
+    -- If target window is already focused
+    if target_win == current_win then
+      -- Toggle maximize/equalize behavior
+      if window_state.maximized_win == target_win then
+        -- Already maximized, equalize all
+        equalize_windows()
+      else
+        -- Not maximized (or different window was maximized), maximize this one
+        maximize_window(target_win)
+      end
+    else
+      -- Focus the target window
+      vim.api.nvim_set_current_win(target_win)
+
+      -- If there's a maximized layout, maximize the newly focused window instead
+      if window_state.maximized_win ~= nil then
+        maximize_window(target_win)
+      end
+    end
+  end
+
+  -- Set up keybindings for window management
+  -- Using F1-F9 function keys - works in all modes and terminals
+  for i = 1, 9 do
+    local fn = function() focus_window_by_number(i) end
+    local desc = { desc = 'Focus/toggle window ' .. i }
+
+    set({ 'n', 'i', 'v' }, '<F' .. i .. '>', fn, vim.tbl_extend('force', opts, desc))
+  end
+
+  -- Auto-update labels when windows change
+  vim.api.nvim_create_autocmd({ 'WinEnter', 'WinResized', 'WinNew', 'WinClosed' }, {
+    callback = function()
+      vim.defer_fn(update_window_labels, 10)
+    end,
+  })
+end
+
+configure_window_management()
+
 local configure_defaults = function (vim)
   vim.g.mapleader = " "
 
