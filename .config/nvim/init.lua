@@ -138,22 +138,20 @@ local configure_window_management = function()
         -- Show label in collapsed windows
         if width <= collapsed_width + 2 then
           -- Use winbar to show the number prominently
-          vim.api.nvim_win_set_option(win, 'winbar', '%=%#Title#[' .. tostring(i) .. ']%=')
-          vim.api.nvim_win_set_option(win, 'number', false)
-          vim.api.nvim_win_set_option(win, 'relativenumber', false)
-          vim.api.nvim_win_set_option(win, 'signcolumn', 'no')
-          vim.api.nvim_win_set_option(win, 'foldcolumn', '0')
+          vim.api.nvim_set_option_value('winbar', '%=%#Title#[' .. tostring(i) .. ']%=', { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('number', false, { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('relativenumber', false, { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('signcolumn', 'no', { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('foldcolumn', '0', { win = win, scope = 'local' })
           vim.api.nvim_win_call(win, function()
             vim.cmd('setlocal syntax=OFF')
           end)
         else
-          vim.api.nvim_win_set_option(win, 'winbar', '')
-          vim.api.nvim_win_set_option(win, 'number', true)
-          vim.api.nvim_win_set_option(win, 'signcolumn', 'yes')
-          vim.api.nvim_win_set_option(win, 'foldcolumn', '1')
-          -- Restore normal highlighting
-          vim.api.nvim_win_set_option(win, 'winhighlight', '')
-          -- Re-enable syntax
+          vim.api.nvim_set_option_value('winbar', '', { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('number', true, { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('signcolumn', 'yes', { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('foldcolumn', '1', { win = win, scope = 'local' })
+          vim.api.nvim_set_option_value('winhighlight', '', { win = win, scope = 'local' })
           vim.api.nvim_win_call(win, function()
             vim.cmd('setlocal syntax=ON')
           end)
