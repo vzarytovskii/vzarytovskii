@@ -312,6 +312,9 @@ configure_window_management()
 local configure_defaults = function (vim)
   vim.g.mapleader = " "
 
+  vim.opt.complete = 'o'
+  vim.opt.pumheight = 7
+  vim.opt.pummaxwidth = 80
   vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'popup' }
   vim.opt.foldlevel = 99
   vim.opt.foldlevelstart = 99
@@ -372,6 +375,20 @@ local configure_defaults = function (vim)
     vim.g.neovide_fullscreen = false
     vim.g.neovide_macos_simple_fullscreen = true
   end
+
+
+  --vim.api.nvim_create_autocmd("CmdlineChanged", {
+  --  pattern = "/",
+  --  callback = function()
+  --    vim.fn.wildtrigger()
+  --  end,
+  --})
+  vim.opt.smartcase = true
+  vim.opt.ignorecase = true
+
+  vim.opt.wildoptions = "pum,fuzzy,exacttext"
+  vim.opt.wildmode = "longest:full,full"
+
 
   vim.diagnostic.config({
     virtual_text = { current_line = true },
@@ -774,7 +791,7 @@ local plugins = {
   },
   {
     'lewis6991/gitsigns.nvim',
-    lazy = false,
+		event = "BufRead",
     opts = {
       signs_staged_enable = true,
       signcolumn = true,
@@ -796,7 +813,7 @@ local plugins = {
   },
   {
     'sindrets/diffview.nvim',
-    event = 'VeryLazy',
+    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
     opts = {
       enhanced_diff_hl = true,
       use_icons = false,
@@ -820,8 +837,22 @@ local plugins = {
     dependencies = {
       'nvim-lua/plenary.nvim',
       'sindrets/diffview.nvim',
+      'folke/snacks.nvim'
     },
-    opts = {},
+    opts = {
+      graph_style = 'unicode',
+      process_spinner = true,
+      highlight = {
+        italic = false,
+        bold = true,
+        underline = true
+      },
+      integrations = {
+        diffview = true,
+        mini_pick = true,
+        snacks = true
+      }
+    },
     config = function ()
       vim.cmd.cabbrev('git', 'Neogit')
       vim.cmd.cabbrev('Git', 'Neogit')
@@ -829,7 +860,7 @@ local plugins = {
       vim.api.nvim_create_user_command(
         'Git',
         'Neogit',
-        { bang = true, desc = "Alias to Neogit" }
+        { bang = true, desc = 'Alias to Neogit' }
       )
     end
   },
