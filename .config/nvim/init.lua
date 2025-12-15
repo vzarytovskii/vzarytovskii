@@ -454,7 +454,7 @@ end
 configure_defaults(vim)
 
 local tools = { 'clang-format', 'codelldb', 'copilot-language-server', 'yaml-language-server' }
-local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc' }
+local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc', 'powershell', 'xml' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
@@ -559,6 +559,7 @@ local plugins = {
   }, { 'nvim-telescope/telescope-fzf-native.nvim', build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install' },
   {
     'wsdjeg/rooter.nvim',
+    event = { 'VeryLazy' },
     opts = {
       root_pattern = { '.git/' },
     }
@@ -633,6 +634,7 @@ local plugins = {
   },
   {
     'refractalize/oil-git-status.nvim',
+    event = { 'VeryLazy' },
     dependencies = {
       'stevearc/oil.nvim',
     },
@@ -653,9 +655,11 @@ local plugins = {
   {
     'nvim-treesitter/nvim-treesitter',
     dependncies = { 'nvim-treesitter/nvim-treesitter-context' },
+    lazy = false,
     build = ':TSUpdate',
     config = function ()
       vim.treesitter.language.register('markdown', 'octo')
+      vim.treesitter.language.register('xml', 'msbuild')
 
       require('nvim-treesitter.install').prefer_git = true
       require('nvim-treesitter.configs').setup({
@@ -686,6 +690,7 @@ local plugins = {
   {
     'andersevenrud/nvim_context_vt',
     dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    event = { 'BufReadPost', 'BufNewFile' },
     opts = {
       enable = true,
       prefix = '// '
@@ -716,10 +721,12 @@ local plugins = {
   },
   {
     'mason-org/mason.nvim',
+    cmd = { 'Mason', 'MasonInstall', 'MasonUninstall', 'MasonUpdate', 'MasonLog' },
     opts = {}
   },
   {
     'WhoIsSethDaniel/mason-tool-installer.nvim',
+    cmd = { 'Mason', 'MasonInstall', 'MasonUninstall', 'MasonUpdate', 'MasonLog' },
     build = ':MasonUpdate',
     dependncies = { 'mason-org/mason.nvim' },
     config = function ()
@@ -736,6 +743,7 @@ local plugins = {
   },
   {
     'https://github.com/j-hui/fidget.nvim',
+    event = { 'LspAttach' },
     opts = {
       suppress_on_insert = true,
       ignore_done_already = true,
@@ -753,10 +761,10 @@ local plugins = {
     }
   },
   {
-    "zbirenbaum/copilot.lua",
-    dependncies = { 'copilotlsp-nvim/copilot-lsp' },
-    cmd = "Copilot",
-    event = "InsertEnter",
+    'zbirenbaum/copilot.lua',
+    dependencies = { 'copilotlsp-nvim/copilot-lsp' },
+    cmd = 'Copilot',
+    event = { 'InsertEnter', 'LspAttach' },
     opts = {
       suggestion = {
         enabled = true,
