@@ -848,22 +848,41 @@ local plugins = {
   {
     'sindrets/diffview.nvim',
     cmd = { "DiffviewOpen", "DiffviewFileHistory" },
-    opts = {
-      enhanced_diff_hl = true,
-      use_icons = false,
-      show_help_hints = true,
-      watch_index = true,
-      view = {
-        default = {
-          layout = 'diff2_horizontal'
+    opts = function ()
+      local actions = require("diffview.actions")
+      return {
+        enhanced_diff_hl = true,
+        use_icons = false,
+        show_help_hints = true,
+        watch_index = true,
+        view = {
+          default = {
+            layout = 'diff2_horizontal'
+          },
+          merge_tool = {
+            layout = 'diff4_mixed',
+            disable_diagnostics = true,
+            winbar_info = true
+          }
         },
-        merge_tool = {
-          layout = 'diff4_mixed',
-          disable_diagnostics = true,
-          winbar_info = true
+        hooks = {
+          -- do not fold
+          diff_buf_win_enter = function(bufnr)
+            vim.opt_local.foldenable = false
+          end
+        },
+        keymaps = {
+          file_history_panel = {
+            {
+              "n",
+              "<cr>",
+              actions.focus_entry,
+              { desc = "Open and focus the diff for the selected entry." },
+            }
+          },
         }
       }
-    }
+  end
   },
   {
     'NeogitOrg/neogit',
