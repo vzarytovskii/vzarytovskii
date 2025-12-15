@@ -346,6 +346,12 @@ configure_window_management()
 local configure_defaults = function (vim)
   vim.g.mapleader = " "
 
+  vim.opt.encoding = "utf-8"
+  vim.opt.fileencodings = 'utf-8,utf-16,utf-32,ucs-bom,default,latin'
+
+  vim.opt.fileformat = 'unix'
+  vim.opt.fileformats = 'unix,dos,mac'
+
   vim.opt.complete = 'o'
   vim.opt.pumheight = 7
   vim.opt.pummaxwidth = 80
@@ -520,47 +526,43 @@ local lsp_configs = {
 local plugins = {
   { 'nvim-lua/plenary.nvim' },
   {
-    "folke/snacks.nvim",
+    'nvim-telescope/telescope.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-fzf-native.nvim' },
     priority = 1000,
     lazy = false,
     opts = {
-      bigfile = { enabled = false },
-      explorer = { enabled = false },
-      input = { enabled = true },
-      image = { enabled = false },
-      lazygit = { enabled = false },
-      quickfile = { enabled = true },
-      scroll = { enabled = false },
-      statuscolumn = { enabled = false },
-      notifier = { enabled = true },
-      picker = { enabled = true },
+      extensions = {
+        fzf = {
+          fuzzy = true,
+          override_generic_sorter = true,
+          override_file_sorter = true,
+          case_mode = "smart_case",
+        }
+      }
     },
     keys = {
-      { '<leader><space>', mode = { 'n', 'v' }, function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
-      { '<leader>ff', mode = { 'n', 'v' }, function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
-      { 'ff', mode = { 'n', 'v' }, function() Snacks.picker.smart() end, desc = 'Smart Find Files' },
+      { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
+      { '<leader>ff', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
+      { 'ff', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
 
-      { "<leader>/", mode = { 'n', 'v' }, function() Snacks.picker.grep() end, desc = "Grep" },
-      { "<leader>gg", mode = { 'n', 'v' }, function() Snacks.picker.grep() end, desc = "Grep" },
-      { "gg", mode = { 'n', 'v' }, function() Snacks.picker.grep() end, desc = "Grep" },
-      { "ß", mode = { 'n', 'v', 'i' }, function() Snacks.picker.grep() end, desc = "Grep" },
+      { "<leader>/", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
+      { "<leader>gg", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
+      { "gg", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
+      { "ß", mode = { 'n', 'v', 'i' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
 
-      { "<leader>e", mode = { 'n', 'v' }, function() Snacks.explorer() end, desc = "File Explorer" },
+      { 'gd', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_definitions() end, desc = 'Goto Definition' },
+      { 'gr', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_references() end, nowait = true, desc = 'References' },
+      { 'gI', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_implementations() end, desc = 'Goto Implementation' },
+      { 'gy', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_type_definitions() end, desc = 'Goto T[y]pe Definition' },
+      { 'gai', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_incoming_calls() end, desc = 'C[a]lls Incoming' },
+      { 'gao', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_outgoing_calls() end, desc = 'C[a]lls Outgoing' },
+      { '<leader>ss', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_document_symbols() end, desc = 'LSP Symbols' },
+      { '<leader>sS', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_workspace_symbols() end, desc = 'LSP Workspace Symbols' },
 
-      { 'gd', mode = { 'n', 'v' }, function() Snacks.picker.lsp_definitions() end, desc = 'Goto Definition' },
-      { 'gD', mode = { 'n', 'v' }, function() Snacks.picker.lsp_declarations() end, desc = 'Goto Declaration' },
-      { 'gr', mode = { 'n', 'v' }, function() Snacks.picker.lsp_references() end, nowait = true, desc = 'References' },
-      { 'gI', mode = { 'n', 'v' }, function() Snacks.picker.lsp_implementations() end, desc = 'Goto Implementation' },
-      { 'gy', mode = { 'n', 'v' }, function() Snacks.picker.lsp_type_definitions() end, desc = 'Goto T[y]pe Definition' },
-      { 'gai', mode = { 'n', 'v' }, function() Snacks.picker.lsp_incoming_calls() end, desc = 'C[a]lls Incoming' },
-      { 'gao', mode = { 'n', 'v' }, function() Snacks.picker.lsp_outgoing_calls() end, desc = 'C[a]lls Outgoing' },
-      { '<leader>ss', mode = { 'n', 'v' }, function() Snacks.picker.lsp_symbols() end, desc = 'LSP Symbols' },
-      { '<leader>sS', mode = { 'n', 'v' }, function() Snacks.picker.lsp_workspace_symbols() end, desc = 'LSP Workspace Symbols' },
-
-      { "<leader>sd", mode = { 'n', 'v' }, function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
+      { "<leader>sd", mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end, desc = "Diagnostics" },
 
     }
-  },
+  }, { 'nvim-telescope/telescope-fzf-native.nvim', build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install' },
   {
     'wsdjeg/rooter.nvim',
     opts = {
@@ -890,7 +892,7 @@ local plugins = {
     dependencies = {
       'nvim-lua/plenary.nvim',
       'sindrets/diffview.nvim',
-      'folke/snacks.nvim'
+      'nvim-telescope/telescope.nvim'
     },
     opts = {
       graph_style = 'unicode',
@@ -903,7 +905,7 @@ local plugins = {
       integrations = {
         diffview = true,
         mini_pick = true,
-        snacks = true
+        telescope = true
       }
     },
     config = function ()
@@ -921,17 +923,17 @@ local plugins = {
     'pwntester/octo.nvim',
     dependencies = {
       'nvim-lua/plenary.nvim',
-      'folke/snacks.nvim'
+      'nvim-telescope/telescope.nvim'
     },
     cmd = 'Octo',
     opts = {
-      picker = 'snacks',
+      picker = 'telescope',
       enable_builtin = true,
     }
   }
 }
 
-require('lazy').setup({ install = { missing = true, colorscheme = { 'github-theme' } }, spec = plugins, checker = { enabled = true } })
+require('lazy').setup({ defaults = { lazy = true }, install = { missing = true, colorscheme = { 'github-theme' } }, spec = plugins, checker = { enabled = true } })
 
 local configure_lsp = function(vim, lsp_configs)
   vim.lsp.config('*', {
@@ -993,8 +995,8 @@ local configure_lsp = function(vim, lsp_configs)
       end
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr) then
-        vim.api.nvim_create_autocmd('CursorHold',  { callback = function () vim.lsp.buf.document_highlight() end, })
-        vim.api.nvim_create_autocmd('CursorHoldI', { callback = function () vim.lsp.buf.document_highlight() end, })
+        vim.api.nvim_create_autocmd('CursorHold',  { buffer = bufnr, callback = function () vim.lsp.buf.document_highlight() end, })
+        vim.api.nvim_create_autocmd('CursorHoldI', { buffer = bufnr, callback = function () vim.lsp.buf.document_highlight() end, })
         vim.api.nvim_create_autocmd('CursorMoved', {
           buffer = bufnr,
           callback = function() vim.lsp.buf.clear_references() end,
