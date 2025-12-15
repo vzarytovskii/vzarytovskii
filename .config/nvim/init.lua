@@ -454,7 +454,7 @@ end
 configure_defaults(vim)
 
 local tools = { 'clang-format', 'codelldb', 'copilot-language-server', 'yaml-language-server' }
-local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'markdown_inline', 'typst', 'latex', 'html', 'typescript', 'javascript', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc' }
+local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
@@ -478,7 +478,7 @@ local lsp_configs = {
   marksman = {
     cmd = { 'marksman' },
     root_markers = { '.marksman.toml', '.git', '*.md' },
-    filetypes = { 'markdown', 'octo' },
+    filetypes = { 'markdown' },
     single_file_support = true,
   },
   ['rust-analyzer'] = {
@@ -502,12 +502,6 @@ local lsp_configs = {
         },
       },
     },
-  },
-  ['typescript-language-server'] = {
-    cmd = { 'typescript-language-server', '--stdio' },
-    root_markers = { 'package.json', 'jsconfig.json' },
-    filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' },
-    single_file_support = true,
   },
   ['yaml-language-server'] = {
     cmd = { 'yaml-language-server', '--stdio' },
