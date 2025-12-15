@@ -48,7 +48,7 @@ local window_state = {
   maximized_win = nil,  -- Currently maximized window ID
   saved_widths = {},    -- Saved widths before maximizing
   label_bufs = {},      -- Label buffers for collapsed windows
-  dim_ns = vim.api.nvim_create_namespace('window_dim'),  -- Namespace for dimming
+  collapsed_wins = {},  -- Windows that have been collapsed (need restoration)
 }
 
 -- Create a dimmed highlight group
@@ -126,6 +126,32 @@ local configure_window_management = function()
     return buf
   end
 
+  -- Restore a window's options to global values (clear local overrides)
+  local function restore_window_to_global(win)
+    if not vim.api.nvim_win_is_valid(win) then return end
+    -- Use setlocal with < to reset to global value
+    vim.api.nvim_win_call(win, function()
+      vim.cmd('setlocal winbar<')
+      vim.cmd('setlocal number<')
+      vim.cmd('setlocal relativenumber<')
+      vim.cmd('setlocal signcolumn<')
+      vim.cmd('setlocal foldcolumn<')
+      vim.cmd('setlocal winhighlight<')
+      vim.cmd('setlocal syntax=ON')
+    end)
+    window_state.collapsed_wins[win] = nil
+  end
+
+  -- Restore all collapsed windows to global settings
+  local function restore_all_collapsed_windows()
+    for win, _ in pairs(window_state.collapsed_wins) do
+      restore_window_to_global(win)
+    end
+    window_state.collapsed_wins = {}
+    window_state.maximized_win = nil
+    window_state.saved_widths = {}
+  end
+
   -- Show window number labels in collapsed windows using winbar
   -- Also dim and disable syntax for collapsed windows
   local function update_window_labels()
@@ -146,15 +172,11 @@ local configure_window_management = function()
           vim.api.nvim_win_call(win, function()
             vim.cmd('setlocal syntax=OFF')
           end)
+          -- Track this window as collapsed
+          window_state.collapsed_wins[win] = true
         else
-          vim.api.nvim_set_option_value('winbar', '', { win = win, scope = 'local' })
-          vim.api.nvim_set_option_value('number', true, { win = win, scope = 'local' })
-          vim.api.nvim_set_option_value('signcolumn', 'yes', { win = win, scope = 'local' })
-          vim.api.nvim_set_option_value('foldcolumn', '1', { win = win, scope = 'local' })
-          vim.api.nvim_set_option_value('winhighlight', '', { win = win, scope = 'local' })
-          vim.api.nvim_win_call(win, function()
-            vim.cmd('setlocal syntax=ON')
-          end)
+          -- Restore to global settings
+          restore_window_to_global(win)
         end
       end
     end
@@ -296,6 +318,27 @@ local configure_window_management = function()
       set({ 'n', 'i', 'v' }, char, fn, vim.tbl_extend('force', opts, { desc = 'Focus/toggle window ' .. i }))
     end
   end
+
+  -- When a window is closed, restore collapsed windows if needed
+  vim.api.nvim_create_autocmd('WinClosed', {
+    callback = function(args)
+      local closed_win = tonumber(args.match)
+      -- If the maximized window was closed, restore all collapsed windows
+      if closed_win == window_state.maximized_win then
+        vim.defer_fn(restore_all_collapsed_windows, 10)
+      -- If a collapsed window was closed, clean up tracking and check if we need to restore others
+      elseif window_state.collapsed_wins[closed_win] then
+        window_state.collapsed_wins[closed_win] = nil
+        -- If only one window remains, restore it
+        vim.defer_fn(function()
+          local wins = get_vertical_windows()
+          if #wins <= 1 then
+            restore_all_collapsed_windows()
+          end
+        end, 10)
+      end
+    end,
+  })
 end
 
 configure_window_management()
