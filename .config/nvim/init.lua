@@ -296,13 +296,6 @@ local configure_window_management = function()
       set({ 'n', 'i', 'v' }, char, fn, vim.tbl_extend('force', opts, { desc = 'Focus/toggle window ' .. i }))
     end
   end
-
-  -- Auto-update labels when windows change
-  vim.api.nvim_create_autocmd({ 'WinEnter', 'WinResized', 'WinNew', 'WinClosed' }, {
-    callback = function()
-      vim.defer_fn(update_window_labels, 10)
-    end,
-  })
 end
 
 configure_window_management()
