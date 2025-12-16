@@ -454,7 +454,7 @@ end
 configure_defaults(vim)
 
 local tools = { 'clang-format', 'codelldb', 'copilot-language-server', 'yaml-language-server' }
-local treesitter_configs = { 'c', 'cpp', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc', 'powershell', 'xml' }
+local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc', 'powershell', 'xml' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
@@ -655,6 +655,7 @@ local plugins = {
   },
   {
     'nvim-treesitter/nvim-treesitter',
+    branch = 'main',
     dependncies = { 'nvim-treesitter/nvim-treesitter-context' },
     lazy = false,
     build = ':TSUpdate',
@@ -662,30 +663,35 @@ local plugins = {
       vim.treesitter.language.register('markdown', 'octo')
       vim.treesitter.language.register('xml', 'msbuild')
 
-      require('nvim-treesitter.install').prefer_git = true
-      require('nvim-treesitter.configs').setup({
-        ensure_installed = treesitter_configs,
-        ignore_install = {},
-        auto_install = true,
-        sync_install = false,
-        highlight = {
-          enable = true,
-          additional_vim_regex_highlighting = false,
-        },
-        incremental_selection = {
-          enable = true,
-          keymaps = {
-            init_selection = "gnn",
-            node_incremental = "grn",
-            scope_incremental = "grc",
-            node_decremental = "grm",
-          },
-        },
-        indent = {
-          enable = true
-        }
+      local ts = require('nvim-treesitter')
+      ts.install(treesitter_configs)
+
+      local group = vim.api.nvim_create_augroup('TreesitterSetup', { clear = true })
+
+      local ignore_filetypes = {
+        'checkhealth',
+        'lazy',
+        'mason',
+        'snacks_dashboard',
+        'snacks_notif',
+        'snacks_win',
+      }
+
+      vim.api.nvim_create_autocmd('FileType', {
+        group = group,
+        desc = 'Enable treesitter highlighting and indentation',
+        callback = function(event)
+          if vim.tbl_contains(ignore_filetypes, event.match) then
+            return
+          end
+          local lang = vim.treesitter.language.get_lang(event.match) or event.match
+          local buf = event.buf
+          pcall(vim.treesitter.start, buf, lang)
+          vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          ts.install({ lang })
+        end,
       })
-      require('treesitter-context').setup({enable = true})
+
     end
   }, { 'nvim-treesitter/nvim-treesitter-context' },
   {
