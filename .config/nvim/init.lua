@@ -519,6 +519,7 @@ local lsp_configs = {
 
 local plugins = {
   { 'nvim-lua/plenary.nvim' },
+  { 'MunifTanjim/nui.nvim' },
   {
     'nvim-telescope/telescope.nvim',
     dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-fzf-native.nvim' },
@@ -565,27 +566,27 @@ local plugins = {
     }
   },
   {
-    'projekt0n/github-nvim-theme',
+    'nyoom-engineering/oxocarbon.nvim',
     lazy = false,
     priority = 1000,
     config = function ()
-      require('github-theme').setup({})
+      vim.cmd("colorscheme oxocarbon")
     end
   },
   {
     'f-person/auto-dark-mode.nvim',
-    dependncies = { 'projekt0n/github-nvim-theme' },
+    dependncies = { 'nyoom-engineering/oxocarbon.nvim' },
     lazy = false,
     priority = 1000,
     opts = {
       update_interval = 1000,
       set_dark_mode = function ()
         vim.api.nvim_set_option_value("background", "dark", {})
-        vim.cmd("colorscheme github_dark_high_contrast")
+        vim.cmd("colorscheme oxocarbon")
       end,
       set_light_mode = function ()
         vim.api.nvim_set_option_value("background", "light", {})
-        vim.cmd("colorscheme github_light_default")
+        vim.cmd("colorscheme oxocarbon")
       end,
     }
   },
@@ -702,12 +703,8 @@ local plugins = {
     keys = {
       { '<C-k>', '<cmd>Treewalker Up<cr>',        mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-j>', '<cmd>Treewalker Down<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
-      -- { '<C-h>', '<cmd>Treewalker Left<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
-      -- { '<C-l>', '<cmd>Treewalker Right<cr>',     mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-Up>', '<cmd>Treewalker Up<cr>',       mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-Down>', '<cmd>Treewalker Down<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
-      -- { '<C-Left>', '<cmd>Treewalker Left<cr>',   mode = { 'n', 'v', 'i' }, silent = true },
-      -- { '<C-Right>', '<cmd>Treewalker Right<cr>', mode = { 'n', 'v', 'i' }, silent = true },
 
       { '<C-S-k>', '<cmd>Treewalker SwapUp<cr>',        mode = { 'n', 'v', 'i' }, silent = true },
       { '<C-S-j>', '<cmd>Treewalker SwapDown<cr>',      mode = { 'n', 'v', 'i' }, silent = true },
@@ -742,7 +739,7 @@ local plugins = {
     end
   },
   {
-    'https://github.com/j-hui/fidget.nvim',
+    'j-hui/fidget.nvim',
     event = { 'LspAttach' },
     opts = {
       suppress_on_insert = true,
@@ -850,10 +847,17 @@ local plugins = {
     }
   },
   {
+    'esmuellert/vscode-diff.nvim',
+    branch = 'next',
+    dependencies = { 'MunifTanjim/nui.nvim' },
+    cmd = 'CodeDiff',
+    opts = {}
+  },
+  {
     'sindrets/diffview.nvim',
-    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
+    cmd = { 'DiffviewOpen', 'DiffviewFileHistory' },
     opts = function ()
-      local actions = require("diffview.actions")
+      local actions = require('diffview.actions')
       return {
         enhanced_diff_hl = true,
         use_icons = false,
@@ -935,7 +939,7 @@ local plugins = {
   }
 }
 
-require('lazy').setup({ defaults = { lazy = true }, install = { missing = true, colorscheme = { 'github-theme' } }, spec = plugins, checker = { enabled = true } })
+require('lazy').setup({ defaults = { lazy = true }, install = { missing = true, colorscheme = { 'oxocarbon' } }, spec = plugins, checker = { enabled = true } })
 
 local configure_lsp = function(vim, lsp_configs)
   vim.lsp.config('*', {
