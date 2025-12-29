@@ -566,27 +566,33 @@ local plugins = {
     }
   },
   {
-    'nyoom-engineering/oxocarbon.nvim',
+    'Mofiqul/vscode.nvim',
     lazy = false,
     priority = 1000,
     config = function ()
-      vim.cmd("colorscheme oxocarbon")
-    end
+      vim.cmd("colorscheme vscode")
+    end,
+    opts = {
+      transparent = true,
+      italic_comments = false,
+      intalic_inlayhints = false,
+      terminal_colors = true
+    }
   },
   {
     'f-person/auto-dark-mode.nvim',
-    dependncies = { 'nyoom-engineering/oxocarbon.nvim' },
+    dependncies = { 'Mofiqul/vscode.nvim' },
     lazy = false,
     priority = 1000,
     opts = {
       update_interval = 1000,
       set_dark_mode = function ()
         vim.api.nvim_set_option_value("background", "dark", {})
-        vim.cmd("colorscheme oxocarbon")
+        vim.cmd("colorscheme vscode")
       end,
       set_light_mode = function ()
         vim.api.nvim_set_option_value("background", "light", {})
-        vim.cmd("colorscheme oxocarbon")
+        vim.cmd("colorscheme vscode")
       end,
     }
   },
@@ -796,7 +802,9 @@ local plugins = {
 
     },
     opts = {
-      useLspFoldsWithTreesitterFallback = true,
+      useLspFoldsWithTreesitterFallback = {
+        enabled = true
+      },
       pauseFoldsOnSearch = true,
       foldtext = {
         enabled = true,
