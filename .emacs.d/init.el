@@ -196,11 +196,81 @@
          ("C-k"             . 'kill-buffer)
          ("C-S-k"           . 'kill-buffer-and-window)
          ("C-c o"           . 'switch-to-minibuffer)
-         ([remap keyboard-quit] . 'keyboard-quit-ex))
+         ([remap keyboard-quit] . 'keyboard-quit-ex)
+         ("M-<up>"          . previous-line)
+         ("M-<down>"        . next-line)
+         ("M-<left>"        . left-word)
+         ("M-<right>"       . right-word)
+         ("C-M-<up>"        . move-line-up)
+         ("C-M-<down>"      . move-line-down)
+         ("C-M-<left>"      . move-text-left)
+         ("C-M-<right>"     . move-text-right))
   :hook (after-init-hook . window-divider-mode)
   :config
   :delight lisp-interaction-mode
   :preface
+  ;; Helper to check if region is at word boundaries
+  (defun region-at-word-boundaries-p ()
+    "Return non-nil if region start and end are both at word boundaries."
+    (and (region-active-p)
+         (save-excursion
+           (goto-char (region-beginning))
+           (or (looking-at-p "\\<") (looking-at-p "\\s-") (bolp)))
+         (save-excursion
+           (goto-char (region-end))
+           (or (looking-at-p "\\>") (looking-at-p "\\s-") (eolp)
+               (looking-back "\\>" (1- (point)))))))
+
+  ;; Move line up
+  (defun move-line-up ()
+    "Move current line up."
+    (interactive)
+    (let ((col (current-column)))
+      (transpose-lines 1)
+      (forward-line -2)
+      (move-to-column col)))
+
+  ;; Move line down
+  (defun move-line-down ()
+    "Move current line down."
+    (interactive)
+    (let ((col (current-column)))
+      (forward-line 1)
+      (transpose-lines 1)
+      (forward-line -1)
+      (move-to-column col)))
+
+  ;; Move text left
+  (defun move-text-left ()
+    "Move char or word(s) left based on selection.
+No region: transpose char before point with previous char.
+Whole word(s) selected: transpose words.
+Partial word selected: transpose chars."
+    (interactive)
+    (if (region-active-p)
+        (if (region-at-word-boundaries-p)
+            (transpose-words -1)
+          (transpose-chars -1))
+      (transpose-chars -1)))
+
+  ;; Move text right
+  (defun move-text-right ()
+    "Move char or word(s) right based on selection.
+No region: transpose char at point with next char.
+Whole word(s) selected: transpose words.
+Partial word selected: transpose chars."
+    (interactive)
+    (if (region-active-p)
+        (if (region-at-word-boundaries-p)
+            (transpose-words 1)
+          (progn
+            (goto-char (region-end))
+            (transpose-chars 1)))
+      (progn
+        (forward-char)
+        (transpose-chars 1)
+        (backward-char))))
+
   (defun kill-buffer-and-window (&optional arg)
     "Kill the current buffer. If there is more than one window on the current frame, also delete the selected window. Otherwise, just kill the buffer."
     (interactive)
@@ -807,10 +877,7 @@ If the window doesn't exist, create one additional window by splitting horizonta
     (advice-add 'undo-tree-visualizer-quit :after #'my/undo-tree-restore-default))
   (global-undo-tree-mode t))
 
-(use-package move-text
-  :demand t
-  :config
-  (move-text-default-bindings))
+
 
 (use-package expand-region
   :bind (("C-=" . 'er/expand-region)
