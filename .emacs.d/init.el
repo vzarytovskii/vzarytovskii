@@ -847,6 +847,14 @@ If the window doesn't exist, create one additional window by splitting horizonta
 
 ;; ---
 
+(use-package mason
+  :ensure t
+  :config
+  (mason-setup
+    (dolist (pkg '("clangd"))
+      (unless (mason-installed-p pkg)
+        (ignore-errors (mason-install pkg))))))
+
 (use-package treesit
   :ensure nil
   :preface
@@ -950,7 +958,8 @@ If the window doesn't exist, create one additional window by splitting horizonta
             (cons "emacs-lsp-booster" orig-result))
         orig-result)))
   :init
-  (setq lsp-keymap-prefix "C-c l"
+  (setq lsp-disabled-clients '(semgrep-ls)
+        lsp-keymap-prefix "C-c l"
         lsp-use-plists t
         lsp-log-io nil ; use only for debugging as it drastically affects performance
         lsp-keep-workspace-alive nil ; close LSP server if all project buffers are closed
