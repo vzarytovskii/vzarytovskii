@@ -369,7 +369,7 @@ local configure_defaults = function (vim)
   vim.opt.hlsearch = false
   vim.opt.incsearch = true
   vim.opt.scrolloff = 8
-  vim.opt.signcolumn = "number"
+  vim.opt.signcolumn = "yes:1"
   vim.opt.isfname:append("@-@")
 
   vim.opt.keymodel="startsel,stopsel"
@@ -377,8 +377,7 @@ local configure_defaults = function (vim)
   vim.opt.undofile = true
   vim.opt.undodir = vim.fn.expand("~/.undodir")
 
-  vim.wo.signcolumn = 'yes'
-  vim.wo.number = true
+  vim.opt.number = true
 
   vim.opt.termguicolors = true
 
@@ -453,8 +452,8 @@ end
 
 configure_defaults(vim)
 
-local tools = { 'clang-format', 'codelldb', 'copilot-language-server', 'yaml-language-server' }
 local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc', 'powershell', 'xml' }
+local tools = { 'clang-format', 'codelldb' }
 local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
@@ -470,10 +469,32 @@ local lsp_configs = {
       buildDirectory = 'build',
     },
   },
-  copilot = {
+  ['copilot-language-server'] = {
     cmd = { 'copilot-language-server', '--stdio', },
     root_markers = { '.git' },
     single_file_support = true,
+  },
+  ['lua-language-server'] = {
+    cmd = { 'lua-language-server' },
+    filetypes = { 'lua' },
+    root_markers = { '.git', 'lua' },
+    settings = {
+      Lua = {
+        runtime = {
+          version = 'LuaJIT',
+        },
+        diagnostics = {
+          globals = { 'vim' },
+        },
+        workspace = {
+          library = vim.api.nvim_get_runtime_file("", true),
+          checkThirdParty = false,
+        },
+        telemetry = {
+          enable = false,
+        },
+      },
+    },
   },
   marksman = {
     cmd = { 'marksman' },
@@ -735,9 +756,9 @@ local plugins = {
   },
   {
     'WhoIsSethDaniel/mason-tool-installer.nvim',
-    cmd = { 'Mason', 'MasonInstall', 'MasonUninstall', 'MasonUpdate', 'MasonLog' },
-    build = ':MasonUpdate',
     dependncies = { 'mason-org/mason.nvim' },
+    cmd = { 'MasonToolsClean', 'MasonToolsInstall', 'MasonToolsUpdate', 'MasonToolsInstallSync', 'MasonToolsUpdateSync' },
+    build = ':MasonToolsInstall',
     config = function ()
       require('mason').setup()
       local all_tools = merge_table(vim.tbl_keys(lsp_configs), tools)
@@ -840,12 +861,12 @@ local plugins = {
   },
   {
     'lewis6991/gitsigns.nvim',
-		event = "BufRead",
+    event = "BufRead",
     opts = {
       signs_staged_enable = true,
       signcolumn = true,
       numhl      = true,
-      linehl     = true,
+      linehl     = false,
       word_diff  = true,
       watch_gitdir = {
         follow_files = true
@@ -862,6 +883,7 @@ local plugins = {
   },
   {
     'esmuellert/vscode-diff.nvim',
+    enabled = false,
     branch = 'next',
     dependencies = { 'MunifTanjim/nui.nvim' },
     cmd = 'CodeDiff',
@@ -983,17 +1005,20 @@ local configure_lsp = function(vim, lsp_configs)
       local bufnr = args.buf
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_completion, bufnr) then
+        local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
+        client.server_capabilities.completionProvider.triggerCharacters = chars
+
         vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+      end
+
+      if vim.lsp.inline_completion and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, bufnr) then
+        vim.lsp.inline_completion.enable(true, { bufnr = bufnr })
         vim.keymap.set('i', '<Tab>',
           function()
             if not vim.lsp.inline_completion.get() then
               return '<Tab>'
             end
           end, { expr = true, desc = 'Accept the current inline completion' })
-      end
-
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, bufnr) then
-        vim.lsp.inline_completion.enable(true, { bufnr = bufnr })
       end
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_foldingRange, bufnr) then
@@ -1010,23 +1035,36 @@ local configure_lsp = function(vim, lsp_configs)
         vim.lsp.semantic_tokens.enable(true, { bufnr = bufnr })
       end
 
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_onTypeFormatting, bufnr) and vim.lsp.on_type_formatting then
+      if vim.lsp.on_type_formatting  and client:supports_method(vim.lsp.protocol.Methods.textDocument_onTypeFormatting, bufnr) then
         vim.lsp.on_type_formatting.enable(true, { client_id = client.id })
       end
 
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_willSaveWaitUntil) and
+         client:supports_method(vim.lsp.protocol.Methods.textDocument_formatting) then
+
+        vim.api.nvim_create_autocmd('BufWritePre', {
+          buffer = bufnr,
+          callback = function () vim.lsp.buf.format({ bufnr = bufnr, id = client.id, timeout_ms = 2000 }) end,
+        })
+      end
+
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr) then
-        vim.api.nvim_create_autocmd('CursorHold',  { buffer = bufnr, callback = function () vim.lsp.buf.document_highlight() end, })
-        vim.api.nvim_create_autocmd('CursorHoldI', { buffer = bufnr, callback = function () vim.lsp.buf.document_highlight() end, })
-        vim.api.nvim_create_autocmd('CursorMoved', {
+        local DocumentHighlightGroup = vim.api.nvim_create_augroup("LSPDocumentHighlight", { clear = true })
+        vim.api.nvim_create_autocmd({'CursorHold', 'CursorHoldI'}, {
+          buffer = bufnr,
+          callback = function () vim.lsp.buf.document_highlight() end,
+          group = DocumentHighlightGroup
+        })
+        vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
           buffer = bufnr,
           callback = function() vim.lsp.buf.clear_references() end,
+          group = DocumentHighlightGroup
         })
       end
     end,
   })
   vim.api.nvim_create_autocmd('LspDetach',   { command = 'setl foldexpr<' })
-  vim.api.nvim_create_autocmd("VimLeavePre", { callback = function () vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
-  vim.api.nvim_create_autocmd('CursorMoved', { callback = function () vim.lsp.buf.clear_references() end, })
+  vim.api.nvim_create_autocmd('VimLeavePre', { callback = function () vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
 
   vim.lsp.enable(vim.tbl_keys(lsp_configs))
 
