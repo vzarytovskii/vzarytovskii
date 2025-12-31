@@ -354,10 +354,15 @@ local configure_defaults = function (vim)
   vim.opt.fileformat = 'unix'
   vim.opt.fileformats = 'unix,dos,mac'
 
-  vim.opt.complete = 'o'
+  vim.opt.pumblend = 0
+  vim.opt.pumborder = 'rounded'
   vim.opt.pumheight = 7
-  vim.opt.pummaxwidth = 80
-  vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'popup' }
+  vim.opt.pummaxwidth = 180
+  vim.opt.pumwidth = 80
+
+  vim.opt.autocomplete = true
+  vim.opt.complete = 'o,F,.,i,d'
+  vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'preinsert', 'popup' }
   vim.opt.foldlevel = 99
   vim.opt.foldlevelstart = 99
   vim.opt.tabstop = 4
