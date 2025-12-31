@@ -346,6 +346,8 @@ configure_window_management()
 local configure_defaults = function (vim)
   vim.g.mapleader = " "
 
+  vim.opt.updatetime = 500
+
   vim.opt.encoding = "utf-8"
   vim.opt.fileencodings = 'utf-8,utf-16,utf-32,ucs-bom,default,latin'
 
@@ -975,9 +977,28 @@ local plugins = {
   }
 }
 
-require('lazy').setup({ defaults = { lazy = true }, install = { missing = true, colorscheme = { 'oxocarbon' } }, spec = plugins, checker = { enabled = true } })
+require('lazy').setup({ defaults = { lazy = true }, install = { missing = true, colorscheme = { 'vscode' } }, spec = plugins, checker = { enabled = true } })
 
 local configure_lsp = function(vim, lsp_configs)
+
+  local default_float_opts = {
+    anchor_bias = 'below',
+    border = 'rounded',
+    silent = true,
+    focusable = false,
+    relative = 'cursor'
+  }
+
+  local function wrap_lsp_handler(handler, opts)
+    local original = handler
+    return function()
+      return original(vim.tbl_extend('force', default_float_opts, opts or {}))
+    end
+  end
+
+  vim.lsp.buf.hover = wrap_lsp_handler(vim.lsp.buf.hover, { offset_x = 0, offset_y = 0 })
+  vim.lsp.buf.signature_help = wrap_lsp_handler(vim.lsp.buf.signature_help, { offset_x = 0, offset_y = 1 })
+
   vim.lsp.config('*', {
     capabilities = {
       textDocument = {
@@ -1044,21 +1065,40 @@ local configure_lsp = function(vim, lsp_configs)
 
         vim.api.nvim_create_autocmd('BufWritePre', {
           buffer = bufnr,
-          callback = function () vim.lsp.buf.format({ bufnr = bufnr, id = client.id, timeout_ms = 2000 }) end,
+          callback = function () vim.lsp.buf.format({ bufnr = bufnr, id = client.id, timeout_ms = 1000 }) end,
         })
       end
 
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr) then
-        local DocumentHighlightGroup = vim.api.nvim_create_augroup("LSPDocumentHighlight", { clear = true })
-        vim.api.nvim_create_autocmd({'CursorHold', 'CursorHoldI'}, {
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp, bufnr) then
+        vim.api.nvim_create_autocmd( {'CursorHold', 'CursorHoldI'}, {
           buffer = bufnr,
-          callback = function () vim.lsp.buf.document_highlight() end,
-          group = DocumentHighlightGroup
+          callback = function () vim.lsp.buf.signature_help() end,
         })
         vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
           buffer = bufnr,
           callback = function() vim.lsp.buf.clear_references() end,
-          group = DocumentHighlightGroup
+        })
+      end
+
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_hover, bufnr) then
+        vim.api.nvim_create_autocmd( {'CursorHold', 'CursorHoldI'}, {
+          buffer = bufnr,
+          callback = function () vim.lsp.buf.hover() end,
+        })
+        vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
+          buffer = bufnr,
+          callback = function() vim.lsp.buf.clear_references() end,
+        })
+      end
+
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr) then
+        vim.api.nvim_create_autocmd({'CursorHold', 'CursorHoldI'}, {
+          buffer = bufnr,
+          callback = function () vim.lsp.buf.document_highlight() end,
+        })
+        vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
+          buffer = bufnr,
+          callback = function() vim.lsp.buf.clear_references() end,
         })
       end
     end,
@@ -1066,11 +1106,13 @@ local configure_lsp = function(vim, lsp_configs)
   vim.api.nvim_create_autocmd('LspDetach',   { command = 'setl foldexpr<' })
   vim.api.nvim_create_autocmd('VimLeavePre', { callback = function () vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
 
+
   vim.lsp.enable(vim.tbl_keys(lsp_configs))
 
   if vim.g.lsp_on_demands then
     vim.lsp.enable(vim.g.lsp_on_demands)
   end
+
 end
 
 configure_lsp(vim, lsp_configs)
