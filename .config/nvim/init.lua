@@ -344,6 +344,7 @@ local configure_defaults = function (vim)
   vim.opt.foldenable = true
   vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
   vim.opt.foldcolumn = "1"
+  vim.opt.fillchars:append({ foldopen = "-", foldclose = "+" })
   vim.opt.foldlevel = 99
   vim.opt.foldlevelstart = 99
 
@@ -367,11 +368,15 @@ local configure_defaults = function (vim)
     )
     vim.g.neovide_show_border = true
     vim.g.neovide_theme = 'auto'
-    vim.g.neovide_refresh_rate = 60
+    vim.g.neovide_refresh_rate = 144
     vim.g.experimental_layer_grouping = true
     vim.g.neovide_refresh_rate_idle = 1
     vim.g.neovide_fullscreen = false
     vim.g.neovide_macos_simple_fullscreen = true
+    vim.g.neovide_floating_shadow = false
+    --vim.g.neovide_floating_z_height = 10
+    --vim.g.neovide_light_angle_degrees = 45
+    vim.g.neovide_light_radius = 0
   end
 
 
@@ -902,7 +907,7 @@ local plugins = {
       },
       autoFold = {
         enabled = true,
-        kinds = { "comments", "imports" }
+        kinds = { "comment", "imports" }
       }
     },
   },
