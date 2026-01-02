@@ -414,7 +414,7 @@ end
 
 configure_defaults(vim)
 
-local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'jsonc', 'powershell', 'xml' }
+local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'powershell', 'xml' }
 local tools = { 'clang-format', 'codelldb' }
 local lsp_configs = {
   clangd = {
@@ -545,6 +545,8 @@ local plugins = {
     'wsdjeg/rooter.nvim',
     lazy = false,
     opts = {
+      enablle_cache = true,
+      project_non_root = 'current',
       root_pattern = { '.git/', 'Cargo.toml', 'README.md' },
     }
   },
@@ -577,6 +579,15 @@ local plugins = {
         vim.api.nvim_set_option_value("background", "light", {})
         vim.cmd("colorscheme vscode")
       end,
+    }
+  },
+  {
+    'shortcuts/no-neck-pain.nvim',
+    opts = {
+      autocmds = {
+        enableOnVimEnter = true,
+        reloadOnColorSchemeChange = true
+      }
     }
   },
   {
