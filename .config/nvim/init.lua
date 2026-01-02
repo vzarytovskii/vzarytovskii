@@ -318,8 +318,6 @@ local configure_defaults = function (vim)
   vim.opt.autocomplete = true
   vim.opt.complete = 'o,F,.,i,d'
   vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'preinsert', 'popup' }
-  vim.opt.foldlevel = 99
-  vim.opt.foldlevelstart = 99
   vim.opt.tabstop = 4
   vim.opt.softtabstop = 4
   vim.opt.shiftwidth = 2
@@ -331,7 +329,7 @@ local configure_defaults = function (vim)
   vim.opt.hlsearch = false
   vim.opt.incsearch = true
   vim.opt.scrolloff = 8
-  vim.opt.signcolumn = "yes:1"
+  vim.opt.signcolumn = "yes:2"
   vim.opt.isfname:append("@-@")
 
   vim.opt.keymodel="startsel,stopsel"
@@ -348,7 +346,6 @@ local configure_defaults = function (vim)
   vim.opt.foldcolumn = "1"
   vim.opt.foldlevel = 99
   vim.opt.foldlevelstart = 99
-  vim.opt.foldenable = true
 
   if vim.g.neovide then
     vim.g.neovide_position_animation_length = 0
@@ -653,7 +650,7 @@ local plugins = {
             --)
 
             if width_ok and single_window and not enabled then
-              local target_width = math.floor(columns * 2 / 3)
+              local target_width = math.floor(columns * 3 / 4)
               --vim.notify(
               --  string.format('[NoNeckPain] Enabling NoNeckPain with target width %d', target_width),
               --  vim.log.levels.DEBUG
@@ -713,7 +710,7 @@ local plugins = {
         'mtime',
       },
       win_options = {
-        signcolumn = 'auto:2'
+        signcolumn = 'yes:2'
       },
 
       view_options = {
@@ -765,7 +762,8 @@ local plugins = {
         'snacks_notif',
         'snacks_win',
         'flash_prompt',
-        'no-neck-pain'
+        'no-neck-pain',
+        'oil'
       }
 
       vim.api.nvim_create_autocmd('FileType', {
@@ -888,7 +886,8 @@ local plugins = {
     },
     opts = {
       useLspFoldsWithTreesitterFallback = {
-        enabled = true
+        enabled = true,
+        foldmethodIfNeitherIsAvailable = "indent"
       },
       pauseFoldsOnSearch = true,
       foldtext = {
