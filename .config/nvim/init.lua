@@ -384,6 +384,7 @@ local configure_defaults = function (vim)
   --    vim.fn.wildtrigger()
   --  end,
   --})
+
   vim.opt.smartcase = true
   vim.opt.ignorecase = true
 
@@ -583,12 +584,100 @@ local plugins = {
   },
   {
     'shortcuts/no-neck-pain.nvim',
-    opts = {
-      autocmds = {
-        enableOnVimEnter = true,
-        reloadOnColorSchemeChange = true
-      }
-    }
+    lazy = false,
+    config = function()
+      require('no-neck-pain').setup({
+        buffers = {
+          scratchPad = {
+            enabled = false,
+          },
+          colors = {
+            blend = -0.2
+          },
+          bo = {
+            readonly = true,
+            modifiable = false,
+          },
+          wo = {
+            fillchars = "eob: ",
+            statusline = " ",
+          },
+        },
+        autocmds = {
+          enableOnVimEnter = false,
+          reloadOnColorSchemeChange = true,
+        },
+      })
+
+      local min_width = 200
+      local debounce_ms = 50
+      local timer = nil
+
+      local function is_nnp_enabled()
+        return _G.NoNeckPain and _G.NoNeckPain.state ~= nil and _G.NoNeckPain.state.enabled
+      end
+
+      local function count_real_windows()
+        local count = 0
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          local config = vim.api.nvim_win_get_config(win)
+          if config.relative == '' then
+            local buf = vim.api.nvim_win_get_buf(win)
+            local ft = vim.bo[buf].filetype
+            if ft ~= 'no-neck-pain' then
+              count = count + 1
+            end
+          end
+        end
+        return count
+      end
+
+      local function evaluate_nnp()
+        if timer then
+          vim.fn.timer_stop(timer)
+          timer = nil
+        end
+
+        timer = vim.fn.timer_start(debounce_ms, function()
+          timer = nil
+          vim.schedule(function()
+            local columns = vim.o.columns
+            local real_windows = count_real_windows()
+            local width_ok = columns >= min_width
+            local single_window = real_windows == 1
+            local enabled = is_nnp_enabled()
+
+            --vim.notify(
+            --  string.format('[NoNeckPain] columns=%d, real_windows=%d, enabled=%s', columns, real_windows, tostring(enabled)),
+            --  vim.log.levels.DEBUG
+            --)
+
+            if width_ok and single_window and not enabled then
+              local target_width = math.floor(columns * 2 / 3)
+              --vim.notify(
+              --  string.format('[NoNeckPain] Enabling NoNeckPain with target width %d', target_width),
+              --  vim.log.levels.DEBUG
+              --)
+              require('no-neck-pain').enable()
+              vim.defer_fn(function()
+                require('no-neck-pain').resize(target_width)
+              end, 10)
+            elseif (not width_ok or not single_window) and enabled then
+              require('no-neck-pain').disable()
+            end
+          end)
+        end)
+      end
+
+      local group = vim.api.nvim_create_augroup('NoNeckPainAuto', { clear = true })
+
+      vim.api.nvim_create_autocmd({ 'VimEnter', 'VimResized', 'WinEnter', 'WinClosed' }, {
+        group = group,
+        callback = function()
+          evaluate_nnp()
+        end,
+      })
+    end,
   },
   {
     'y3owk1n/time-machine.nvim',
@@ -675,6 +764,8 @@ local plugins = {
         'snacks_dashboard',
         'snacks_notif',
         'snacks_win',
+        'flash_prompt',
+        'no-neck-pain'
       }
 
       vim.api.nvim_create_autocmd('FileType', {
