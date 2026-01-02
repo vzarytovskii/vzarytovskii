@@ -531,6 +531,8 @@ local plugins = {
       { "gg", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
       { "ß", mode = { 'n', 'v', 'i' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
 
+      { "<leader>bs", mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
+
       { 'gd', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_definitions() end, desc = 'Goto Definition' },
       { 'gr', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_references() end, nowait = true, desc = 'References' },
       { 'gI', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_implementations() end, desc = 'Goto Implementation' },
@@ -550,7 +552,7 @@ local plugins = {
     opts = {
       enablle_cache = true,
       project_non_root = 'current',
-      root_pattern = { '.git/', 'Cargo.toml', 'README.md' },
+      root_pattern = { '.git', 'Cargo.toml', 'README.md', '.cargo' },
     }
   },
   {
@@ -738,7 +740,14 @@ local plugins = {
     'folke/flash.nvim',
     event = 'VeryLazy',
     ---@type Flash.Config
-    opts = {},
+    opts = {
+      modes = {
+        search = {
+          enabled = true,
+          highlight = { backdrop = true },
+        }
+      }
+    },
     keys = {
       { 's', mode = { 'n', 'x', 'o' }, function() require('flash').jump() end, desc = 'Flash' },
       { 'S', mode = { 'n', 'x', 'o' }, function() require('flash').treesitter() end, desc = 'Flash Treesitter' },
@@ -762,6 +771,7 @@ local plugins = {
       local ignore_filetypes = {
         'checkhealth',
         'lazy',
+        'lazy_backdrop',
         'mason',
         'snacks_dashboard',
         'snacks_notif',
