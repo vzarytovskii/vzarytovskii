@@ -300,6 +300,7 @@ configure_window_management()
 
 local configure_defaults = function (vim)
   vim.g.mapleader = " "
+  vim.g.maplocalleader = "\\"
 
   vim.opt.updatetime = 500
 
@@ -506,6 +507,7 @@ local lsp_configs = {
 local plugins = {
   { 'nvim-lua/plenary.nvim' },
   { 'MunifTanjim/nui.nvim' },
+  { "nvim-tree/nvim-web-devicons", opts = {} },
   {
     'nvim-telescope/telescope.nvim',
     dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-fzf-native.nvim' },
@@ -768,27 +770,16 @@ local plugins = {
 
       local group = vim.api.nvim_create_augroup('TreesitterSetup', { clear = true })
 
-      local ignore_filetypes = {
-        'checkhealth',
-        'lazy',
-        'lazy_backdrop',
-        'mason',
-        'snacks_dashboard',
-        'snacks_notif',
-        'snacks_win',
-        'flash_prompt',
-        'no-neck-pain',
-        'oil'
-      }
-
       vim.api.nvim_create_autocmd('FileType', {
         group = group,
         desc = 'Enable treesitter highlighting and indentation',
         callback = function(event)
-          if vim.tbl_contains(ignore_filetypes, event.match) then
+          local lang = vim.treesitter.language.get_lang(event.match) or event.match
+
+          if not vim.tbl_contains(treesitter_configs, lang) then
             return
           end
-          local lang = vim.treesitter.language.get_lang(event.match) or event.match
+
           local buf = event.buf
           pcall(vim.treesitter.start, buf, lang)
           vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
@@ -1049,7 +1040,28 @@ local plugins = {
     opts = {
       picker = 'telescope',
       enable_builtin = true,
+      use_timeline_icons = false,
+      runs = {
+        icons = {
+          pending = "[Pending]",
+          in_progress = "[In Progress]",
+          failed = "[Failed]",
+          succeeded = "",
+          skipped = "[Skipped]",
+          cancelled = "[Cancelled]",
+        },
+  },
     }
+  },
+  {
+    "otavioschwanck/github-pr-reviewer.nvim",
+    opts = {
+      -- options here
+    },
+    keys = {
+      { "<leader>pr", "<cmd>PRReviewMenu<cr>",    desc = "PR Review Menu" },
+      { "<leader>p", ":<C-u>'<,'>PRSuggestChange<CR>", desc = "Suggest change", mode = "v" }
+    },
   }
 }
 
