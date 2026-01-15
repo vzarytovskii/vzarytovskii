@@ -1,16 +1,5 @@
 ;;; -*- lexical-binding: t; -*- no-byte-compile: t; -*-
 
-;;; Commentary:
-;; Emacs 27+ early init, for main configuration, see init.el.
-
-;;; Code:
-
-(let ((minver 27))
-  (unless (>= emacs-major-version minver)
-    (error "Your Emacs is too old -- this configuration requires v%s or higher" minver)))
-
-;; Some basic checks:
-
 (if (and (fboundp 'native-comp-available-p)
          (native-comp-available-p))
     (message "Native compilation is available")
@@ -23,8 +12,26 @@
 (with-eval-after-load 'package
   (setopt package-enable-at-startup nil))
 
-(defun display-startup-echo-area-message ()
-  (message ""))
+(setenv "PATH" (concat (getenv "PATH") ":~/.cargo/bin:~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
+(setq exec-path (append exec-path '("~/.cargo/bin" "~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
+
+
+(defconst default-font-name "Hack")
+(defconst default-file-name-handler-alist file-name-handler-alist)
+(defconst default-vc-handled-backends vc-handled-backends)
+
+(defconst gc-cons-highest-threshold most-positive-fixnum)
+(defconst gc-cons-default-threshold (* 1024 1024 100))
+
+(defconst gc-cons-higher-percentage 1.0)
+(defconst gc-cons-default-percentage 0.1) ;; If frequent and slow GCs are experienced, maybe try increasing this. It might, however, affect Emacs' memory usage
+
+(defconst gc-idle-timer 30)
+(defconst gc-focus-blur-timer 3.0)
+
+(set-face-attribute 'default nil :family default-font-name :height 140)
+(set-face-attribute 'fixed-pitch nil :family default-font-name :height 130 :weight 'semi-light :width 'expanded)
+(set-face-attribute 'variable-pitch nil :family default-font-name :height 130 :weight 'regular)
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(fullscreen . fullheight))
@@ -32,72 +39,9 @@
 (when (fboundp 'menu-bar-mode) (menu-bar-mode -1))
 (when (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (when (fboundp 'set-scroll-bar-mode) (set-scroll-bar-mode nil))
-(setq-default mode-line-format nil)
-
-;; LSP Plists (does it have to be in the early-init?)
-(setenv "LSP_USE_PLISTS" "true")
-
-;; macOS related
-(setq ns-use-native-fullscreen t
-      ns-use-thin-smoothing t
-      ns-pop-up-frames nil)
-(defun homebrew-gcc-paths ()
-  "Return GCC library paths from Homebrew installations.
-Detects paths for gcc and libgccjit packages to be used in LIBRARY_PATH."
-  (let* ((paths '())
-         (brew-bin (or (executable-find "brew")
-                       (let ((arm-path "/opt/homebrew/bin/brew")
-                             (intel-path "/usr/local/bin/brew"))
-                         (cond
-                          ((file-exists-p arm-path) arm-path)
-                          ((file-exists-p intel-path) intel-path))))))
-
-    (when brew-bin
-      ;; Get gcc paths.
-      (let* ((gcc-prefix (string-trim
-                          (shell-command-to-string
-                           (concat brew-bin " --prefix gcc"))))
-             (gcc-lib-current (expand-file-name "lib/gcc/current" gcc-prefix)))
-        (push gcc-lib-current paths)
-
-        ;; Find apple-darwin directory.
-        (let* ((default-directory gcc-lib-current)
-               (arch-dirs (file-expand-wildcards "gcc/*-apple-darwin*/*[0-9]")))
-          (when arch-dirs
-            (push (expand-file-name
-                   (car (sort arch-dirs #'string>)))
-                  paths))))
-
-      ;; Get libgccjit paths
-      (let* ((jit-prefix (string-trim
-                          (shell-command-to-string
-                           (concat brew-bin " --prefix libgccjit"))))
-             (jit-lib-current (expand-file-name "lib/gcc/current" jit-prefix)))
-        (push jit-lib-current paths)))
-
-    (nreverse paths)))
-
-(defun setup-macos-native-comp-library-paths ()
-  "Set up LIBRARY_PATH for native compilation on macOS.
-Includes Homebrew GCC paths and CommandLineTools SDK libraries."
-  (let* ((existing-paths (split-string (or (getenv "LIBRARY_PATH") "") ":" t))
-         (gcc-paths (homebrew-gcc-paths))
-         (clt-paths '("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"))
-         (unique-paths (delete-dups
-                        (append existing-paths gcc-paths clt-paths))))
-
-    (setenv "LIBRARY_PATH" (mapconcat #'identity unique-paths ":"))))
-
-;; Set up library paths for native compilation on macOS.
-(when (eq system-type 'darwin)
-  (setup-macos-native-comp-library-paths))
-
-
 
 (when (display-graphic-p)
-  (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
-
-(setq locale-coding-system 'utf-8)
+  (setq-default x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
 (prefer-coding-system 'utf-8)
 (set-language-environment "UTF-8")
 (set-default-coding-systems 'utf-8)
@@ -107,67 +51,70 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 (set-language-environment "UTF-8")
 
 (setopt bidi-inhibit-bpa t)
-(setq-default bidi-display-reordering 'left-to-right
-              bidi-paragraph-direction 'left-to-right)
+(setq-default locale-coding-system 'utf-8
 
+              bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right
 
-(setq window-min-height 1
-      window-min-width 2)
+              mode-line-format nil
 
-(defvar default-font-name "Hack")
-(set-face-attribute 'default nil :family default-font-name :height 140)
-(set-face-attribute 'fixed-pitch nil :family default-font-name :height 130 :weight 'semi-light :width 'expanded)
-(set-face-attribute 'variable-pitch nil :family default-font-name :height 130 :weight 'regular)
+              ns-use-native-fullscreen t
+              ns-use-thin-smoothing t
+              ns-pop-up-frames nil
 
-(defvar default-file-name-handler-alist file-name-handler-alist)
-(defvar default-vc-handled-backends vc-handled-backends)
+              gc-cons-percentage gc-cons-higher-percentage
+              gc-cons-threshold gc-cons-highest-threshold
+              garbage-collection-messages t
 
-(defvar gc-cons-highest-threshold most-positive-fixnum)
-(defvar gc-cons-default-threshold (* 1024 1024 100))
+              file-name-handler-alist nil
 
-(defvar gc-cons-higher-percentage 1.0)
-(defvar gc-cons-default-percentage 0.1) ;; If frequent and slow GCs are experienced, maybe try increasing this. It might, however, affect Emacs' memory usage
+              vc-handled-backends nil
 
-(setq gc-cons-percentage gc-cons-higher-percentage
-      gc-cons-threshold gc-cons-highest-threshold
-      garbage-collection-messages t
-      file-name-handler-alist nil
-      vc-handled-backends nil
-      read-process-output-max (* 1024 1024)
-      inhibit-default-init t
-      inhibit-message t
-      inhibit-redisplay t
-      inhibit-startup-buffer-menu t
-      inhibit-startup-echo-area-message ""
-      inhibit-startup-screen t
-      initial-scratch-message nil
-      load-prefer-newer t
-      idle-update-delay 1.1
-      site-run-file nil
-      package-install-upgrade-built-in t
-      compilation-safety 0
-      native-comp-speed 3
-      native-comp-debug 0
-      native-comp-verbose 0
-      native-comp-async-report-warnings-errors nil
-      native-comp-async-jobs-number 24
-      native-comp-async-on-battery-power nil
-      native-comp-jit-compilation t
-      native-comp-deferred-compilation native-comp-jit-compilation
-      native-comp-enable-subr-trampolines t
-      native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
-      native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
-      native-comp-always-compile t
-      native-comp-async-query-on-exit t
-      package-native-compile t
-      confirm-kill-processes t
-      warning-minimum-level :warning
-      byte-compile-warnings '(not obsolete)
-      warning-suppress-log-types '((comp) (bytecomp))
-      native-comp-async-report-warnings-errors 'silent)
+              read-process-output-max (* 1024 1024)
 
-(setenv "PATH" (concat (getenv "PATH") ":~/.cargo/bin:~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
-(setq exec-path (append exec-path '("~/.cargo/bin" "~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
+              inhibit-default-init t
+              inhibit-message t
+              inhibit-redisplay t
+              inhibit-startup-buffer-menu t
+              inhibit-startup-echo-area-message ""
+              inhibit-startup-screen t
+              initial-scratch-message nil
+
+              load-prefer-newer t
+              idle-update-delay 1.1
+
+              site-run-file nil
+
+              package-install-upgrade-built-in t
+
+              compilation-safety 0
+
+              native-comp-speed 3
+              native-comp-debug 0
+              native-comp-verbose 0
+              native-comp-async-report-warnings-errors nil
+              native-comp-async-jobs-number 24
+              native-comp-async-on-battery-power nil
+              native-comp-jit-compilation t
+              native-comp-deferred-compilation native-comp-jit-compilation
+              native-comp-enable-subr-trampolines t
+              native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
+              native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
+              native-comp-always-compile t
+              native-comp-async-query-on-exit t
+              native-comp-async-report-warnings-errors 'silent
+
+              package-native-compile t
+
+              confirm-kill-processes t
+
+              warning-minimum-level :warning
+              byte-compile-warnings '(not obsolete)
+              warning-suppress-log-types '((comp) (bytecomp))
+
+              window-min-height 1
+              window-min-width 2)
+
 
 ;; We want to avoid GC for as long as we can, so when we are in minibuffer (consult, ivy, helm, etc), set percentage to highest (100%) and memory to the max int
 (defun my-minibuffer-setup-hook ()
@@ -196,7 +143,7 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 ;; We GC in two cases:
 ;; 1. If emacs is idling for more than 30s
 ;; 2. If emacs' window lost focus and didn't regain it in 3s
-(run-with-idle-timer 30 t 'garbage-collect)
+(run-with-idle-timer gc-idle-timer t 'garbage-collect)
 (add-function :after after-focus-change-function (lambda ()
   (unless (frame-focus-state)
     (run-with-timer 3.0 nil (lambda ()
@@ -297,4 +244,3 @@ Includes Homebrew GCC paths and CommandLineTools SDK libraries."
 
 
 (provide 'early-init)
-;;; early-init.el ends here
