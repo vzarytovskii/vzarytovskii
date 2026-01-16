@@ -1,5 +1,33 @@
 ;;; -*- lexical-binding: t; -*- no-byte-compile: t; -*-
 
+(defun reload-init-file ()
+  (interactive)
+  (load-file user-init-file))
+
+(defun emacs-recompile ()
+  "Recompile all .elc files."
+  (interactive)
+  (message "Recompiling ...")
+  (if (functionp 'async-byte-recompile-directory)
+      (async-byte-recompile-directory package-user-dir)
+    (byte-recompile-directory package-user-dir 0 'force)))
+
+(defun add-to-list-many (list-var elements)
+  (dolist (element elements)
+    (add-to-list list-var element)))
+
+(defmacro defconsts (&rest definitions)
+  `(progn
+     ,@(mapcar (lambda (def)
+                 `(defconst ,(car def) ,(cadr def)))
+               definitions)))
+
+(defmacro set-face-attributes (&rest definitions)
+  `(progn
+     ,@(mapcar (lambda (def)
+                 `(set-face-attribute ',(car def) nil ,@(cdr def)))
+               definitions)))
+
 (if (and (fboundp 'native-comp-available-p)
          (native-comp-available-p))
     (message "Native compilation is available")
@@ -9,33 +37,54 @@
     (message "Native JSON is available")
   (message "Native JSON is *not* available"))
 
-(with-eval-after-load 'package
-  (setopt package-enable-at-startup nil))
+(defconsts
+  (default-font-name "Consolas")
+  (default-file-name-handler-alist file-name-handler-alist)
+  (default-vc-handled-backends vc-handled-backends)
+  (gc-cons-highest-threshold most-positive-fixnum)
+  (gc-cons-default-threshold (* 1024 1024 100))
+  (gc-cons-higher-percentage 1.0)
+  (gc-cons-default-percentage 0.1)
+  (gc-idle-timer 30)
+  (gc-focus-blur-timer 3.0)
+  (*sys/gui* (display-graphic-p))
+  (*sys/is-mac* (eq system-type 'darwin))
+  (*sys/is-linux* (or (eq system-type 'gnu/linux) (eq system-type 'linux)))
+  (*sys/is-unix* (or *sys/is-linux* (eq system-type 'usg-unix-v) (eq system-type 'berkeley-unix)))
+  (*sys/is-windows* (or (eq system-type 'ms-dos) (eq system-type 'windows-nt)))
+  (*sys/is-cygwin* (eq system-type 'cygwin))
+  (*sys/is-wsl* (and *sys/is-linux* (getenv "WSLENV")))
+  (my-extra-paths
+  '("~/.cargo/bin"
+    "~/.dotnet"
+    "~/.dotnet/tools"
+    "~/.cabal/bin"
+    "~/.ghcup/bin"
+    "~/.local/bin"
+    "/opt/homebrew/bin"
+    "/usr/local/share/dotnet")
+  "Additional paths to add to PATH and `exec-path'."))
 
-(setenv "PATH" (concat (getenv "PATH") ":~/.cargo/bin:~/.dotnet:~/.dotnet/tools:~/.cabal/bin:~/.ghcup/bin:~/.local/bin:/opt/homebrew/bin:/usr/local/share/dotnet:~/.dotnet/tools"))
-(setq exec-path (append exec-path '("~/.cargo/bin" "~/.dotnet" "~/.dotnet/tools" "~/.cabal/bin" "~/.ghcup/bin" "~/.local/bin" "/opt/homebrew/bin" "/usr/local/share/dotnet" "~/.dotnet/tools")))
+(let ((expanded-paths (mapcar #'expand-file-name my-extra-paths)))
+  (setenv "PATH" (concat (getenv "PATH") ":" (string-join expanded-paths ":")))
+  (setq exec-path (append exec-path expanded-paths)))
 
-
-(defconst default-font-name "Hack")
-(defconst default-file-name-handler-alist file-name-handler-alist)
-(defconst default-vc-handled-backends vc-handled-backends)
-
-(defconst gc-cons-highest-threshold most-positive-fixnum)
-(defconst gc-cons-default-threshold (* 1024 1024 100))
-
-(defconst gc-cons-higher-percentage 1.0)
-(defconst gc-cons-default-percentage 0.1) ;; If frequent and slow GCs are experienced, maybe try increasing this. It might, however, affect Emacs' memory usage
-
-(defconst gc-idle-timer 30)
-(defconst gc-focus-blur-timer 3.0)
-
-(set-face-attribute 'default nil :family default-font-name :height 140)
-(set-face-attribute 'fixed-pitch nil :family default-font-name :height 130 :weight 'semi-light :width 'expanded)
-(set-face-attribute 'variable-pitch nil :family default-font-name :height 130 :weight 'regular)
+(set-face-attributes
+  (default :family default-font-name :height 140)
+  (fixed-pitch :family default-font-name :height 130 :weight 'semi-light :width 'expanded)
+  (variable-pitch :family default-font-name :height 130 :weight 'regular))
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
-(add-to-list 'default-frame-alist '(fullscreen . fullheight))
-(add-to-list 'default-frame-alist '(undecorated . t))
+(add-to-list-many 'default-frame-alist
+                  '((fullscreen . fullheight)
+                    (undecorated . t)
+                    (menu-bar-lines . 0)
+                    (tool-bar-lines . 0)
+                    (vertical-scroll-bars)))
+
+(when (featurep 'ns)
+  (push '(ns-transparent-titlebar . t) default-frame-alist))
+
 (when (fboundp 'menu-bar-mode) (menu-bar-mode -1))
 (when (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (when (fboundp 'set-scroll-bar-mode) (set-scroll-bar-mode nil))
@@ -48,10 +97,11 @@
 (set-terminal-coding-system 'utf-8)
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
-(set-language-environment "UTF-8")
 
 (setopt bidi-inhibit-bpa t)
-(setq-default locale-coding-system 'utf-8
+(setq-default package-enable-at-startup nil
+              package-quickstart nil
+              locale-coding-system 'utf-8
 
               bidi-display-reordering 'left-to-right
               bidi-paragraph-direction 'left-to-right
@@ -78,14 +128,18 @@
               inhibit-startup-buffer-menu t
               inhibit-startup-echo-area-message ""
               inhibit-startup-screen t
+              inhibit-splash-screen t
+
+              frame-inhibit-implied-resize t
+
               initial-scratch-message nil
 
-              load-prefer-newer t
+              load-prefer-newer noninteractive
               idle-update-delay 1.1
 
               site-run-file nil
 
-              package-install-upgrade-built-in t
+              mode-line-format nil
 
               compilation-safety 0
 
@@ -96,10 +150,10 @@
               native-comp-async-jobs-number 24
               native-comp-async-on-battery-power nil
               native-comp-jit-compilation t
-              native-comp-deferred-compilation native-comp-jit-compilation
               native-comp-enable-subr-trampolines t
-              native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
-              native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
+              native-comp-driver-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-floop-parallelize-all" "-ftree-parallelize-loops=4" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
+              native-comp-compiler-options '("-Ofast" "-g0" "-fno-finite-math-only" "-fgraphite-identity" "-floop-nest-optimize" "-floop-parallelize-all" "-ftree-parallelize-loops=4" "-fdevirtualize-at-ltrans" "-fipa-pta" "-fno-semantic-interposition" "-flto=auto")
+              native-comp-deferred-compilation t
               native-comp-always-compile t
               native-comp-async-query-on-exit t
               native-comp-async-report-warnings-errors 'silent
