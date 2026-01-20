@@ -281,53 +281,53 @@ Partial word selected: transpose chars."
             (kill-region start eol))))))))
   :config
     (setq-default major-mode 'text-mode
-                    use-file-dialog nil
-                    use-dialog-box nil
-                    cursor-type 'box
-                    x-stretch-cursor t
-                    cursor-in-non-selected-window nil
-                    indent-tabs-mode nil
-                    tab-width 4
-                    select-enable-primary t
-                    select-enable-clipboard t
+                  use-file-dialog nil
+                  use-dialog-box nil
+                  cursor-type 'box
+                  x-stretch-cursor t
+                  cursor-in-non-selected-window nil
 
-                    scroll-margin 0
-                    scroll-step 1
-                    scroll-conservatively 100000
-                    scroll-preserve-screen-position 1
-                    scroll-preserve-screen-position 'always
-                    hscroll-step 2
-                    hscroll-margin 2
+                  indent-tabs-mode nil
+                  tab-width 4
 
-                    next-line-add-newlines nil
+                  select-enable-primary t
+                  select-enable-clipboard t
 
-                    byte-compile-warnings '(cl-functions)
-                    visible-bell nil
-                    ring-bell-function 'flash-mode-line
+                  scroll-margin 0
+                  scroll-step 1
+                  scroll-conservatively 100000
+                  scroll-preserve-screen-position 'always
 
-                    tab-width 4
+                  hscroll-step 2
+                  hscroll-margin 2
 
-                    display-raw-bytes-as-hex t
-                    redisplay-skip-fontification-on-input t
+                  next-line-add-newlines nil
 
-                    window-divider-default-right-width 1
-                    window-divider-default-bottom-width 1
-                    window-divider-default-places t  ; Show dividers on all sides
+                  byte-compile-warnings '(cl-functions)
+                  visible-bell nil
+                  ring-bell-function 'flash-mode-line
 
-                    blink-cursor-mode nil
+                  display-raw-bytes-as-hex t
+                  redisplay-skip-fontification-on-input t
 
-                    show-trailing-whitespace t
-                    whitespace-style '(face trailing)
-                    make-backup-files t
-                    backup-directory-alist '(("." . "~/.saves"))
-                    auto-save-default nil
-                    track-eol nil
-                    line-move-visual nil
-                    kill-whole-line t
-                    truncate-lines t
-                    show-paren-style 'parenthesis
-                    frame-resize-pixelwise t
-                    use-short-answers t)
+                  window-divider-default-right-width 1
+                  window-divider-default-bottom-width 1
+                  window-divider-default-places t  ; Show dividers on all sides
+
+                  blink-cursor-mode nil
+
+                  show-trailing-whitespace t
+                  whitespace-style '(face trailing)
+                  make-backup-files t
+                  backup-directory-alist '(("." . "~/.saves"))
+                  auto-save-default nil
+                  track-eol nil
+                  line-move-visual nil
+                  kill-whole-line t
+                  truncate-lines t
+                  show-paren-style 'parenthesis
+                  frame-resize-pixelwise t
+                  use-short-answers t)
 
   (fset 'yes-or-no-p 'y-or-n-p))
 
