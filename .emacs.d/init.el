@@ -2,13 +2,6 @@
 
 (require 'package)
 
-(add-to-list-many 'package-archives
-                  '(("gnu" . "https://elpa.gnu.org/packages/")
-                    ("gnu-devel" . "https://elpa.gnu.org/devel/")
-                    ("melpa" . "https://stable.melpa.org/packages/")
-                    ("melpa-devel" . "https://melpa.org/packages/")
-                    ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
-
 (setq-default
               ad-redefinition-action 'accept
               custom-file (expand-file-name "custom.el" user-emacs-directory)
@@ -17,6 +10,12 @@
               load-prefer-newer t
               package-install-upgrade-built-in t
               package-quickstart t
+              package-archives
+              '(("gnu" . "https://elpa.gnu.org/packages/")
+                ("gnu-devel" . "https://elpa.gnu.org/devel/")
+                ("melpa" . "https://stable.melpa.org/packages/")
+                ("melpa-devel" . "https://melpa.org/packages/")
+                ("nongnu" . "https://elpa.nongnu.org/nongnu/"))
               package-archive-priorities
               '(("melpa-devel" . 500)
                 ("melpa" . 400)
@@ -330,6 +329,11 @@ Partial word selected: transpose chars."
                   use-short-answers t)
 
   (fset 'yes-or-no-p 'y-or-n-p))
+
+(use-package centered-window
+  :ensure t
+  :defer t
+  :demand nil)
 
 (when (file-exists-p custom-file)
   (load custom-file))
