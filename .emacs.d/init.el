@@ -39,6 +39,7 @@
 (use-package use-package
   :demand t
   :defer nil
+
   :custom
   (use-package-always-ensure nil)
   (use-package-always-demand nil)
@@ -54,7 +55,6 @@
 (use-package compile-angel
   :ensure t
   :demand t
-
   :custom
   (compile-angel-verbose t)
   (compile-angel-enable-byte-compile t)
@@ -87,10 +87,51 @@
   (u/compile-angel-setup-exclusions)
   (compile-angel-on-load-mode 1))
 
+(use-package timu-macos-theme
+  :ensure t
+  :defer nil
+  :demand t
+  :preface
+  (defun u/macos-appearance ()
+    "Return 'light or 'dark based on macOS system appearance."
+    (let ((result (string-trim
+                   (shell-command-to-string
+                    "defaults read -g AppleInterfaceStyle 2>/dev/null || echo 'Light'"))))
+      (if (string-equal result "Dark") 'dark 'light)))
+  :config
+  (customize-set-variable 'timu-macos-color-contrast 'contrasted)
+  (customize-set-variable 'timu-macos-mode-line-border-type "none")
+
+  (let ((appearance (u/macos-appearance)))
+    (customize-set-variable 'timu-macos-flavour
+                            (if (eq appearance 'dark) "dark" "light")))
+  (load-theme 'timu-macos t))
+
+(use-package auto-dark
+  :ensure t
+  :defer t
+  :demand nil
+  :hook
+  (auto-dark-dark-mode-hook
+   . (lambda ()
+       (customize-set-variable 'timu-macos-flavour "dark")
+       (load-theme 'timu-macos t)))
+  (auto-dark-light-mode-hook
+   . (lambda ()
+       (customize-set-variable 'timu-macos-flavour "light")
+       (load-theme 'timu-macos t)))
+  :init (auto-dark-mode)
+  :custom
+  (auto-dark-polling-interval-seconds 5)
+  (auto-dark-allow-osascript t))
+
 (use-package emacs
   :ensure nil
   :demand t
   :defer nil
+  :hook
+  ((prog-mode-hook . display-line-numbers-mode)
+   (after-init-hook . hl-line-mode))
   :bind (("C-z"             . nil)
          ("C-x C-z"         . nil)
          ("C-h h"           . nil)
@@ -333,7 +374,11 @@ Partial word selected: transpose chars."
 (use-package centered-window
   :ensure t
   :defer t
-  :demand nil)
+  :demand nil
+  :commands centered-window-mode
+  :hook (after-init-hook . centered-window-mode)
+  :custom
+  (cwm-centered-window-width 150))
 
 (when (file-exists-p custom-file)
   (load custom-file))

@@ -38,7 +38,7 @@
   (message "Native JSON is *not* available"))
 
 (defconsts
-  (default-font-name "Consolas")
+  (default-font-name "Hack")
   (default-file-name-handler-alist file-name-handler-alist)
   (default-vc-handled-backends vc-handled-backends)
   (gc-cons-highest-threshold most-positive-fixnum)
@@ -106,7 +106,7 @@
               bidi-display-reordering 'left-to-right
               bidi-paragraph-direction 'left-to-right
 
-              mode-line-format nil
+              ;mode-line-format nil
 
               ns-use-native-fullscreen t
               ns-use-thin-smoothing t
@@ -138,8 +138,6 @@
               idle-update-delay 1.1
 
               site-run-file nil
-
-              mode-line-format nil
 
               compilation-safety 0
 
