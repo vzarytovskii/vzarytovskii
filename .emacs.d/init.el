@@ -1,5 +1,7 @@
 ;;; -*- lexical-binding: t; -*- no-byte-compile: t; -*-
 
+;; Common tools to make sure installed via mason
+
 (require 'package)
 
 (setq-default
@@ -111,6 +113,7 @@
   :ensure t
   :defer t
   :demand nil
+  :disabled t
   :hook
   (auto-dark-dark-mode-hook
    . (lambda ()
@@ -379,6 +382,55 @@ Partial word selected: transpose chars."
   :hook (after-init-hook . centered-window-mode)
   :custom
   (cwm-centered-window-width 150))
+
+
+(use-package mason
+  :ensure t
+  :defer t
+  :demand nil
+  :init
+    (defvar mason-tools '("clangd"))
+  :config
+  (mason-setup
+    (dolist (pkg mason-tools)
+      (unless (mason-installed-p pkg)
+        (ignore-errors (mason-install pkg))))))
+
+(use-package treesit
+  :ensure nil
+  :defer nil
+  :commands (treesit-install-language-grammar setup-install-grammars)
+  :init
+    (defvar treesitter-grammars
+      '(
+        (json . ("https://github.com/tree-sitter/tree-sitter-json" "master"))
+        (elisp . ("https://github.com/Wilfred/tree-sitter-elisp" "main"))
+        (cmake . ("https://github.com/uyha/tree-sitter-cmake" "master"))
+        (c . ("https://github.com/tree-sitter/tree-sitter-c" "master"))
+        (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp" "master"))
+        (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "master"))
+      ))
+  :preface
+    (defun setup-install-grammars ()
+      "Install Tree-sitter grammars if they are absent."
+      (interactive)
+      (dolist (grammar treesitter-grammars)
+        (add-to-list 'treesit-language-source-alist grammar)
+        (unless (treesit-language-available-p (car grammar))
+          (message "Installing Tree-sitter grammar for %s..." (car grammar))
+          (treesit-install-language-grammar (car grammar)))))
+    :config
+      (setup-install-grammars))
+
+  (use-package treesit-auto
+    :ensure t
+    :defer nil
+    :after treesit
+    :hook (after-init-hook . global-treesit-auto-mode)
+    :custom
+      (treesit-auto-install 'prompt)
+    :config
+      (treesit-auto-add-to-auto-mode-alist 'all))
 
 (when (file-exists-p custom-file)
   (load custom-file))
