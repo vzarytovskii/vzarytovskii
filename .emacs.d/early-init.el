@@ -106,7 +106,7 @@
               bidi-display-reordering 'left-to-right
               bidi-paragraph-direction 'left-to-right
 
-              ;mode-line-format nil
+              mode-line-format nil
 
               ns-use-native-fullscreen t
               ns-use-thin-smoothing t

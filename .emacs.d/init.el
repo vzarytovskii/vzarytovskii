@@ -54,6 +54,16 @@
   (use-package-hook-name-suffix nil)
   (use-package-verbose t))
 
+(use-package cond-let
+  :ensure t
+  :vc (:url "https://github.com/tarsius/cond-let" :rev "main"))
+
+(use-package llama)
+(use-package emacsql)
+(use-package closql :after emacsql)
+
+(use-package hydra :ensure t)
+
 (use-package compile-angel
   :ensure t
   :demand t
@@ -422,15 +432,133 @@ Partial word selected: transpose chars."
     :config
       (setup-install-grammars))
 
-  (use-package treesit-auto
-    :ensure t
-    :defer nil
-    :after treesit
-    :hook (after-init-hook . global-treesit-auto-mode)
-    :custom
-      (treesit-auto-install 'prompt)
-    :config
-      (treesit-auto-add-to-auto-mode-alist 'all))
+(use-package treesit-auto
+  :ensure t
+  :defer nil
+  :after treesit
+  :hook (after-init-hook . global-treesit-auto-mode)
+  :custom
+    (treesit-auto-install 'prompt)
+  :config
+    (treesit-auto-add-to-auto-mode-alist 'all))
+
+;; Git
+
+(use-package vc-mode
+  :ensure nil)
+
+(use-package diff-mode
+  :ensure nil
+  :hook (diff-mode-hook .(lambda ()
+                           (setq-local whitespace-style
+                                       '( face tabs tab-mark spaces space-mark trailing
+                                          indentation::space indentation::tab
+                                          newline newline-mark))
+                           (whitespace-mode)))
+  :after whitespace-mode)
+
+(use-package diff-hl
+  :config
+  (setq diff-hl-draw-borders nil
+        diff-hl-disable-on-remote t)
+  :custom
+  (defun enable-diff-hl-dired-locally ()
+    (if (file-remote-p default-directory)
+        (diff-hl-dired-mode -1)
+      (diff-hl-dired-mode 1)))
+
+  (add-hook 'prog-mode-hook #'diff-hl-mode)
+  (add-hook 'conf-mode-hook #'diff-hl-mode)
+  (add-hook 'dired-mode-hook #'enable-diff-hl-dired-locally)
+
+  (with-eval-after-load 'diff-hl
+    (add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
+    (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
+    ;; Highlight on-the-fly
+    (diff-hl-flydiff-mode 1)
+    (unless (display-graphic-p)
+      ;; Fall back to the display margin since the fringe is unavailable in tty
+      (diff-hl-margin-mode 1)
+      ;; Avoid restoring `diff-hl-margin-mode'
+      (with-eval-after-load 'desktop
+        (add-to-list 'desktop-minor-mode-table
+                     '(diff-hl-margin-mode nil))))))
+
+(use-package smerge-mode
+  :ensure nil
+  :config
+  (defhydra smerge-hydra
+    (:color pink :hint nil :post (smerge-auto-leave))
+    "
+  ^Move^       ^Keep^               ^Diff^                 ^Other^
+  ^^-----------^^-------------------^^---------------------^^-------
+  _n_ext       _b_ase               _<_: upper/base        _C_ombine
+  _p_rev       _u_pper              _=_: upper/lower       _r_esolve
+  ^^           _l_ower              _>_: base/lower        _k_ill current
+  ^^           _a_ll                _R_efine
+  ^^           _RET_: current       _E_diff
+  "
+    ("n" smerge-next)
+    ("p" smerge-prev)
+    ("b" smerge-keep-base)
+    ("u" smerge-keep-upper)
+    ("l" smerge-keep-lower)
+    ("a" smerge-keep-all)
+    ("RET" smerge-keep-current)
+    ("\C-m" smerge-keep-current)
+    ("<" smerge-diff-base-upper)
+    ("=" smerge-diff-upper-lower)
+    (">" smerge-diff-base-lower)
+    ("R" smerge-refine)
+    ("E" smerge-ediff)
+    ("C" smerge-combine-with-next)
+    ("r" smerge-resolve)
+    ("k" smerge-kill-current)
+    ("ZZ" (lambda ()
+            (interactive)
+            (save-buffer)
+            (bury-buffer))
+     "Save and bury buffer" :color blue)
+    ("q" nil "cancel" :color blue))
+  :hook (magit-diff-visit-file . (lambda ()
+                                   (when smerge-mode
+                                     (smerge-hydra/body)))))
+
+(use-package magit
+  :ensure t
+  :defer t
+  :demand nil
+  :commands (magit magit-status)
+  :custom
+    (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  :config
+    (setq
+      magit-revision-insert-related-refs nil
+      magit-diff-refine-hunk t
+      magit-diff-paint-whitespace nil
+      magit-commit-show-diff nil
+      magit-branch-direct-configure nil
+      magit-refresh-status-buffer t
+      magit-tramp-pipe-stty-settings 'pty
+      magit-status-buffer-switch-function 'switch-to-buffer
+      magit-post-display-buffer-hook
+        #'(lambda ()
+            (when (derived-mode-p 'magit-status-mode)
+              (delete-other-windows)))
+      magit-display-buffer-function
+        (lambda (buffer)
+          (display-buffer
+            buffer (if (and (derived-mode-p 'magit-mode)
+                            (memq (with-current-buffer buffer major-mode)
+                                  '(magit-process-mode
+                                    magit-revision-mode
+                                    magit-diff-mode
+                                    magit-stash-mode
+                                    magit-status-mode)))
+                      nil
+                    '(display-buffer-same-window))))))
+
+(use-package forge :after magit)
 
 (when (file-exists-p custom-file)
   (load custom-file))
