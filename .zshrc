@@ -41,7 +41,7 @@ if [[ -n $MY_PS1 ]]; then
 	PS1="$bg[yellow]$fg_bold[black] $MY_PS1 $reset_color :: $PS1"
 fi
 
-#alias cat="bat"
+alias cat="bat"
 alias br="br -h"
 alias lsa="br -dp"
 alias ls="exa"
