@@ -879,40 +879,6 @@ local plugins = {
     }
   }, { 'copilotlsp-nvim/copilot-lsp' },
   {
-    "chrisgrieser/nvim-origami",
-    event = "VeryLazy",
-    init = function()
-      vim.opt.foldlevel = 99
-      vim.opt.foldlevelstart = 99
-    end,
-    keys = {
-      { "<Left>",  function() require("origami").h() end, mode = { 'n' } },
-      { "<Right>", function() require("origami").l() end, mode = { 'n' } }
-
-    },
-    opts = {
-      useLspFoldsWithTreesitterFallback = {
-        enabled = true,
-        foldmethodIfNeitherIsAvailable = "indent"
-      },
-      pauseFoldsOnSearch = true,
-      foldtext = {
-        enabled = true,
-        padding = 3,
-        lineCount = {
-            template = "%d lines",
-            hlgroup = "Comment",
-        },
-        diagnosticsCount = true,
-        gitsignsCount = true,
-      },
-      autoFold = {
-        enabled = true,
-        kinds = { "comment", "imports" }
-      }
-    },
-  },
-  {
     'windwp/nvim-autopairs',
     event = "InsertEnter",
     config = true,
