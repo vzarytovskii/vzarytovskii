@@ -917,12 +917,8 @@ local plugins = {
     }
   },
   {
-    'esmuellert/vscode-diff.nvim',
-    enabled = false,
-    branch = 'next',
-    dependencies = { 'MunifTanjim/nui.nvim' },
+    'esmuellert/codediff.nvim',
     cmd = 'CodeDiff',
-    opts = {}
   },
   {
     'sindrets/diffview.nvim',
@@ -981,8 +977,15 @@ local plugins = {
       },
       integrations = {
         diffview = true,
+        code_diff = true,
         mini_pick = true,
         telescope = true
+      },
+      diff_viewer = 'diffview',
+      signs = {
+        hunk = { "+", "-" },
+        item = { "+", "-" },
+        section = { "+", "-" },
       }
     },
     config = function ()
@@ -1028,6 +1031,23 @@ local plugins = {
       { "<leader>pr", "<cmd>PRReviewMenu<cr>",    desc = "PR Review Menu" },
       { "<leader>p", ":<C-u>'<,'>PRSuggestChange<CR>", desc = "Suggest change", mode = "v" }
     },
+  },
+  {
+    "kdheepak/lazygit.nvim",
+    lazy = true,
+    cmd = {
+        "LazyGit",
+        "LazyGitConfig",
+        "LazyGitCurrentFile",
+        "LazyGitFilter",
+        "LazyGitFilterCurrentFile",
+    },
+    dependencies = {
+        "nvim-lua/plenary.nvim",
+    },
+    keys = {
+        { "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" }
+    }
   }
 }
 
