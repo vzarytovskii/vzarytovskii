@@ -965,6 +965,7 @@ local plugins = {
     dependencies = {
       'nvim-lua/plenary.nvim',
       'sindrets/diffview.nvim',
+      'esmuellert/codediff.nvim',
       'nvim-telescope/telescope.nvim'
     },
     opts = {
@@ -977,18 +978,31 @@ local plugins = {
       },
       integrations = {
         diffview = true,
-        code_diff = true,
+        codediff = true,
         mini_pick = true,
         telescope = true
       },
-      diff_viewer = 'diffview',
+      -- diff_viewer = 'diffview',
+      diff_viewer = 'codediff',
       signs = {
         hunk = { "+", "-" },
         item = { "+", "-" },
         section = { "+", "-" },
+      },
+      commit_editor = {
+        kind = "tab",
+        show_staged_diff = true,
+        spell_check = true
+      },
+      sections = {
+        untracked = {
+          folded = true,
+        },
       }
     },
-    config = function ()
+    config = function (_, opts)
+      require('neogit').setup(opts)
+
       vim.cmd.cabbrev('git', 'Neogit')
       vim.cmd.cabbrev('Git', 'Neogit')
 
@@ -1019,7 +1033,7 @@ local plugins = {
           skipped = "[Skipped]",
           cancelled = "[Cancelled]",
         },
-  },
+      },
     }
   },
   {
