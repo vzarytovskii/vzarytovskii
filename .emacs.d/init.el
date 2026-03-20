@@ -97,7 +97,7 @@
             (forward-line 1)))
         (message "Marked %d VC and %d built-in package(s) for upgrade."
                  vc-count builtin-count)
-        (package-menu-filter-by-marked))))
+        (package-menu-filter-upgradable))))
   (advice-add 'package-menu-mark-upgrades :after #'u/package-menu-mark-vc-and-builtin)
 
   (defun u/package-menu-execute (orig-fn &rest args)
@@ -216,7 +216,8 @@
 
     (push ".emacs.d/init.el" compile-angel-excluded-files)
     (push ".emacs.d/early-init.el" compile-angel-excluded-files)
-    (push "lisp/subdirs.el" compile-angel-excluded-files))
+    (push "lisp/subdirs.el" compile-angel-excluded-files)
+    (push "magit-section.el" compile-angel-excluded-files))
 
   :config
   (u/compile-angel-setup-exclusions)
