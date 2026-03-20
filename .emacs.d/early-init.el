@@ -118,7 +118,7 @@
 
               file-name-handler-alist nil
 
-              vc-handled-backends nil
+              ;vc-handled-backends nil
 
               read-process-output-max (* 1024 1024)
 
@@ -182,7 +182,7 @@
 
 ;; On startup, set the sane defaults
 (defun emacs-startup ()
-  (set-default
+  (setq-default
         file-name-handler-alist default-file-name-handler-alist
         vc-handled-backends default-vc-handled-backends
         gc-cons-percentage gc-cons-default-percentage

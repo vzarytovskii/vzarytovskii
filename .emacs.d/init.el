@@ -31,6 +31,105 @@
                         "openssl s_client -connect %h:%p -no_ssl2 -no_ssl3 -ign_eof"))
 (package-initialize)
 
+(defun u/package-vc-needs-upgrade-p (desc)
+  "Check if VC package DESC has upstream changes by comparing local and remote HEADs."
+  (let ((pkg-dir (package-desc-dir desc)))
+    (when (and pkg-dir (file-directory-p (expand-file-name ".git" pkg-dir)))
+      (let ((default-directory pkg-dir))
+        (= 0 (process-file "git" nil nil nil "fetch" "--quiet"))
+        (not (string= (string-trim (shell-command-to-string "git rev-parse HEAD"))
+                       (string-trim (shell-command-to-string "git rev-parse @{u}"))))))))
+
+(defun u/package-upgrade-all (&rest _args)
+  "Upgrade all packages, handling VC and archive-missing packages."
+  (interactive "P")
+  (package-refresh-contents)
+  (let ((upgradable 0))
+    (dolist (pkg (mapcar #'car package-alist))
+      (let ((desc (cadr (assq pkg package-alist))))
+        (cond
+         ((null desc)
+          (message "Skipping %s (no descriptor)" pkg))
+         ((package-vc-p desc)
+          (if (u/package-vc-needs-upgrade-p desc)
+              (progn
+                (message "VC-upgrading %s..." pkg)
+                (ignore-errors (package-vc-upgrade desc))
+                (cl-incf upgradable))
+            (message "Skipping %s (no upstream changes)" pkg)))
+         ((when-let ((avail (cadr (assq pkg package-archive-contents))))
+            (version-list-< (package-desc-version desc)
+                            (package-desc-version avail)))
+          (message "Upgrading %s..." pkg)
+          (ignore-errors (package-upgrade pkg))
+          (cl-incf upgradable))
+         (t nil))))
+    (message "Done. %d package(s) upgraded." upgradable)))
+(advice-add 'package-upgrade-all :override #'u/package-upgrade-all)
+
+(with-eval-after-load 'package
+  (defun u/package-menu-mark-vc-and-builtin (&rest _)
+    "Mark VC-installed and upgradable built-in packages in package menu."
+    (when (derived-mode-p 'package-menu-mode)
+      (let ((vc-count 0) (builtin-count 0))
+        (save-excursion
+          (goto-char (point-min))
+          (while (not (eobp))
+            (let ((desc (tabulated-list-get-id)))
+              (when (package-desc-p desc)
+                (let* ((name (package-desc-name desc))
+                       (avail (cadr (assq name package-archive-contents))))
+                  (cond
+                   ((and (package-vc-p desc)
+                         (u/package-vc-needs-upgrade-p desc))
+                    (message "Marking VC package: %s" name)
+                    (tabulated-list-put-tag "U")
+                    (cl-incf vc-count))
+                   ((and (package-built-in-p name)
+                         avail
+                         (version-list-< (package-desc-version desc)
+                                         (package-desc-version avail)))
+                    (message "Marking built-in package: %s (%s -> %s)" name
+                             (package-version-join (package-desc-version desc))
+                             (package-version-join (package-desc-version avail)))
+                    (tabulated-list-put-tag "U")
+                    (cl-incf builtin-count))))))
+            (forward-line 1)))
+        (message "Marked %d VC and %d built-in package(s) for upgrade."
+                 vc-count builtin-count)
+        (package-menu-filter-by-marked))))
+  (advice-add 'package-menu-mark-upgrades :after #'u/package-menu-mark-vc-and-builtin)
+
+  (defun u/package-menu-execute (orig-fn &rest args)
+    "Handle VC and built-in packages during package menu execute."
+    (let (vc-descs builtin-descs)
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (when (eq (char-after (line-beginning-position)) ?U)
+            (let ((desc (tabulated-list-get-id)))
+              (when (package-desc-p desc)
+                (cond
+                 ((package-vc-p desc)
+                  (push desc vc-descs)
+                  (tabulated-list-put-tag " "))
+                 ((package-built-in-p (package-desc-name desc))
+                  (push desc builtin-descs)
+                  (tabulated-list-put-tag " "))))))
+          (forward-line 1)))
+      (dolist (desc vc-descs)
+        (message "VC-upgrading %s..." (package-desc-name desc))
+        (ignore-errors (package-vc-upgrade desc)))
+      (dolist (desc builtin-descs)
+        (let ((name (package-desc-name desc)))
+          (when-let ((avail (cadr (assq name package-archive-contents))))
+            (message "Upgrading built-in %s..." name)
+            (ignore-errors (package-install avail)))))
+      (apply orig-fn args)
+      (when (or vc-descs builtin-descs)
+        (package-menu--generate t t))))
+  (advice-add 'package-menu-execute :around #'u/package-menu-execute))
+
 (unless (package-installed-p 'use-package)
   (unless package-archive-contents
     (package-refresh-contents))
@@ -588,7 +687,10 @@ Partial word selected: transpose chars."
                       nil
                     '(display-buffer-same-window))))))
 
-(use-package forge :after magit)
+(use-package forge
+  :ensure t
+  :vc (:url "https://github.com/magit/forge" :rev "main")
+ :after magit)
 
 (when (file-exists-p custom-file)
   (load custom-file))
