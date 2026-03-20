@@ -54,15 +54,39 @@
   (use-package-hook-name-suffix nil)
   (use-package-verbose t))
 
+
+(use-package compat
+  :ensure t
+  :vc (:url "https://github.com/emacs-compat/compat" :rev "main"))
+
 (use-package cond-let
   :ensure t
   :vc (:url "https://github.com/tarsius/cond-let" :rev "main"))
 
-(use-package llama)
-(use-package emacsql)
-(use-package closql :after emacsql)
+(use-package llama
+  :ensure t
+  :vc (:url "https://github.com/tarsius/llama" :rev "main"))
+
+(use-package seq)
+
+(use-package transient
+  :ensure t
+  :vc (:url "https://github.com/magit/transient" :rev "main"))
+
+(use-package with-editor
+  :ensure t
+  :vc (:url "https://github.com/magit/with-editor" :rev "main"))
+
+(use-package emacsql
+  :ensure t
+  :vc (:url "https://github.com/magit/emacsql" :rev "main"))
+
+(use-package closql :after emacsql
+  :ensure t
+  :vc (:url "https://github.com/magit/closql" :rev "main"))
 
 (use-package hydra :ensure t)
+
 
 (use-package compile-angel
   :ensure t
@@ -143,8 +167,7 @@
   :demand t
   :defer nil
   :hook
-  ((prog-mode-hook . display-line-numbers-mode)
-   (after-init-hook . hl-line-mode))
+  ((prog-mode-hook . display-line-numbers-mode))
   :bind (("C-z"             . nil)
          ("C-x C-z"         . nil)
          ("C-h h"           . nil)
@@ -384,15 +407,20 @@ Partial word selected: transpose chars."
 
   (fset 'yes-or-no-p 'y-or-n-p))
 
+(use-package hl-line
+  :ensure nil
+  :defer t
+  :demand nil
+  :hook ((prog-mode-hook text-mode-hook) . hl-line-mode))
+
 (use-package centered-window
   :ensure t
   :defer t
   :demand nil
   :commands centered-window-mode
-  :hook (after-init-hook . centered-window-mode)
+  ;:hook (after-init-hook . centered-window-mode)
   :custom
   (cwm-centered-window-width 150))
-
 
 (use-package mason
   :ensure t
@@ -528,6 +556,8 @@ Partial word selected: transpose chars."
   :ensure t
   :defer t
   :demand nil
+  :vc (:url "https://github.com/magit/magit" :rev "main")
+  :after (:all transient)
   :commands (magit magit-status)
   :custom
     (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)

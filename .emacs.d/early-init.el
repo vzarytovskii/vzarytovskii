@@ -182,7 +182,8 @@
 
 ;; On startup, set the sane defaults
 (defun emacs-startup ()
-  (setq file-name-handler-alist default-file-name-handler-alist
+  (set-default
+        file-name-handler-alist default-file-name-handler-alist
         vc-handled-backends default-vc-handled-backends
         gc-cons-percentage gc-cons-default-percentage
         gc-cons-threshold gc-cons-default-threshold
