@@ -97,7 +97,27 @@
             (forward-line 1)))
         (message "Marked %d VC and %d built-in package(s) for upgrade."
                  vc-count builtin-count)
-        (package-menu-filter-upgradable))))
+        (let ((marked-names nil))
+          (save-excursion
+            (goto-char (point-min))
+            (while (not (eobp))
+              (when (eq (char-after (line-beginning-position)) ?U)
+                (let ((desc (tabulated-list-get-id)))
+                  (when (package-desc-p desc)
+                    (push (package-desc-name desc) marked-names))))
+              (forward-line 1)))
+          (when marked-names
+            (setq tabulated-list-entries
+                  (seq-filter
+                   (lambda (entry)
+                     (memq (package-desc-name (car entry)) marked-names))
+                   tabulated-list-entries))
+            (tabulated-list-print t t)
+            (save-excursion
+              (goto-char (point-min))
+              (while (not (eobp))
+                (tabulated-list-put-tag "U")
+                (forward-line 1))))))))
   (advice-add 'package-menu-mark-upgrades :after #'u/package-menu-mark-vc-and-builtin)
 
   (defun u/package-menu-execute (orig-fn &rest args)
