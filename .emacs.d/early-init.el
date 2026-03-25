@@ -37,6 +37,18 @@
     (message "Native JSON is available")
   (message "Native JSON is *not* available"))
 
+;; Workaround for Emacs 31 native-compilation bug: native-compiled macroexp.el
+;; hardwires calls to the macroexpand-1 C subroutine, bypassing function advice.
+;; cl-symbol-macrolet relies on advising macroexpand-1 for symbol-macro expansion,
+;; so with-slots (and anything using cl-symbol-macrolet) is broken.
+;; Force-reload macroexp.el from Lisp source so calls go through the symbol table.
+(when (and (fboundp 'native-comp-available-p)
+           (native-comp-available-p)
+           (fboundp 'subr-native-elisp-p)
+           (subr-native-elisp-p (symbol-function 'macroexp--expand-all)))
+  (load (concat (file-name-sans-extension (locate-library "macroexp")) ".el")
+        nil nil 'nosuffix))
+
 (defconsts
   (default-font-name "Hack")
   (default-file-name-handler-alist file-name-handler-alist)
