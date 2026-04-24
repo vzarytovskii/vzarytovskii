@@ -18,11 +18,7 @@ local lsp_configs = {
       buildDirectory = 'build',
     },
   },
-  ['copilot-language-server'] = {
-    cmd = { 'copilot-language-server', '--stdio', },
-    root_markers = { '.git' },
-    single_file_support = true,
-  },
+
   ['lua-language-server'] = {
     cmd = { 'lua-language-server' },
     filetypes = { 'lua' },
@@ -295,8 +291,7 @@ local plugins = {
       italic_inlayhints = false,
       terminal_colors = true
     },
-    config = function(_, opts)
-      require('vscode').setup(opts)
+    config = function()
       vim.cmd("colorscheme vscode")
     end,
   },
@@ -318,30 +313,29 @@ local plugins = {
   {
     'shortcuts/no-neck-pain.nvim',
     lazy = false,
+    opts = {
+      buffers = {
+        scratchPad = {
+          enabled = false,
+        },
+        colors = {
+          blend = -0.2
+        },
+        bo = {
+          readonly = true,
+          modifiable = false,
+        },
+        wo = {
+          fillchars = "eob: ",
+          statusline = " ",
+        },
+      },
+      autocmds = {
+        enableOnVimEnter = false,
+        reloadOnColorSchemeChange = true,
+      },
+    },
     config = function()
-      require('no-neck-pain').setup({
-        buffers = {
-          scratchPad = {
-            enabled = false,
-          },
-          colors = {
-            blend = -0.2
-          },
-          bo = {
-            readonly = true,
-            modifiable = false,
-          },
-          wo = {
-            fillchars = "eob: ",
-            statusline = " ",
-          },
-        },
-        autocmds = {
-          enableOnVimEnter = false,
-          reloadOnColorSchemeChange = true,
-        },
-      })
-
       local min_width = 200
       local debounce_ms = 50
       local timer = nil
@@ -402,11 +396,6 @@ local plugins = {
         end,
       })
     end,
-  },
-  {
-    'y3owk1n/time-machine.nvim',
-    cmd = { 'TimeMachineToggle', 'TimeMachinePurgeBuffer', 'TimeMachinePurgeAll', 'TimeMachineLogShow', 'TimeMachineLogClear' },
-    opts = {},
   },
   {
     'stevearc/oil.nvim',
@@ -503,6 +492,9 @@ local plugins = {
     cmd = 'Copilot',
     events = { 'InsertEnter' },
     opts = {
+      logger = {
+        print_log_level = vim.log.levels.OFF,
+      },
       suggestion = {
         enabled = true,
         auto_trigger = true,
@@ -589,47 +581,36 @@ local plugins = {
   },
   {
     'NeogitOrg/neogit',
-    cmd = 'Neogit',
-    config = function()
-      require('neogit').setup({
-        graph_style = 'unicode',
-        process_spinner = true,
-        highlight = {
-          italic = false,
-          bold = true,
-          underline = true
-        },
-        integrations = {
-          diffview = true,
-          codediff = true,
-          mini_pick = true,
-          telescope = true
-        },
-        diff_viewer = 'codediff',
-        signs = {
-          hunk = { "+", "-" },
-          item = { "+", "-" },
-          section = { "+", "-" },
-        },
-        commit_editor = {
-          kind = "tab",
-          show_staged_diff = true,
-          spell_check = true
-        },
-        sections = {
-          untracked = { folded = true },
-        }
-      })
-
-      vim.cmd.cabbrev('git', 'Neogit')
-      vim.cmd.cabbrev('Git', 'Neogit')
-
-      vim.api.nvim_create_user_command(
-        'Git',
-        'Neogit',
-        { bang = true, desc = 'Alias to Neogit' }
-      )
-    end,
+    events = { 'VimEnter' },
+    opts = {
+      graph_style = 'unicode',
+      process_spinner = true,
+      highlight = {
+        italic = false,
+        bold = true,
+        underline = true
+      },
+      integrations = {
+        diffview = true,
+        codediff = true,
+        mini_pick = true,
+        telescope = true
+      },
+      diff_viewer = 'codediff',
+      signs = {
+        hunk = { "+", "-" },
+        item = { "+", "-" },
+        section = { "+", "-" },
+      },
+      commit_editor = {
+        kind = "tab",
+        show_staged_diff = true,
+        spell_check = true
+      },
+      sections = {
+        untracked = { folded = true },
+      },
+    }
   },
   {
     'pwntester/octo.nvim',
@@ -666,19 +647,33 @@ vim.api.nvim_create_autocmd("PackChanged", {
     local build = ev.data.spec.data and ev.data.spec.data.build
     if not build then return end
 
+    local name = ev.data.spec.name
     if build:sub(1, 1) == ':' then
-      vim.cmd('packadd ' .. ev.data.spec.name)
-      vim.cmd(build:sub(2))
+      vim.cmd('packadd ' .. name)
+      local ok, err = pcall(vim.cmd, build:sub(2))
+      if not ok then
+        vim.notify(('Build failed for %s: %s'):format(name, err), vim.log.levels.ERROR)
+      end
     else
-      vim.system({ "sh", "-c", build }, {
+      local result = vim.system({ "sh", "-c", build }, {
         cwd = ev.data.path,
         text = true,
-      })
+      }):wait()
+      if result.code ~= 0 then
+        vim.notify(
+          ('Build failed for %s (exit %d)\n%s'):format(name, result.code, result.stderr or ''),
+          vim.log.levels.ERROR
+        )
+      end
     end
   end,
 })
 
+local pack_fields = { src = true, name = true, version = true }
 local plugin_meta = {}
+local eager_specs = {}
+local deferred_specs = {}
+local managed_names = {}
 
 for _, spec in ipairs(plugins) do
   local url = spec[1]
@@ -687,7 +682,7 @@ for _, spec in ipairs(plugins) do
     url = 'https://github.com/' .. url
   end
   spec.src = url
-  local pack_fields = { src = true, name = true, version = true }
+
   local meta = {}
   for k, v in pairs(spec) do
     if not pack_fields[k] then
@@ -695,40 +690,129 @@ for _, spec in ipairs(plugins) do
       spec[k] = nil
     end
   end
-  plugin_meta[spec.src] = next(meta) and meta or nil
-end
+  if next(meta) then plugin_meta[spec.src] = meta end
 
-local eager_plugins = {}
-local deferred_plugins = {}
+  spec.name = spec.name or spec.src:gsub('%.git$', ''):match('[^/]+$')
+  managed_names[spec.name] = true
 
-for _, spec in ipairs(plugins) do
-  local m = plugin_meta[spec.src] or {}
-  if m.lazy == false then
-    table.insert(eager_plugins, spec)
+  if meta.lazy == false then
+    table.insert(eager_specs, spec)
   else
-    table.insert(deferred_plugins, spec)
+    table.insert(deferred_specs, spec)
   end
 end
 
-vim.pack.add(eager_plugins)
-vim.pack.add(deferred_plugins, { load = false })
+local function setup_plugin(name, meta)
+  if not meta then return end
+  if not meta.config and not meta.opts then return end
+  local opts = meta.opts or {}
+  local mod_name = name:gsub('%.nvim$', ''):gsub('%.lua$', ''):gsub('^nvim%-', ''):gsub('^nvim_', '')
+  local ok, mod = pcall(require, mod_name)
+  if not ok then
+    ok, mod = pcall(require, name)
+  end
+  if ok and type(mod) == 'table' and mod.setup then
+    mod.setup(opts)
+  end
+  if meta.config then
+    meta.config(ok and mod or nil, opts)
+  end
+end
+
+local loaded_plugins = {}
+
+local function load_and_setup(spec, meta)
+  if loaded_plugins[spec.src] then return end
+  loaded_plugins[spec.src] = true
+  vim.pack.add({ spec }, { load = true })
+  setup_plugin(spec.name, meta)
+end
+
+-- Load eager plugins and run their setup immediately so colorschemes / UI
+-- plugins don't flicker through a VimEnter detour.
+vim.pack.add(eager_specs)
+for _, spec in ipairs(eager_specs) do
+  loaded_plugins[spec.src] = true
+  setup_plugin(spec.name, plugin_meta[spec.src])
+end
+
+vim.pack.add(deferred_specs, { load = false })
+
+for _, spec in ipairs(deferred_specs) do
+  local m = plugin_meta[spec.src] or {}
+  local function trigger() load_and_setup(spec, m) end
+  local has_trigger = m.events or m.cmd or m.ft or m.keys
+
+  if m.events then
+    vim.api.nvim_create_autocmd(m.events, { once = true, callback = trigger })
+  end
+
+  if m.cmd then
+    local cmds = type(m.cmd) == 'string' and { m.cmd } or m.cmd
+    for _, cmd in ipairs(cmds) do
+      vim.api.nvim_create_user_command(cmd, function(args)
+        vim.api.nvim_del_user_command(cmd)
+        local ok, err = pcall(load_and_setup, spec, m)
+        if not ok then
+          vim.notify(('Failed to load %s: %s'):format(spec.name, err), vim.log.levels.ERROR)
+          return
+        end
+        vim.api.nvim_cmd({
+          cmd = cmd,
+          args = args.fargs,
+          bang = args.bang,
+          range = args.range > 0 and { args.line1, args.line2 } or nil,
+          mods = args.smods,
+        }, {})
+      end, { nargs = '*', bang = true, range = true })
+    end
+  end
+
+  if m.ft then
+    local fts = type(m.ft) == 'string' and { m.ft } or m.ft
+    vim.api.nvim_create_autocmd('FileType', { pattern = fts, once = true, callback = trigger })
+  end
+
+  if m.keys then
+    for _, keyspec in ipairs(m.keys) do
+      local lhs = keyspec[1]
+      local modes = keyspec.mode or { 'n' }
+      if type(modes) == 'string' then modes = { modes } end
+      local rhs = keyspec[2]
+      local key_opts = { desc = keyspec.desc, nowait = keyspec.nowait }
+
+      if type(rhs) == 'function' then
+        local fn = rhs
+        vim.keymap.set(modes, lhs, function()
+          load_and_setup(spec, m)
+          fn()
+        end, key_opts)
+      elseif type(rhs) == 'string' then
+        vim.keymap.set(modes, lhs, function()
+          load_and_setup(spec, m)
+          local keys = vim.api.nvim_replace_termcodes(rhs, true, true, true)
+          vim.api.nvim_feedkeys(keys, 'mt', false)
+        end, key_opts)
+      end
+    end
+  end
+
+  if not has_trigger and (m.config or m.opts) then
+    vim.schedule(trigger)
+  end
+end
 
 vim.api.nvim_create_user_command('PackUpdate', function(args)
   vim.pack.update(#args.fargs > 0 and args.fargs or nil)
 end, {
   nargs = '*',
   complete = function()
-    return vim.iter(vim.pack.get()):map(function(p) return p.spec.name end):totable()
+    return vim.iter(vim.pack.get())
+      :filter(function(p) return managed_names[p.spec.name] end)
+      :map(function(p) return p.spec.name end)
+      :totable()
   end,
 })
-
-local managed_names = {}
-for _, list in ipairs({ eager_plugins, deferred_plugins }) do
-  for _, spec in ipairs(list) do
-    local name = spec.name or spec.src:gsub('%.git$', ''):match('[^/]+$')
-    managed_names[name] = true
-  end
-end
 
 vim.api.nvim_create_user_command('PackClean', function()
   local orphans = vim.iter(vim.pack.get())
@@ -770,116 +854,6 @@ vim.api.nvim_create_user_command('UpdateAll', function()
     continue()
   end
 end, { desc = 'Clean packages, update plugins, and update Mason tools' })
-
-local function setup_plugin(name, meta)
-  if not meta then return end
-  if meta.config then
-    meta.config(nil, meta.opts or {})
-  elseif meta.opts then
-    local mod_name = name:gsub('%.nvim$', ''):gsub('%.lua$', ''):gsub('^nvim%-', ''):gsub('^nvim_', '')
-    local ok, mod = pcall(require, mod_name)
-    if ok and mod.setup then
-      mod.setup(meta.opts)
-    else
-      ok, mod = pcall(require, name)
-      if ok and mod.setup then mod.setup(meta.opts) end
-    end
-  end
-end
-
-local loaded_plugins = {}
-
-local function load_and_setup(spec, meta)
-  if loaded_plugins[spec.src] then return end
-  loaded_plugins[spec.src] = true
-  vim.pack.add({ spec }, { load = true })
-  setup_plugin(spec.name, meta)
-end
-
-for _, plug in ipairs(vim.pack.get()) do
-  local spec = plug.spec
-  if not managed_names[spec.name] then goto continue end
-  local m = plugin_meta[spec.src] or {}
-
-  if m.lazy == false then
-    vim.api.nvim_create_autocmd('VimEnter', {
-      once = true,
-      callback = function()
-        setup_plugin(spec.name, m)
-      end,
-    })
-    goto continue
-  end
-
-  local has_trigger = m.events or m.cmd or m.ft or m.keys
-
-  if m.events then
-    vim.api.nvim_create_autocmd(m.events, {
-      once = true,
-      callback = function()
-        load_and_setup(spec, m)
-      end,
-    })
-  end
-
-  if m.cmd then
-    local cmds = type(m.cmd) == 'string' and { m.cmd } or m.cmd
-    for _, cmd in ipairs(cmds) do
-      vim.api.nvim_create_user_command(cmd, function(args)
-        vim.api.nvim_del_user_command(cmd)
-        load_and_setup(spec, m)
-        vim.cmd(cmd .. ' ' .. (args.args or ''))
-      end, { nargs = '*', bang = true, complete = function(arg_lead, cmd_line, cursor_pos)
-        vim.api.nvim_del_user_command(cmd)
-        load_and_setup(spec, m)
-        return vim.fn.getcompletion(cmd_line, 'cmdline')
-      end })
-    end
-  end
-
-  if m.ft then
-    local fts = type(m.ft) == 'string' and { m.ft } or m.ft
-    vim.api.nvim_create_autocmd('FileType', {
-      pattern = fts,
-      once = true,
-      callback = function()
-        load_and_setup(spec, m)
-      end,
-    })
-  end
-
-  if m.keys then
-    for _, keyspec in ipairs(m.keys) do
-      local lhs = keyspec[1]
-      local modes = keyspec.mode or { 'n' }
-      if type(modes) == 'string' then modes = { modes } end
-      local rhs = keyspec[2]
-      local key_opts = { desc = keyspec.desc, nowait = keyspec.nowait }
-
-      if type(rhs) == 'function' then
-        local fn = rhs
-        vim.keymap.set(modes, lhs, function()
-          load_and_setup(spec, m)
-          fn()
-        end, key_opts)
-      elseif type(rhs) == 'string' then
-        vim.keymap.set(modes, lhs, function()
-          load_and_setup(spec, m)
-          local keys = vim.api.nvim_replace_termcodes(rhs, true, true, true)
-          vim.api.nvim_feedkeys(keys, 'mt', false)
-        end, key_opts)
-      end
-    end
-  end
-
-  if not has_trigger then
-    vim.schedule(function()
-      load_and_setup(spec, m)
-    end)
-  end
-
-  ::continue::
-end
 
 local configure_global_keymaps = function ()
   local opts = { noremap = true, silent = true }
