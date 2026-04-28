@@ -463,7 +463,7 @@ local plugins = {
     },
   },
   {
-    'sindrets/diffview.nvim',
+    'dlyongemallo/diffview.nvim',
     cmd = { 'DiffviewOpen', 'DiffviewFileHistory' },
     config = function()
       local actions = require('diffview.actions')
@@ -481,7 +481,7 @@ local plugins = {
           }
         },
         hooks = {
-          diff_buf_win_enter = function(bufnr)
+          diff_buf_win_enter = function(_)
             vim.opt_local.foldenable = false
           end
         },
