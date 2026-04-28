@@ -27,7 +27,6 @@ local lsp_configs = {
       buildDirectory = 'build',
     },
   },
-
   ['lua-language-server'] = {
     cmd = { 'lua-language-server' },
     filetypes = { 'lua' },
@@ -208,8 +207,8 @@ local configure_defaults = function(vim)
     vim.g.neovide_light_radius = 0
   end
 
-  vim.opt.smartcase = true
   vim.opt.ignorecase = true
+  vim.opt.smartcase = true
 
   vim.opt.wildoptions = "pum,fuzzy,exacttext"
   vim.opt.wildmode = "longest:full,full"
@@ -284,39 +283,39 @@ require('vim._core.ui2').enable({
 })
 
 local plugins = {
-  { 'nvim-lua/plenary.nvim',       lazy = false },
-  { 'MunifTanjim/nui.nvim',        lazy = false },
-  { 'nvim-tree/nvim-web-devicons', lazy = false, opts = {} },
-  {
-    'nvim-telescope/telescope-fzf-native.nvim',
-    lazy = false,
-    build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install',
-  },
-  {
-    'nvim-telescope/telescope.nvim',
-    lazy = false,
-    opts = {
-      extensions = {
-        fzf = {
-          fuzzy = true,
-          override_generic_sorter = true,
-          override_file_sorter = true,
-          case_mode = "smart_case",
-        }
-      }
-    },
-    keys = {
-      { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
-      { '<leader>ff',      mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
-
-      { "<leader>/",       mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
-      { "<leader>gg",      mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
-      { "ß",               mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
-
-      { "<leader>bs",      mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
-      { "<leader>sd",      mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end,               desc = "Diagnostics" },
-    },
-  },
+  { 'nvim-lua/plenary.nvim', lazy = false },
+  -- { 'MunifTanjim/nui.nvim',        lazy = false },
+  -- { 'nvim-tree/nvim-web-devicons', lazy = false, opts = {} },
+  -- {
+  --  'nvim-telescope/telescope-fzf-native.nvim',
+  --  lazy = false,
+  --  build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install',
+  -- },
+  --{
+  --  'nvim-telescope/telescope.nvim',
+  --  lazy = false,
+  --  opts = {
+  --    extensions = {
+  --      fzf = {
+  --        fuzzy = true,
+  --        override_generic_sorter = true,
+  --        override_file_sorter = true,
+  --        case_mode = "smart_case",
+  --      }
+  --    }
+  --  },
+  --  keys = {
+  --    { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
+  --    { '<leader>ff',      mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
+  --
+  --    { "<leader>/",       mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
+  --    { "<leader>gg",      mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
+  --    { "ß",               mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
+  --
+  --    { "<leader>bs",      mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
+  --    { "<leader>sd",      mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end,               desc = "Diagnostics" },
+  --  },
+  --},
   {
     'wsdjeg/rooter.nvim',
     lazy = false,
@@ -464,10 +463,6 @@ local plugins = {
     },
   },
   {
-    'esmuellert/codediff.nvim',
-    cmd = 'CodeDiff',
-  },
-  {
     'sindrets/diffview.nvim',
     cmd = { 'DiffviewOpen', 'DiffviewFileHistory' },
     config = function()
@@ -511,11 +506,8 @@ local plugins = {
       },
       integrations = {
         diffview = true,
-        codediff = true,
-        mini_pick = true,
-        telescope = true
       },
-      diff_viewer = 'codediff',
+      diff_viewer = 'diffview',
       signs = {
         hunk = { "+", "-" },
         item = { "+", "-" },
@@ -535,7 +527,7 @@ local plugins = {
     'pwntester/octo.nvim',
     cmd = 'Octo',
     opts = {
-      picker = 'telescope',
+      picker = 'default',
       enable_builtin = true,
       use_timeline_icons = false,
       runs = {
@@ -1129,7 +1121,7 @@ local configure_lsp = function(vim, lsp_configs)
 
       vim.notify(
         string.format('[LSP] %s (buf %d): %s', client.name, bufnr, table.concat(enabled_methods, ', ')),
-        vim.log.levels.DEBUG
+        vim.log.levels.TRACE
       )
 
       if has_format then
