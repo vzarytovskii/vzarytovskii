@@ -1,5 +1,12 @@
 local vim = vim
 
+do
+  local mason_bin = vim.fn.stdpath('data') .. '/mason/bin'
+  if not (vim.env.PATH or ''):find(mason_bin, 1, true) then
+    vim.env.PATH = mason_bin .. (vim.fn.has('win32') == 1 and ';' or ':') .. (vim.env.PATH or '')
+  end
+end
+
 local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'powershell', 'xml' }
 local tools = { 'clang-format', 'codelldb' }
 
@@ -7,13 +14,14 @@ local lsp_configs = {
   clangd = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
     root_markers = { '.clangd', 'compile_commands.json', '.git', 'CMakeLists.txt' },
-    filetypes = { 'c', 'cpp', 'h', 'hpp', 'cxx', 'c++' },
-    single_file_support = true,
+    filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
+    workspace_required = false,
   },
   ['cmake-language-server'] = {
     cmd = { 'cmake-language-server' },
     filetypes = { 'cmake' },
     root_markers = { 'CMakePresets.json', 'CTestConfig.cmake', '.git', 'build', 'cmake' },
+    workspace_required = false,
     init_options = {
       buildDirectory = 'build',
     },
@@ -22,7 +30,8 @@ local lsp_configs = {
   ['lua-language-server'] = {
     cmd = { 'lua-language-server' },
     filetypes = { 'lua' },
-    root_markers = { '.git', 'lua' },
+    root_markers = { '.luarc.json', '.luarc.jsonc', '.git', 'lua' },
+    workspace_required = false,
     settings = {
       Lua = {
         runtime = {
@@ -45,12 +54,13 @@ local lsp_configs = {
     cmd = { 'marksman' },
     root_markers = { '.marksman.toml', '.git', '*.md' },
     filetypes = { 'markdown' },
-    single_file_support = true,
+    workspace_required = false,
   },
   ['yaml-language-server'] = {
     cmd = { 'yaml-language-server', '--stdio' },
     filetypes = { 'yaml', 'yaml.docker-compose', 'yaml.gitlab', 'yaml.helm-values' },
     root_markers = { '.git' },
+    workspace_required = false,
     settings = {
       redhat = { telemetry = { enabled = false } },
       yaml = { format = { enable = true } },
@@ -211,21 +221,6 @@ require('vim._core.ui2').enable({
     },
   },
 })
-
-local merge_table = function (t1, t2)
-    for k,v in pairs(t2) do
-        if type(v) == "table" then
-            if type(t1[k] or false) == "table" then
-                merge_table(t1[k] or {}, t2[k] or {})
-            else
-                t1[k] = v
-            end
-        else
-            t1[k] = v
-        end
-    end
-    return t1
-end
 
 local plugins = {
   { 'nvim-lua/plenary.nvim', lazy = false },
@@ -450,11 +445,6 @@ local plugins = {
     end,
   },
   { 'nvim-treesitter/nvim-treesitter-context', lazy = false },
-  {
-    'andersevenrud/nvim_context_vt',
-    events = { 'BufReadPost', 'BufNewFile' },
-    opts = { enable = true, prefix = '// ' },
-  },
   {
     'mason-org/mason.nvim',
     cmd = { 'Mason', 'MasonInstall', 'MasonUninstall', 'MasonUpdate', 'MasonLog' },
@@ -1144,6 +1134,7 @@ local configure_lsp = function(vim, lsp_configs)
       },
     },
     root_markers = { '.git' },
+    workspace_required = false,
   })
 
   for name, config in pairs(lsp_configs) do
@@ -1175,7 +1166,7 @@ local configure_lsp = function(vim, lsp_configs)
       end
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentColor, bufnr) then
-        vim.lsp.document_color.enable(true, bufnr, { style = 'virtual' })
+        vim.lsp.document_color.enable(true, { bufnr = bufnr, style = 'virtual' })
       end
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_semanticTokens_full, bufnr) then
