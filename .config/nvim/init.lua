@@ -7,11 +7,12 @@ do
   end
 end
 
-local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust', 'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'powershell', 'xml' }
+local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust',
+  'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'powershell', 'xml' }
 local tools = { 'clang-format', 'codelldb' }
 
 local lsp_configs = {
-  clangd = {
+  ['clangd'] = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
     root_markers = { '.clangd', 'compile_commands.json', '.git', 'CMakeLists.txt' },
     filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
@@ -50,7 +51,7 @@ local lsp_configs = {
       },
     },
   },
-  marksman = {
+  ['marksman'] = {
     cmd = { 'marksman' },
     root_markers = { '.marksman.toml', '.git', '*.md' },
     filetypes = { 'markdown' },
@@ -68,11 +69,71 @@ local lsp_configs = {
     on_init = function(client)
       client.server_capabilities.documentFormattingProvider = true
     end,
-  }
+  },
+  ['copilot-language-server'] = {
+    cmd = { 'copilot-language-server', '--stdio' },
+    root_markers = { '.git' },
+    workspace_required = false,
+    init_options = {
+      editorInfo = {
+        name = 'Neovim',
+        version = tostring(vim.version()),
+      },
+      editorPluginInfo = {
+        name = 'Neovim',
+        version = tostring(vim.version()),
+      },
+    },
+    settings = {
+      telemetry = {
+        telemetryLevel = 'all',
+      },
+    },
+    on_attach = function(client, bufnr)
+      vim.api.nvim_buf_create_user_command(bufnr, 'LspCopilotSignIn', function()
+        client:request(
+          'signIn',
+          vim.empty_dict(),
+          function(err, result)
+            if err then
+              vim.notify(err.message, vim.log.levels.ERROR)
+              return
+            end
+            if result.command then
+              local code = result.userCode
+              local command = result.command
+              vim.fn.setreg('+', code)
+              vim.fn.setreg('*', code)
+              local continue = vim.fn.confirm(
+                'Copied your one-time code to clipboard.\n' .. 'Open the browser to complete the sign-in process?',
+                '&Yes\n&No'
+              )
+              if continue == 1 then
+                client:exec_cmd(command, { bufnr = bufnr }, function(cmd_err, cmd_result)
+                  if cmd_err then
+                    vim.notify(cmd_err.message, vim.log.levels.ERROR)
+                    return
+                  end
+                  if cmd_result.status == 'OK' then
+                    vim.notify('Signed in as ' .. cmd_result.user .. '.')
+                  end
+                end)
+              end
+            end
+
+            if result.status == 'PromptUserDeviceFlow' then
+              vim.notify('Enter your one-time code ' .. result.userCode .. ' in ' .. result.verificationUri)
+            elseif result.status == 'AlreadySignedIn' then
+              vim.notify('Already signed in as ' .. result.user .. '.')
+            end
+          end
+        )
+      end, { desc = 'Sign in Copilot with GitHub' })
+    end,
+  },
 }
 
-local configure_defaults = function (vim)
-
+local configure_defaults = function(vim)
   vim.g.mapleader = " "
   vim.g.maplocalleader = "\\"
 
@@ -109,7 +170,7 @@ local configure_defaults = function (vim)
   vim.opt.signcolumn = "yes:2"
   vim.opt.isfname:append("@-@")
 
-  vim.opt.keymodel="startsel,stopsel"
+  vim.opt.keymodel = "startsel,stopsel"
 
   vim.opt.undofile = true
   vim.opt.undodir = vim.fn.expand("~/.undodir")
@@ -132,7 +193,7 @@ local configure_defaults = function (vim)
     vim.g.neovide_padding_left = 1
     vim.g.neovide_opacity = 0.8
     vim.g.neovide_window_blurred = true
-    local normal_bg = (vim.api.nvim_get_hl(0, {id=vim.api.nvim_get_hl_id_by_name("Normal")}) or {}).bg
+    local normal_bg = (vim.api.nvim_get_hl(0, { id = vim.api.nvim_get_hl_id_by_name("Normal") }) or {}).bg
     if normal_bg then
       vim.g.neovide_title_background_color = string.format("%x", normal_bg)
     end
@@ -164,15 +225,15 @@ local configure_defaults = function (vim)
   })
 
   vim.filetype.add({
-   extension = {
-     props = 'msbuild',
-     tasks = 'msbuild',
-     targets = 'msbuild',
-   },
-   pattern = {
-     [ [[.*\..*proj]] ] = 'msbuild',
-   },
- })
+    extension = {
+      props = 'msbuild',
+      tasks = 'msbuild',
+      targets = 'msbuild',
+    },
+    pattern = {
+      [ [[.*\..*proj]] ] = 'msbuild',
+    },
+  })
 end
 
 require('vim._core.ui2').enable({
@@ -223,8 +284,8 @@ require('vim._core.ui2').enable({
 })
 
 local plugins = {
-  { 'nvim-lua/plenary.nvim', lazy = false },
-  { 'MunifTanjim/nui.nvim', lazy = false },
+  { 'nvim-lua/plenary.nvim',       lazy = false },
+  { 'MunifTanjim/nui.nvim',        lazy = false },
   { 'nvim-tree/nvim-web-devicons', lazy = false, opts = {} },
   {
     'nvim-telescope/telescope-fzf-native.nvim',
@@ -245,15 +306,15 @@ local plugins = {
       }
     },
     keys = {
-      { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
-      { '<leader>ff', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
+      { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
+      { '<leader>ff',      mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
 
-      { "<leader>/", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
-      { "<leader>gg", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
-      { "ß", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
+      { "<leader>/",       mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
+      { "<leader>gg",      mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
+      { "ß",               mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
 
-      { "<leader>bs", mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
-      { "<leader>sd", mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end, desc = "Diagnostics" },
+      { "<leader>bs",      mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
+      { "<leader>sd",      mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end,               desc = "Diagnostics" },
     },
   },
   {
@@ -283,11 +344,11 @@ local plugins = {
     lazy = false,
     opts = {
       update_interval = 1000,
-      set_dark_mode = function ()
+      set_dark_mode = function()
         vim.api.nvim_set_option_value("background", "dark", {})
         vim.cmd("colorscheme vscode")
       end,
-      set_light_mode = function ()
+      set_light_mode = function()
         vim.api.nvim_set_option_value("background", "light", {})
         vim.cmd("colorscheme vscode")
       end,
@@ -309,16 +370,11 @@ local plugins = {
     },
   },
   {
-    'refractalize/oil-git-status.nvim',
-    events = { 'UIEnter' },
-    opts = { show_ignored = true },
-  },
-  {
     'nvim-treesitter/nvim-treesitter',
     version = 'main',
     lazy = false,
     build = ':TSUpdate',
-    config = function ()
+    config = function()
       vim.treesitter.language.register('markdown', 'octo')
       vim.treesitter.language.register('xml', 'msbuild')
 
@@ -345,7 +401,11 @@ local plugins = {
       })
     end,
   },
-  { 'nvim-treesitter/nvim-treesitter-context', lazy = false },
+  {
+    'nvim-treesitter/nvim-treesitter-context',
+    events = { 'BufRead' },
+    opts = {},
+  },
   {
     'mason-org/mason.nvim',
     cmd = { 'Mason', 'MasonInstall', 'MasonUninstall', 'MasonUpdate', 'MasonLog' },
@@ -357,7 +417,7 @@ local plugins = {
     cmd = { 'Mason', 'MasonInstall', 'MasonUninstall', 'MasonUpdate', 'MasonLog', 'MasonToolsClean', 'MasonToolsInstall', 'MasonToolsUpdate', 'MasonToolsInstallSync', 'MasonToolsUpdateSync' },
     events = { 'VimEnter' },
     build = ':MasonToolsInstall',
-    config = function ()
+    config = function()
       require('mason').setup()
       local all_tools = vim.list_extend(vim.tbl_keys(lsp_configs), tools)
       for _, tool in pairs(all_tools) do
@@ -368,16 +428,6 @@ local plugins = {
       end
     end,
   },
-  {
-    'MeanderingProgrammer/render-markdown.nvim',
-    ft = { 'markdown', 'quarto', 'octo' },
-    opts = {
-      render_modes = { 'n', 'c', 't' },
-      anti_conceal = { enabled = false },
-      completions = { lsp = { enabled = true } },
-    },
-  },
-  { 'copilotlsp-nvim/copilot-lsp', lazy = false },
   {
     'windwp/nvim-autopairs',
     events = { 'InsertEnter' },
@@ -398,14 +448,14 @@ local plugins = {
     events = { 'BufRead' },
     opts = {
       signs_staged_enable = true,
-      signcolumn = true,
-      numhl      = true,
-      linehl     = false,
-      word_diff  = true,
-      watch_gitdir = { follow_files = true },
-      auto_attach = true,
+      signcolumn          = true,
+      numhl               = true,
+      linehl              = false,
+      word_diff           = true,
+      watch_gitdir        = { follow_files = true },
+      auto_attach         = true,
       attach_to_untracked = false,
-      preview_config = {
+      preview_config      = {
         style = 'minimal',
         relative = 'cursor',
         row = 0,
@@ -677,17 +727,17 @@ end, {
   nargs = '*',
   complete = function()
     return vim.iter(vim.pack.get())
-      :filter(function(p) return managed_names[p.spec.name] end)
-      :map(function(p) return p.spec.name end)
-      :totable()
+        :filter(function(p) return managed_names[p.spec.name] end)
+        :map(function(p) return p.spec.name end)
+        :totable()
   end,
 })
 
 vim.api.nvim_create_user_command('PackClean', function()
   local orphans = vim.iter(vim.pack.get())
-    :filter(function(p) return not managed_names[p.spec.name] end)
-    :map(function(p) return p.spec.name end)
-    :totable()
+      :filter(function(p) return not managed_names[p.spec.name] end)
+      :map(function(p) return p.spec.name end)
+      :totable()
   if #orphans == 0 then
     vim.notify('No orphaned plugins to remove', vim.log.levels.INFO)
     return
@@ -724,7 +774,7 @@ vim.api.nvim_create_user_command('UpdateAll', function()
   end
 end, { desc = 'Clean packages, update plugins, and update Mason tools' })
 
-local configure_global_keymaps = function ()
+local configure_global_keymaps = function()
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
@@ -789,9 +839,9 @@ local configure_window_management = function()
 
   local function create_label_buffer(num)
     local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-    vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-    vim.api.nvim_buf_set_option(buf, 'swapfile', false)
+    vim.bo[buf].buftype = 'nofile'
+    vim.bo[buf].bufhidden = 'wipe'
+    vim.bo[buf].swapfile = false
     vim.api.nvim_buf_set_name(buf, '[Window ' .. num .. ']')
 
     local lines = {}
@@ -891,8 +941,8 @@ local configure_window_management = function()
     vim.cmd('botright vnew')
     local new_win = vim.api.nvim_get_current_win()
     local new_buf = vim.api.nvim_get_current_buf()
-    vim.api.nvim_buf_set_option(new_buf, 'buftype', '')
-    vim.api.nvim_buf_set_option(new_buf, 'buflisted', true)
+    vim.bo[new_buf].buftype = ''
+    vim.bo[new_buf].buflisted = true
     return new_win
   end
 
@@ -985,7 +1035,6 @@ end
 
 
 local configure_lsp = function(vim, lsp_configs)
-
   local default_float_opts = {
     anchor_bias = 'below',
     border = 'rounded',
@@ -994,10 +1043,10 @@ local configure_lsp = function(vim, lsp_configs)
     relative = 'cursor'
   }
 
-  local function wrap_lsp_handler(handler, opts)
+  local function wrap_lsp_handler(handler, defaults)
     local original = handler
-    return function()
-      return original(vim.tbl_extend('force', default_float_opts, opts or {}))
+    return function(caller_opts)
+      return original(vim.tbl_extend('force', default_float_opts, defaults or {}, caller_opts or {}))
     end
   end
 
@@ -1051,10 +1100,37 @@ local configure_lsp = function(vim, lsp_configs)
       local has_format, has_highlight, has_hover, has_sig = false, false, false, false
       for _, c in ipairs(clients) do
         has_format = has_format or c:supports_method(vim.lsp.protocol.Methods.textDocument_formatting, bufnr)
-        has_highlight = has_highlight or c:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr)
+        has_highlight = has_highlight or
+            c:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr)
         has_hover = has_hover or c:supports_method(vim.lsp.protocol.Methods.textDocument_hover, bufnr)
         has_sig = has_sig or c:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp, bufnr)
       end
+
+      local enabled_methods = {}
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_completion, bufnr) then
+        table.insert(enabled_methods, 'completion')
+      end
+      if vim.lsp.inline_completion and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, bufnr) then
+        table.insert(enabled_methods, 'inlineCompletion')
+      end
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentColor, bufnr) then
+        table.insert(enabled_methods, 'documentColor')
+      end
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_semanticTokens_full, bufnr) then
+        table.insert(enabled_methods, 'semanticTokens')
+      end
+      if vim.lsp.on_type_formatting and client:supports_method(vim.lsp.protocol.Methods.textDocument_onTypeFormatting, bufnr) then
+        table.insert(enabled_methods, 'onTypeFormatting')
+      end
+      if has_format then table.insert(enabled_methods, 'formatting') end
+      if has_highlight then table.insert(enabled_methods, 'documentHighlight') end
+      if has_hover then table.insert(enabled_methods, 'hover') end
+      if has_sig then table.insert(enabled_methods, 'signatureHelp') end
+
+      vim.notify(
+        string.format('[LSP] %s (buf %d): %s', client.name, bufnr, table.concat(enabled_methods, ', ')),
+        vim.log.levels.DEBUG
+      )
 
       if has_format then
         vim.api.nvim_create_autocmd('BufWritePre', {
@@ -1065,7 +1141,7 @@ local configure_lsp = function(vim, lsp_configs)
       end
 
       if has_highlight or has_hover or has_sig then
-        vim.api.nvim_create_autocmd({'CursorHold', 'CursorHoldI'}, {
+        vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
           group = group,
           buffer = bufnr,
           callback = function()
@@ -1078,7 +1154,7 @@ local configure_lsp = function(vim, lsp_configs)
             end
           end,
         })
-        vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
+        vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
           group = group,
           buffer = bufnr,
           callback = function() vim.lsp.buf.clear_references() end,
@@ -1140,7 +1216,8 @@ local configure_lsp = function(vim, lsp_configs)
     end,
   })
 
-  vim.api.nvim_create_autocmd('VimLeavePre', { callback = function () vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
+  vim.api.nvim_create_autocmd('VimLeavePre',
+    { callback = function() vim.iter(vim.lsp.get_clients()):each(function(client) client:stop() end) end, })
 
   vim.lsp.enable(vim.tbl_keys(lsp_configs))
 
