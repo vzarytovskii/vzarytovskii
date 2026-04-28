@@ -132,10 +132,10 @@ local configure_defaults = function (vim)
     vim.g.neovide_padding_left = 1
     vim.g.neovide_opacity = 0.8
     vim.g.neovide_window_blurred = true
-    vim.g.neovide_title_background_color = string.format(
-      "%x",
-      vim.api.nvim_get_hl(0, {id=vim.api.nvim_get_hl_id_by_name("Normal")}).bg
-    )
+    local normal_bg = (vim.api.nvim_get_hl(0, {id=vim.api.nvim_get_hl_id_by_name("Normal")}) or {}).bg
+    if normal_bg then
+      vim.g.neovide_title_background_color = string.format("%x", normal_bg)
+    end
     vim.g.neovide_show_border = true
     vim.g.neovide_theme = 'auto'
     vim.g.neovide_refresh_rate = 144
@@ -247,24 +247,12 @@ local plugins = {
     keys = {
       { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
       { '<leader>ff', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
-      { 'ff', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end, desc = 'Find Files' },
 
       { "<leader>/", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
       { "<leader>gg", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
-      { "gg", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
-      { "ß", mode = { 'n', 'v', 'i' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
+      { "ß", mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end, desc = "Grep" },
 
       { "<leader>bs", mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
-
-      { 'gd', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_definitions() end, desc = 'Goto Definition' },
-      { 'gr', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_references() end, nowait = true, desc = 'References' },
-      { 'gI', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_implementations() end, desc = 'Goto Implementation' },
-      { 'gy', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_type_definitions() end, desc = 'Goto T[y]pe Definition' },
-      { 'gai', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_incoming_calls() end, desc = 'C[a]lls Incoming' },
-      { 'gao', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_outgoing_calls() end, desc = 'C[a]lls Outgoing' },
-      { '<leader>ss', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_document_symbols() end, desc = 'LSP Symbols' },
-      { '<leader>sS', mode = { 'n', 'v' }, function() require('telescope.builtin').lsp_workspace_symbols() end, desc = 'LSP Workspace Symbols' },
-
       { "<leader>sd", mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end, desc = "Diagnostics" },
     },
   },
@@ -304,93 +292,6 @@ local plugins = {
         vim.cmd("colorscheme vscode")
       end,
     },
-  },
-  {
-    'shortcuts/no-neck-pain.nvim',
-    lazy = false,
-    opts = {
-      buffers = {
-        scratchPad = {
-          enabled = false,
-        },
-        colors = {
-          blend = -0.2
-        },
-        bo = {
-          readonly = true,
-          modifiable = false,
-        },
-        wo = {
-          fillchars = "eob: ",
-          statusline = " ",
-        },
-      },
-      autocmds = {
-        enableOnVimEnter = false,
-        reloadOnColorSchemeChange = true,
-      },
-    },
-    config = function()
-      local min_width = 200
-      local debounce_ms = 50
-      local timer = nil
-
-      local function is_nnp_enabled()
-        return _G.NoNeckPain and _G.NoNeckPain.state ~= nil and _G.NoNeckPain.state.enabled
-      end
-
-      local function count_real_windows()
-        local count = 0
-        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          local config = vim.api.nvim_win_get_config(win)
-          if config.relative == '' then
-            local buf = vim.api.nvim_win_get_buf(win)
-            local ft = vim.bo[buf].filetype
-            if ft ~= 'no-neck-pain' then
-              count = count + 1
-            end
-          end
-        end
-        return count
-      end
-
-      local function evaluate_nnp()
-        if timer then
-          vim.fn.timer_stop(timer)
-          timer = nil
-        end
-
-        timer = vim.fn.timer_start(debounce_ms, function()
-          timer = nil
-          vim.schedule(function()
-            local columns = vim.o.columns
-            local real_windows = count_real_windows()
-            local width_ok = columns >= min_width
-            local single_window = real_windows == 1
-            local enabled = is_nnp_enabled()
-
-            if width_ok and single_window and not enabled then
-              local target_width = math.floor(columns * 3 / 4)
-              require('no-neck-pain').enable()
-              vim.defer_fn(function()
-                require('no-neck-pain').resize(target_width)
-              end, 10)
-            elseif (not width_ok or not single_window) and enabled then
-              require('no-neck-pain').disable()
-            end
-          end)
-        end)
-      end
-
-      local group = vim.api.nvim_create_augroup('NoNeckPainAuto', { clear = true })
-
-      vim.api.nvim_create_autocmd({ 'VimEnter', 'VimResized', 'WinEnter', 'WinClosed' }, {
-        group = group,
-        callback = function()
-          evaluate_nnp()
-        end,
-      })
-    end,
   },
   {
     'stevearc/oil.nvim',
@@ -477,28 +378,6 @@ local plugins = {
     },
   },
   { 'copilotlsp-nvim/copilot-lsp', lazy = false },
-  {
-    'zbirenbaum/copilot.lua',
-    cmd = 'Copilot',
-    events = { 'InsertEnter' },
-    opts = {
-      logger = {
-        print_log_level = vim.log.levels.OFF,
-      },
-      suggestion = {
-        enabled = true,
-        auto_trigger = true,
-      },
-      nes = {
-        enabled = false,
-        keymap = {
-          accept_and_goto = "",
-          accept = false,
-          dismiss = "<Esc>",
-        },
-      },
-    },
-  },
   {
     'windwp/nvim-autopairs',
     events = { 'InsertEnter' },
@@ -1143,26 +1022,15 @@ local configure_lsp = function(vim, lsp_configs)
 
   vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(args)
-      local group = vim.api.nvim_create_augroup("UserLspAttach", { clear = true })
-
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       local bufnr = args.buf
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_completion, bufnr) then
-        local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
-        client.server_capabilities.completionProvider.triggerCharacters = chars
-
         vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
       end
 
       if vim.lsp.inline_completion and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, bufnr) then
         vim.lsp.inline_completion.enable(true, { bufnr = bufnr })
-        vim.keymap.set('i', '<Tab>',
-          function()
-            if not vim.lsp.inline_completion.get() then
-              return '<Tab>'
-            end
-          end, { expr = true, desc = 'Accept the current inline completion' })
       end
 
       if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentColor, bufnr) then
@@ -1173,51 +1041,69 @@ local configure_lsp = function(vim, lsp_configs)
         vim.lsp.semantic_tokens.enable(true, { bufnr = bufnr })
       end
 
-      if vim.lsp.on_type_formatting  and client:supports_method(vim.lsp.protocol.Methods.textDocument_onTypeFormatting, bufnr) then
+      if vim.lsp.on_type_formatting and client:supports_method(vim.lsp.protocol.Methods.textDocument_onTypeFormatting, bufnr) then
         vim.lsp.on_type_formatting.enable(true, { client_id = client.id })
       end
 
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_willSaveWaitUntil) and
-         client:supports_method(vim.lsp.protocol.Methods.textDocument_formatting) then
+      local group = vim.api.nvim_create_augroup("UserLsp_" .. bufnr, { clear = true })
 
+      local clients = vim.lsp.get_clients({ bufnr = bufnr })
+      local has_format, has_highlight, has_hover, has_sig = false, false, false, false
+      for _, c in ipairs(clients) do
+        has_format = has_format or c:supports_method(vim.lsp.protocol.Methods.textDocument_formatting, bufnr)
+        has_highlight = has_highlight or c:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr)
+        has_hover = has_hover or c:supports_method(vim.lsp.protocol.Methods.textDocument_hover, bufnr)
+        has_sig = has_sig or c:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp, bufnr)
+      end
+
+      if has_format then
         vim.api.nvim_create_autocmd('BufWritePre', {
+          group = group,
           buffer = bufnr,
-          callback = function () vim.lsp.buf.format({ bufnr = bufnr, id = client.id, timeout_ms = 1000 }) end,
+          callback = function() vim.lsp.buf.format({ bufnr = bufnr, timeout_ms = 1000 }) end,
         })
       end
 
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp, bufnr) then
-        vim.api.nvim_create_autocmd( {'CursorHold', 'CursorHoldI'}, {
-          buffer = bufnr,
-          callback = function () vim.lsp.buf.signature_help() end,
-        })
-        vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
-          buffer = bufnr,
-          callback = function() vim.lsp.buf.clear_references() end,
-        })
-      end
-
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_hover, bufnr) then
-        vim.api.nvim_create_autocmd( {'CursorHold', 'CursorHoldI'}, {
-          buffer = bufnr,
-          callback = function () vim.lsp.buf.hover() end,
-        })
-        vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
-          buffer = bufnr,
-          callback = function() vim.lsp.buf.clear_references() end,
-        })
-      end
-
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr) then
+      if has_highlight or has_hover or has_sig then
         vim.api.nvim_create_autocmd({'CursorHold', 'CursorHoldI'}, {
+          group = group,
           buffer = bufnr,
-          callback = function () vim.lsp.buf.document_highlight() end,
+          callback = function()
+            if has_highlight then vim.lsp.buf.document_highlight() end
+            local mode = vim.api.nvim_get_mode().mode
+            if has_sig and (mode == 'i' or mode == 'ic') then
+              vim.lsp.buf.signature_help()
+            elseif has_hover and mode == 'n' then
+              vim.lsp.buf.hover()
+            end
+          end,
         })
         vim.api.nvim_create_autocmd({'CursorMoved', 'CursorMovedI'}, {
+          group = group,
           buffer = bufnr,
           callback = function() vim.lsp.buf.clear_references() end,
         })
       end
+
+      vim.keymap.set('i', '<Tab>', function()
+        if vim.lsp.inline_completion and vim.lsp.inline_completion.get() then
+          vim.lsp.inline_completion.accept()
+          return ''
+        end
+        return '<Tab>'
+      end, { expr = true, buffer = bufnr, desc = 'Accept inline completion or Tab' })
+
+      local map = function(lhs, fn, desc)
+        vim.keymap.set('n', lhs, fn, { buffer = bufnr, desc = desc })
+      end
+      map('gd', vim.lsp.buf.definition, 'Goto Definition')
+      map('gr', vim.lsp.buf.references, 'References')
+      map('gI', vim.lsp.buf.implementation, 'Goto Implementation')
+      map('gy', vim.lsp.buf.type_definition, 'Goto Type Definition')
+      map('gai', vim.lsp.buf.incoming_calls, 'Incoming Calls')
+      map('gao', vim.lsp.buf.outgoing_calls, 'Outgoing Calls')
+      map('<leader>ss', vim.lsp.buf.document_symbol, 'Document Symbols')
+      map('<leader>sS', vim.lsp.buf.workspace_symbol, 'Workspace Symbols')
     end,
   })
   local progress_msg = ''
