@@ -245,6 +245,13 @@ local configure_defaults = function(vim)
       [ [[.*\..*proj]] ] = 'msbuild',
     },
   })
+
+  vim.api.nvim_create_autocmd('BufEnter', {
+    callback = function(ev)
+      local root = vim.fs.root(ev.buf, { '.git', 'Cargo.toml', 'CMakeLists.txt', '.cargo' })
+      if root then vim.cmd.lcd(root) end
+    end,
+  })
 end
 
 vim.schedule(function()
@@ -298,15 +305,7 @@ end)
 
 local plugins = {
   { 'nvim-lua/plenary.nvim', lazy = false },
-  {
-    'wsdjeg/rooter.nvim',
-    lazy = false,
-    opts = {
-      enable_cache = true,
-      project_non_root = 'current',
-      root_pattern = { '.git', 'Cargo.toml', 'README.md', '.cargo' },
-    },
-  },
+
   {
     'Mofiqul/vscode.nvim',
     lazy = false,
@@ -993,23 +992,7 @@ end
 
 
 local configure_lsp = function(vim, lsp_configs)
-  local default_float_opts = {
-    anchor_bias = 'below',
-    border = 'rounded',
-    silent = true,
-    focusable = false,
-    relative = 'cursor'
-  }
-
-  local function wrap_lsp_handler(handler, defaults)
-    local original = handler
-    return function(caller_opts)
-      return original(vim.tbl_extend('force', default_float_opts, defaults or {}, caller_opts or {}))
-    end
-  end
-
-  vim.lsp.buf.hover = wrap_lsp_handler(vim.lsp.buf.hover, { offset_x = 0, offset_y = 0 })
-  vim.lsp.buf.signature_help = wrap_lsp_handler(vim.lsp.buf.signature_help, { offset_x = 0, offset_y = 1 })
+  local float_opts = { border = 'rounded', focusable = false }
 
   vim.lsp.config('*', {
     capabilities = {
@@ -1055,12 +1038,11 @@ local configure_lsp = function(vim, lsp_configs)
       local group = vim.api.nvim_create_augroup("UserLsp_" .. bufnr, { clear = true })
 
       local clients = vim.lsp.get_clients({ bufnr = bufnr })
-      local has_format, has_highlight, has_hover, has_sig = false, false, false, false
+      local has_format, has_highlight, has_sig = false, false, false
       for _, c in ipairs(clients) do
         has_format = has_format or c:supports_method(vim.lsp.protocol.Methods.textDocument_formatting, bufnr)
         has_highlight = has_highlight or
             c:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, bufnr)
-        has_hover = has_hover or c:supports_method(vim.lsp.protocol.Methods.textDocument_hover, bufnr)
         has_sig = has_sig or c:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp, bufnr)
       end
 
@@ -1072,7 +1054,7 @@ local configure_lsp = function(vim, lsp_configs)
         })
       end
 
-      if has_highlight or has_hover or has_sig then
+      if has_highlight or has_sig then
         vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
           group = group,
           buffer = bufnr,
@@ -1080,9 +1062,7 @@ local configure_lsp = function(vim, lsp_configs)
             if has_highlight then vim.lsp.buf.document_highlight() end
             local mode = vim.api.nvim_get_mode().mode
             if has_sig and (mode == 'i' or mode == 'ic') then
-              vim.lsp.buf.signature_help()
-            elseif has_hover and mode == 'n' then
-              vim.lsp.buf.hover()
+              vim.lsp.buf.signature_help(float_opts)
             end
           end,
         })
@@ -1104,6 +1084,7 @@ local configure_lsp = function(vim, lsp_configs)
       local map = function(lhs, fn, desc)
         vim.keymap.set('n', lhs, fn, { buffer = bufnr, desc = desc })
       end
+      map('K', function() vim.lsp.buf.hover(float_opts) end, 'Hover')
       map('gd', vim.lsp.buf.definition, 'Goto Definition')
       map('gr', vim.lsp.buf.references, 'References')
       map('gI', vim.lsp.buf.implementation, 'Goto Implementation')
