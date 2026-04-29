@@ -1,5 +1,10 @@
 local vim = vim
 
+local old = vim.opt.runtimepath:get()
+vim.opt.runtimepath = vim.iter(old):filter(function(el)
+  return vim.uv.fs_stat(vim.fs.normalize(el)) ~= nil
+end):totable()
+
 do
   local mason_bin = vim.fn.stdpath('data') .. '/mason/bin'
   if not (vim.env.PATH or ''):find(mason_bin, 1, true) then
@@ -235,87 +240,57 @@ local configure_defaults = function(vim)
   })
 end
 
-require('vim._core.ui2').enable({
-  enable = true,
-  msg = {
-    targets = {
-      [''] = 'msg',
-      empty = 'cmd',
-      bufwrite = 'msg',
-      confirm = 'cmd',
-      emsg = 'pager',
-      echo = 'msg',
-      echomsg = 'msg',
-      echoerr = 'pager',
-      completion = 'cmd',
-      list_cmd = 'pager',
-      lua_error = 'pager',
-      lua_print = 'msg',
-      progress = 'pager',
-      rpc_error = 'pager',
-      quickfix = 'msg',
-      search_cmd = 'cmd',
-      search_count = 'cmd',
-      shell_cmd = 'pager',
-      shell_err = 'pager',
-      shell_out = 'pager',
-      shell_ret = 'msg',
-      undo = 'msg',
-      verbose = 'pager',
-      wildlist = 'cmd',
-      wmsg = 'msg',
-      typed_cmd = 'cmd',
-    },
-    cmd = {
-      height = 0.5,
-    },
-    dialog = {
-      height = 0.5,
-    },
+vim.schedule(function()
+  require('vim._core.ui2').enable({
+    enable = true,
     msg = {
-      height = 0.3,
-      timeout = 5000,
+      targets = {
+        [''] = 'msg',
+        empty = 'cmd',
+        bufwrite = 'msg',
+        confirm = 'cmd',
+        emsg = 'pager',
+        echo = 'msg',
+        echomsg = 'msg',
+        echoerr = 'pager',
+        completion = 'cmd',
+        list_cmd = 'pager',
+        lua_error = 'pager',
+        lua_print = 'msg',
+        progress = 'pager',
+        rpc_error = 'pager',
+        quickfix = 'pager',
+        search_cmd = 'cmd',
+        search_count = 'cmd',
+        shell_cmd = 'pager',
+        shell_err = 'pager',
+        shell_out = 'pager',
+        shell_ret = 'msg',
+        undo = 'msg',
+        verbose = 'pager',
+        wildlist = 'cmd',
+        wmsg = 'msg',
+        typed_cmd = 'cmd',
+      },
+      cmd = {
+        height = 0.5,
+      },
+      dialog = {
+        height = 0.5,
+      },
+      msg = {
+        height = 0.3,
+        timeout = 5000,
+      },
+      pager = {
+        height = 0.5,
+      },
     },
-    pager = {
-      height = 0.5,
-    },
-  },
-})
+  })
+end)
 
 local plugins = {
   { 'nvim-lua/plenary.nvim', lazy = false },
-  -- { 'MunifTanjim/nui.nvim',        lazy = false },
-  -- { 'nvim-tree/nvim-web-devicons', lazy = false, opts = {} },
-  -- {
-  --  'nvim-telescope/telescope-fzf-native.nvim',
-  --  lazy = false,
-  --  build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install',
-  -- },
-  --{
-  --  'nvim-telescope/telescope.nvim',
-  --  lazy = false,
-  --  opts = {
-  --    extensions = {
-  --      fzf = {
-  --        fuzzy = true,
-  --        override_generic_sorter = true,
-  --        override_file_sorter = true,
-  --        case_mode = "smart_case",
-  --      }
-  --    }
-  --  },
-  --  keys = {
-  --    { '<leader><space>', mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
-  --    { '<leader>ff',      mode = { 'n', 'v' }, function() require('telescope.builtin').find_files() end,                desc = 'Find Files' },
-  --
-  --    { "<leader>/",       mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
-  --    { "<leader>gg",      mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
-  --    { "ß",               mode = { 'n', 'v' }, function() require('telescope.builtin').live_grep() end,                 desc = "Grep" },
-  --
-  --    { "<leader>bs",      mode = { 'n', 'v' }, function() require('telescope.builtin').current_buffer_fuzzy_find() end, desc = "Search in Buffer" },
-  --    { "<leader>sd",      mode = { 'n', 'v' }, function() require('telescope.builtin').diagnostics() end,               desc = "Diagnostics" },
-  --  },
-  --},
   {
     'wsdjeg/rooter.nvim',
     lazy = false,
@@ -827,22 +802,6 @@ local configure_window_management = function()
     end
 
     return {}
-  end
-
-  local function create_label_buffer(num)
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.bo[buf].buftype = 'nofile'
-    vim.bo[buf].bufhidden = 'wipe'
-    vim.bo[buf].swapfile = false
-    vim.api.nvim_buf_set_name(buf, '[Window ' .. num .. ']')
-
-    local lines = {}
-    for _ = 1, 50 do
-      table.insert(lines, '')
-    end
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-
-    return buf
   end
 
   local function restore_window_to_global(win)
