@@ -1,9 +1,11 @@
 local vim = vim
 
 local old = vim.opt.runtimepath:get()
-vim.opt.runtimepath = vim.iter(old):filter(function(el)
-  return vim.uv.fs_stat(vim.fs.normalize(el)) ~= nil
-end):totable()
+vim.opt.runtimepath = vim.iter(old):filter(
+  function(el)
+    return vim.uv.fs_stat(vim.fs.normalize(el)) ~= nil
+  end
+):totable()
 
 do
   local mason_bin = vim.fn.stdpath('data') .. '/mason/bin'
