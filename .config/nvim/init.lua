@@ -143,6 +143,9 @@ local configure_defaults = function(vim)
   vim.g.mapleader = " "
   vim.g.maplocalleader = "\\"
 
+  vim.wo.fillchars = 'eob: '
+
+
   vim.g.builtin_autocompletion = true
 
   vim.opt.cmdheight = 1
@@ -175,7 +178,7 @@ local configure_defaults = function(vim)
   vim.opt.hlsearch = false
   vim.opt.incsearch = true
   vim.opt.scrolloff = 8
-  vim.opt.signcolumn = "yes:2"
+  vim.opt.signcolumn = "yes"
   vim.opt.isfname:append("@-@")
 
   vim.opt.keymodel = "startsel,stopsel"
