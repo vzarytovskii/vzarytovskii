@@ -141,6 +141,8 @@ local configure_defaults = function(vim)
   vim.g.mapleader = " "
   vim.g.maplocalleader = "\\"
 
+  vim.g.builtin_autocompletion = true
+
   vim.opt.cmdheight = 1
 
   vim.opt.updatetime = 500
@@ -1056,32 +1058,6 @@ local configure_lsp = function(vim, lsp_configs)
         has_hover = has_hover or c:supports_method(vim.lsp.protocol.Methods.textDocument_hover, bufnr)
         has_sig = has_sig or c:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp, bufnr)
       end
-
-      local enabled_methods = {}
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_completion, bufnr) then
-        table.insert(enabled_methods, 'completion')
-      end
-      if vim.lsp.inline_completion and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, bufnr) then
-        table.insert(enabled_methods, 'inlineCompletion')
-      end
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentColor, bufnr) then
-        table.insert(enabled_methods, 'documentColor')
-      end
-      if client:supports_method(vim.lsp.protocol.Methods.textDocument_semanticTokens_full, bufnr) then
-        table.insert(enabled_methods, 'semanticTokens')
-      end
-      if vim.lsp.on_type_formatting and client:supports_method(vim.lsp.protocol.Methods.textDocument_onTypeFormatting, bufnr) then
-        table.insert(enabled_methods, 'onTypeFormatting')
-      end
-      if has_format then table.insert(enabled_methods, 'formatting') end
-      if has_highlight then table.insert(enabled_methods, 'documentHighlight') end
-      if has_hover then table.insert(enabled_methods, 'hover') end
-      if has_sig then table.insert(enabled_methods, 'signatureHelp') end
-
-      vim.notify(
-        string.format('[LSP] %s (buf %d): %s', client.name, bufnr, table.concat(enabled_methods, ', ')),
-        vim.log.levels.TRACE
-      )
 
       if has_format then
         vim.api.nvim_create_autocmd('BufWritePre', {
