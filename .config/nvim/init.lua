@@ -491,6 +491,9 @@ local plugins = {
       picker = 'default',
       enable_builtin = true,
       use_timeline_icons = false,
+      file_panel = {
+        use_icons = false
+      },
       runs = {
         icons = {
           pending = "[Pending]",
@@ -548,11 +551,10 @@ local function setup_plugin(name, meta)
   if not ok then
     ok, mod = pcall(require, name)
   end
-  if ok and type(mod) == 'table' and mod.setup then
-    mod.setup(opts)
-  end
   if meta.config then
     meta.config(ok and mod or nil, opts)
+  elseif ok and type(mod) == 'table' and mod.setup then
+    mod.setup(opts)
   end
 end
 
