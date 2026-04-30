@@ -246,12 +246,6 @@ local configure_defaults = function(vim)
     },
   })
 
-  vim.api.nvim_create_autocmd('BufEnter', {
-    callback = function(ev)
-      local root = vim.fs.root(ev.buf, { '.git', 'Cargo.toml', 'CMakeLists.txt', '.cargo' })
-      if root then vim.cmd.lcd(root) end
-    end,
-  })
 end
 
 vim.schedule(function()
@@ -408,21 +402,7 @@ local plugins = {
       end
     end,
   },
-  {
-    'windwp/nvim-autopairs',
-    events = { 'InsertEnter' },
-    opts = { map_bs = false },
-  },
-  {
-    'kylechui/nvim-surround',
-    events = { 'UIEnter' },
-    opts = {},
-  },
-  {
-    'qwavies/smart-backspace.nvim',
-    events = { 'CmdlineEnter' },
-    opts = {},
-  },
+
   {
     'lewis6991/gitsigns.nvim',
     events = { 'BufRead' },
@@ -523,43 +503,8 @@ local plugins = {
       },
     },
   },
-  {
-    'kdheepak/lazygit.nvim',
-    cmd = { 'LazyGit', 'LazyGitConfig', 'LazyGitCurrentFile', 'LazyGitFilter', 'LazyGitFilterCurrentFile' },
-    keys = {
-      { "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" }
-    },
-  },
+
 }
-
-vim.api.nvim_create_autocmd("PackChanged", {
-  callback = function(ev)
-    if ev.data.kind ~= "install" and ev.data.kind ~= "update" then return end
-
-    local build = ev.data.spec.data and ev.data.spec.data.build
-    if not build then return end
-
-    local name = ev.data.spec.name
-    if build:sub(1, 1) == ':' then
-      vim.cmd('packadd ' .. name)
-      local ok, err = pcall(vim.cmd, build:sub(2))
-      if not ok then
-        vim.notify(('Build failed for %s: %s'):format(name, err), vim.log.levels.ERROR)
-      end
-    else
-      local result = vim.system({ "sh", "-c", build }, {
-        cwd = ev.data.path,
-        text = true,
-      }):wait()
-      if result.code ~= 0 then
-        vim.notify(
-          ('Build failed for %s (exit %d)\n%s'):format(name, result.code, result.stderr or ''),
-          vim.log.levels.ERROR
-        )
-      end
-    end
-  end,
-})
 
 local pack_fields = { src = true, name = true, version = true }
 local plugin_meta = {}
@@ -747,10 +692,11 @@ vim.api.nvim_create_user_command('UpdateAll', function()
   end
 end, { desc = 'Clean packages, update plugins, and update Mason tools' })
 
-local configure_global_keymaps = function()
+local configure_global_keymaps = function(vim)
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
+  set("n", "<leader>lg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
 end
 
 local configure_window_management = function()
@@ -1139,7 +1085,72 @@ local configure_lsp = function(vim, lsp_configs)
   end
 end
 
+local configure_autocmds = function(vim)
+  vim.api.nvim_create_autocmd('BufEnter', {
+    callback = function(ev)
+      if vim.bo[ev.buf].buftype ~= '' then return end
+      local root = vim.fs.root(ev.buf, { '.git', 'Cargo.toml', 'CMakeLists.txt', '.cargo' })
+      if root then vim.cmd.lcd(root) end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('TermOpen', {
+    pattern = 'term://*lazygit*',
+    callback = function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.bo[buf].buflisted = false
+      vim.cmd.startinsert()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('PackChanged', {
+    callback = function(ev)
+      if ev.data.kind ~= 'install' and ev.data.kind ~= 'update' then return end
+
+      local build = ev.data.spec.data and ev.data.spec.data.build
+      if not build then return end
+
+      local name = ev.data.spec.name
+      if build:sub(1, 1) == ':' then
+        vim.cmd('packadd ' .. name)
+        local ok, err = pcall(vim.cmd, build:sub(2))
+        if not ok then
+          vim.notify(('Build failed for %s: %s'):format(name, err), vim.log.levels.ERROR)
+        end
+      else
+        local result = vim.system({ 'sh', '-c', build }, {
+          cwd = ev.data.path,
+          text = true,
+        }):wait()
+        if result.code ~= 0 then
+          vim.notify(
+            ('Build failed for %s (exit %d)\n%s'):format(name, result.code, result.stderr or ''),
+            vim.log.levels.ERROR
+          )
+        end
+      end
+    end,
+  })
+end
+
+local configure_user_commands = function(vim)
+  vim.api.nvim_create_user_command('LazyGit', function()
+    vim.cmd('terminal lazygit')
+  end, { desc = 'Open LazyGit' })
+
+  vim.api.nvim_create_user_command('LazyGitCurrentFile', function()
+    local file = vim.fn.expand('%:p')
+    vim.cmd('terminal lazygit --filter ' .. vim.fn.shellescape(file))
+  end, { desc = 'Open LazyGit filtered on current file' })
+
+  vim.api.nvim_create_user_command('LazyGitFilter', function(args)
+    vim.cmd('terminal lazygit --filter ' .. vim.fn.shellescape(args.args))
+  end, { nargs = 1, desc = 'Open LazyGit with filter' })
+end
+
 configure_defaults(vim)
-configure_global_keymaps()
+configure_global_keymaps(vim)
+configure_autocmds(vim)
+configure_user_commands(vim)
 configure_window_management()
 configure_lsp(vim, lsp_configs)
