@@ -145,9 +145,6 @@ local configure_defaults = function(vim)
 
   vim.wo.fillchars = 'eob: '
 
-
-  vim.g.builtin_autocompletion = true
-
   vim.opt.cmdheight = 1
 
   vim.opt.updatetime = 500
@@ -164,8 +161,9 @@ local configure_defaults = function(vim)
   vim.opt.pummaxwidth = 180
   vim.opt.pumwidth = 80
 
+  vim.g.builtin_autocompletion = true
   vim.opt.autocomplete = true
-  vim.opt.complete = 'o,F,.,i,d'
+  vim.opt.complete = 'o,F,.,i,d,w,b,u,t'
   vim.opt.completeopt = { 'fuzzy', 'menu', 'menuone', 'noselect', 'preinsert', 'popup' }
   vim.opt.tabstop = 4
   vim.opt.softtabstop = 4
@@ -245,7 +243,6 @@ local configure_defaults = function(vim)
       [ [[.*\..*proj]] ] = 'msbuild',
     },
   })
-
 end
 
 vim.schedule(function()
