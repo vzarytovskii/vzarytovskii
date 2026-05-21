@@ -145,6 +145,8 @@ local configure_defaults = function(vim)
 
   vim.wo.fillchars = 'eob: '
 
+  vim.opt.grepformat = "%f:%l:%c:%m,%f"
+
   vim.opt.cmdheight = 1
 
   vim.opt.updatetime = 500
@@ -696,6 +698,9 @@ local configure_global_keymaps = function(vim)
   local set = vim.keymap.set
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
   set("n", "<leader>lg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
+  set("n", "<leader>ff", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
+  set("n", "<leader>fg", "<cmd>FzfGrep<cr>", { desc = "Grep content (rg + fzf)" })
+  set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
 end
 
 local configure_window_management = function()
@@ -1133,6 +1138,162 @@ local configure_autocmds = function(vim)
 end
 
 local configure_user_commands = function(vim)
+  local function fzf_files(query)
+    if vim.fn.executable('fd') == 0 then
+      vim.notify('fd is not installed', vim.log.levels.ERROR)
+      return
+    end
+    if vim.fn.executable('fzf') == 0 then
+      vim.notify('fzf is not installed', vim.log.levels.ERROR)
+      return
+    end
+
+    local tmp = vim.fn.tempname()
+    local fd_cmd = "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
+    local fzf_cmd = "fzf --height=100% --layout=reverse --prompt='Files> '"
+    if query and query ~= '' then
+      fzf_cmd = fzf_cmd .. ' --query ' .. vim.fn.shellescape(query)
+    end
+
+    local shell_cmd = table.concat({ fd_cmd, '|', fzf_cmd, '>', vim.fn.shellescape(tmp) }, ' ')
+    local prev_win = vim.api.nvim_get_current_win()
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    local width = math.floor(vim.o.columns * 0.8)
+    local height = math.floor(vim.o.lines * 0.6)
+    local win = vim.api.nvim_open_win(buf, true, {
+      relative = 'editor',
+      width = width,
+      height = height,
+      row = math.floor((vim.o.lines - height) / 2),
+      col = math.floor((vim.o.columns - width) / 2),
+      style = 'minimal',
+      border = 'rounded',
+    })
+
+    vim.fn.termopen(shell_cmd, {
+      on_exit = function(_, exit_code, _)
+        vim.schedule(function()
+          if vim.api.nvim_win_is_valid(win) then
+            vim.api.nvim_win_close(win, true)
+          end
+          if vim.api.nvim_buf_is_valid(buf) then
+            vim.api.nvim_buf_delete(buf, { force = true })
+          end
+
+          local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
+          vim.fn.delete(tmp)
+
+          if vim.api.nvim_win_is_valid(prev_win) then
+            vim.api.nvim_set_current_win(prev_win)
+          end
+
+          if exit_code == 0 then
+            local selected = lines[1] and vim.trim(lines[1]) or ''
+            if selected ~= '' then
+              vim.cmd('edit ' .. vim.fn.fnameescape(selected))
+            end
+          end
+        end)
+      end,
+    })
+
+    vim.cmd('startinsert')
+  end
+
+  vim.api.nvim_create_user_command('FzfFiles', function(args)
+    fzf_files(args.args)
+  end, { nargs = '?', desc = 'Pick files with fd + fzf' })
+
+  local function fzf_grep(query, dir)
+    if vim.fn.executable('rg') == 0 then
+      vim.notify('rg (ripgrep) is not installed', vim.log.levels.ERROR)
+      return
+    end
+    if vim.fn.executable('fzf') == 0 then
+      vim.notify('fzf is not installed', vim.log.levels.ERROR)
+      return
+    end
+
+    local tmp = vim.fn.tempname()
+    local initial_query = (query and query ~= '') and query or ''
+    local path_arg = dir and (' ' .. vim.fn.shellescape(dir)) or ''
+    local rg_base = 'rg --column --line-number --no-heading --color=always --smart-case'
+    local fzf_cmd = table.concat({
+      'fzf',
+      '--ansi',
+      '--disabled',
+      '--layout=reverse',
+      '--delimiter=:',
+      '--bind', vim.fn.shellescape('change:reload:' .. rg_base .. ' -- {q}' .. path_arg .. ' || true'),
+      '--query', vim.fn.shellescape(initial_query),
+      "--prompt='Grep> '",
+    }, ' ')
+    local shell_cmd = table.concat({
+      rg_base .. ' --',
+      vim.fn.shellescape(initial_query ~= '' and initial_query or '.'),
+      path_arg,
+      '|', fzf_cmd,
+      '>', vim.fn.shellescape(tmp),
+    }, ' ')
+
+    local prev_win = vim.api.nvim_get_current_win()
+    local buf = vim.api.nvim_create_buf(false, true)
+    local width = math.floor(vim.o.columns * 0.8)
+    local height = math.floor(vim.o.lines * 0.6)
+    local win = vim.api.nvim_open_win(buf, true, {
+      relative = 'editor',
+      width = width,
+      height = height,
+      row = math.floor((vim.o.lines - height) / 2),
+      col = math.floor((vim.o.columns - width) / 2),
+      style = 'minimal',
+      border = 'rounded',
+    })
+
+    vim.fn.termopen(shell_cmd, {
+      on_exit = function(_, exit_code, _)
+        vim.schedule(function()
+          if vim.api.nvim_win_is_valid  (win) then
+            vim.api.nvim_win_close(win, true)
+          end
+          if vim.api.nvim_buf_is_valid(buf) then
+            vim.api.nvim_buf_delete(buf, { force = true })
+          end
+
+          local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
+          vim.fn.delete(tmp)
+
+          if vim.api.nvim_win_is_valid(prev_win) then
+            vim.api.nvim_set_current_win(prev_win)
+          end
+
+          if exit_code == 0 then
+            local selected = lines[1] and vim.trim(lines[1]) or ''
+            if selected ~= '' then
+              local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
+              if file then
+                vim.cmd('edit ' .. vim.fn.fnameescape(file))
+                pcall(vim.api.nvim_win_set_cursor, 0, { tonumber(lnum), tonumber(col) - 1 })
+              end
+            end
+          end
+        end)
+      end,
+    })
+
+    vim.cmd('startinsert')
+  end
+
+  vim.api.nvim_create_user_command('FzfGrep', function(args)
+    fzf_grep(args.args)
+  end, { nargs = '?', desc = 'Live grep with rg + fzf' })
+
+  vim.api.nvim_create_user_command('FzfGrepDir', function(args)
+    local dir = vim.fn.expand('%:p:h')
+    fzf_grep(args.args, dir)
+  end, { nargs = '?', desc = 'Live grep in current file directory with rg + fzf' })
+
   vim.api.nvim_create_user_command('LazyGit', function()
     vim.cmd('terminal lazygit')
   end, { desc = 'Open LazyGit' })
