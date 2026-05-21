@@ -150,6 +150,7 @@ local configure_defaults = function(vim)
   vim.opt.cmdheight = 1
 
   vim.opt.updatetime = 500
+  vim.opt.ttimeoutlen = 10
 
   vim.opt.hidden = true
 
@@ -699,6 +700,7 @@ local configure_global_keymaps = function(vim)
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
+  set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
   set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
   set("n", "<leader>gs", "<cmd>Neogit<cr>", { desc = "Neogit" })
   set("n", "<leader>ff", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
@@ -706,6 +708,14 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
   set("n", "<leader>flg", "<cmd>FzfLiveGrep<cr>", { desc = "Live grep with preview" })
   set("n", "<leader>bl", "<cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
+  set("n", "<leader>tn", "<cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
+  set("n", "<leader>tN", "<cmd>TermNew<cr>", { desc = "Create new terminal" })
+  set("n", "<leader>tl", "<cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
+  set("t", "<C-Space>n", "<C-\\><C-n><cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
+  set("t", "<C-Space>N", "<C-\\><C-n><cmd>TermNew<cr>", { desc = "Create new terminal" })
+  set("t", "<C-Space>l", "<C-\\><C-n><cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
+  set("t", "<C-Space>b", "<C-\\><C-n><cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
+  set("t", "<C-Space>f", "<C-\\><C-n><cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
   set({ "n", "i", "v" }, "<D-p>", "<cmd>FzfFiles<cr>", { desc = "Find files (Cmd-P)" })
 end
 
@@ -1170,29 +1180,34 @@ local configure_autocmds = function(vim)
 end
 
 local configure_user_commands = function(vim)
-  local function fzf_files(query)
-    if vim.fn.executable('fd') == 0 then
-      vim.notify('fd is not installed', vim.log.levels.ERROR)
-      return
+  local function require_executables(...)
+    for _, exe in ipairs({ ... }) do
+      if vim.fn.executable(exe) == 0 then
+        vim.notify(exe .. ' is not installed', vim.log.levels.ERROR)
+        return false
+      end
     end
-    if vim.fn.executable('fzf') == 0 then
-      vim.notify('fzf is not installed', vim.log.levels.ERROR)
-      return
-    end
+    return true
+  end
 
-    local tmp = vim.fn.tempname()
-    local fd_cmd = "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
-    local fzf_cmd = "fzf --height=100% --layout=reverse --prompt='Files> '"
-    if query and query ~= '' then
-      fzf_cmd = fzf_cmd .. ' --query ' .. vim.fn.shellescape(query)
+  local function open_file_or_switch(file, lnum, col)
+    local existing = vim.fn.bufnr(file)
+    if existing ~= -1 then
+      vim.cmd('buffer ' .. existing)
+    else
+      vim.cmd('edit ' .. vim.fn.fnameescape(file))
     end
+    if lnum then
+      pcall(vim.api.nvim_win_set_cursor, 0, { lnum, (col or 1) - 1 })
+    end
+  end
 
-    local shell_cmd = table.concat({ fd_cmd, '|', fzf_cmd, '>', vim.fn.shellescape(tmp) }, ' ')
+  local function fzf_float(shell_cmd, opts)
+    opts = opts or {}
     local prev_win = vim.api.nvim_get_current_win()
-
     local buf = vim.api.nvim_create_buf(false, true)
-    local width = math.floor(vim.o.columns * 0.8)
-    local height = math.floor(vim.o.lines * 0.6)
+    local width = math.floor(vim.o.columns * (opts.width_pct or 0.8))
+    local height = opts.height or math.floor(vim.o.lines * (opts.height_pct or 0.6))
     local win = vim.api.nvim_open_win(buf, true, {
       relative = 'editor',
       width = width,
@@ -1209,24 +1224,14 @@ local configure_user_commands = function(vim)
           if vim.api.nvim_buf_is_valid(buf) then
             vim.api.nvim_buf_delete(buf, { force = true })
           end
-
-          local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
-          vim.fn.delete(tmp)
-
           if vim.api.nvim_win_is_valid(prev_win) then
             vim.api.nvim_set_current_win(prev_win)
           end
-
-          if exit_code == 0 then
-            local selected = lines[1] and vim.trim(lines[1]) or ''
-            if selected ~= '' then
-              local existing = vim.fn.bufnr(selected)
-              if existing ~= -1 then
-                vim.cmd('buffer ' .. existing)
-              else
-                vim.cmd('edit ' .. vim.fn.fnameescape(selected))
-              end
-            end
+          if opts.on_result then
+            opts.on_result(exit_code)
+          end
+          for _, f in ipairs(opts.tmp_files or {}) do
+            vim.fn.delete(f)
           end
         end)
       end,
@@ -1252,30 +1257,37 @@ local configure_user_commands = function(vim)
     vim.cmd('startinsert')
   end
 
+  local function fzf_files(query)
+    if not require_executables('fd', 'fzf') then return end
+    local tmp = vim.fn.tempname()
+    local fd_cmd = "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
+    local fzf_cmd = "fzf --height=100% --layout=reverse --prompt='Files> '"
+    if query and query ~= '' then
+      fzf_cmd = fzf_cmd .. ' --query ' .. vim.fn.shellescape(query)
+    end
+    fzf_float(fd_cmd .. ' | ' .. fzf_cmd .. ' > ' .. vim.fn.shellescape(tmp), {
+      tmp_files = { tmp },
+      on_result = function(exit_code)
+        if exit_code ~= 0 then return end
+        local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
+        local selected = lines[1] and vim.trim(lines[1]) or ''
+        if selected ~= '' then open_file_or_switch(selected) end
+      end,
+    })
+  end
+
   vim.api.nvim_create_user_command('FzfFiles', function(args)
     fzf_files(args.args)
   end, { nargs = '?', desc = 'Pick files with fd + fzf' })
 
   local function fzf_grep(query, dir)
-    if vim.fn.executable('rg') == 0 then
-      vim.notify('rg (ripgrep) is not installed', vim.log.levels.ERROR)
-      return
-    end
-    if vim.fn.executable('fzf') == 0 then
-      vim.notify('fzf is not installed', vim.log.levels.ERROR)
-      return
-    end
-
+    if not require_executables('rg', 'fzf') then return end
     local tmp = vim.fn.tempname()
     local initial_query = (query and query ~= '') and query or ''
     local path_arg = dir and (' ' .. vim.fn.shellescape(dir)) or ''
     local rg_base = 'rg --column --line-number --no-heading --color=always --smart-case'
     local fzf_cmd = table.concat({
-      'fzf',
-      '--ansi',
-      '--disabled',
-      '--layout=reverse',
-      '--delimiter=:',
+      'fzf', '--ansi', '--disabled', '--layout=reverse', '--delimiter=:',
       '--bind', vim.fn.shellescape('change:reload:' .. rg_base .. ' -- {q}' .. path_arg .. ' || true'),
       '--query', vim.fn.shellescape(initial_query),
       "--prompt='Grep> '",
@@ -1283,76 +1295,19 @@ local configure_user_commands = function(vim)
     local shell_cmd = table.concat({
       rg_base .. ' --',
       vim.fn.shellescape(initial_query ~= '' and initial_query or '.'),
-      path_arg,
-      '|', fzf_cmd,
-      '>', vim.fn.shellescape(tmp),
+      path_arg, '|', fzf_cmd, '>', vim.fn.shellescape(tmp),
     }, ' ')
-
-    local prev_win = vim.api.nvim_get_current_win()
-    local buf = vim.api.nvim_create_buf(false, true)
-    local width = math.floor(vim.o.columns * 0.8)
-    local height = math.floor(vim.o.lines * 0.6)
-    local win = vim.api.nvim_open_win(buf, true, {
-      relative = 'editor',
-      width = width,
-      height = height,
-      row = math.floor((vim.o.lines - height) / 2),
-      col = math.floor((vim.o.columns - width) / 2),
-      style = 'minimal',
-      border = 'rounded',
-    })
-
-    local job_id = vim.fn.termopen(shell_cmd, {
-      on_exit = function(_, exit_code, _)
-        vim.schedule(function()
-          if vim.api.nvim_buf_is_valid(buf) then
-            vim.api.nvim_buf_delete(buf, { force = true })
-          end
-
-          local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
-          vim.fn.delete(tmp)
-
-          if vim.api.nvim_win_is_valid(prev_win) then
-            vim.api.nvim_set_current_win(prev_win)
-          end
-
-          if exit_code == 0 then
-            local selected = lines[1] and vim.trim(lines[1]) or ''
-            if selected ~= '' then
-              local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
-              if file then
-                local existing = vim.fn.bufnr(file)
-                if existing ~= -1 then
-                  vim.cmd('buffer ' .. existing)
-                else
-                  vim.cmd('edit ' .. vim.fn.fnameescape(file))
-                end
-                pcall(vim.api.nvim_win_set_cursor, 0, { tonumber(lnum), tonumber(col) - 1 })
-              end
-            end
-          end
-        end)
+    fzf_float(shell_cmd, {
+      tmp_files = { tmp },
+      on_result = function(exit_code)
+        if exit_code ~= 0 then return end
+        local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
+        local selected = lines[1] and vim.trim(lines[1]) or ''
+        if selected == '' then return end
+        local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
+        if file then open_file_or_switch(file, tonumber(lnum), tonumber(col)) end
       end,
     })
-
-    vim.api.nvim_create_autocmd('TermClose', {
-      buffer = buf,
-      once = true,
-      callback = function()
-        if vim.api.nvim_win_is_valid(win) then
-          vim.api.nvim_win_close(win, true)
-        end
-      end,
-    })
-
-    vim.keymap.set({ 'n', 't' }, '<Esc>', function()
-      if vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_close(win, true)
-      end
-      pcall(vim.fn.jobstop, job_id)
-    end, { buffer = buf })
-
-    vim.cmd('startinsert')
   end
 
   vim.api.nvim_create_user_command('FzfGrep', function(args)
@@ -1365,20 +1320,13 @@ local configure_user_commands = function(vim)
   end, { nargs = '?', desc = 'Live grep in current file directory with rg + fzf' })
 
   local function fzf_live_grep(query)
-    if vim.fn.executable('rg') == 0 then
-      vim.notify('rg (ripgrep) is not installed', vim.log.levels.ERROR)
-      return
-    end
-    if vim.fn.executable('fzf') == 0 then
-      vim.notify('fzf is not installed', vim.log.levels.ERROR)
-      return
-    end
-
+    if not require_executables('rg', 'fzf') then return end
     local tmp = vim.fn.tempname()
     local initial_query = (query and query ~= '') and query or ''
     local rg_base = 'rg --column --line-number --no-heading --color=always --smart-case'
 
     local prev_win = vim.api.nvim_get_current_win()
+    local prev_buf = vim.api.nvim_win_get_buf(prev_win)
 
     local preview_buf = vim.api.nvim_create_buf(false, true)
     vim.bo[preview_buf].bufhidden = 'wipe'
@@ -1388,11 +1336,11 @@ local configure_user_commands = function(vim)
     local fzf_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(fzf_win, fzf_buf)
     vim.wo[fzf_win].winfixheight = true
+    vim.wo[fzf_win].statusline = ' '
 
-    local preview_win = prev_win
-    vim.api.nvim_win_set_buf(preview_win, preview_buf)
-    vim.wo[preview_win].number = true
-    vim.wo[preview_win].cursorline = true
+    vim.api.nvim_win_set_buf(prev_win, preview_buf)
+    vim.wo[prev_win].number = true
+    vim.wo[prev_win].cursorline = true
 
     local current_preview_file = nil
 
@@ -1401,7 +1349,7 @@ local configure_user_commands = function(vim)
       local file, lnum = line:match('^(.+):(%d+):%d+:')
       if not file or not lnum then return end
       lnum = tonumber(lnum)
-      if not vim.api.nvim_win_is_valid(preview_win) then return end
+      if not vim.api.nvim_win_is_valid(prev_win) then return end
 
       if current_preview_file ~= file then
         current_preview_file = file
@@ -1416,21 +1364,19 @@ local configure_user_commands = function(vim)
             local ft = vim.filetype.match({ filename = abs })
             if ft then vim.bo[pbuf].filetype = ft end
           end
-          vim.api.nvim_win_set_buf(preview_win, pbuf)
+          vim.api.nvim_win_set_buf(prev_win, pbuf)
           if vim.api.nvim_buf_is_valid(preview_buf) and preview_buf ~= pbuf then
             pcall(vim.api.nvim_buf_delete, preview_buf, { force = true })
           end
           preview_buf = pbuf
         end
       end
-      pcall(vim.api.nvim_win_set_cursor, preview_win, { lnum, 0 })
-      pcall(vim.api.nvim_win_call, preview_win, function() vim.cmd('normal! zz') end)
+      pcall(vim.api.nvim_win_set_cursor, prev_win, { lnum, 0 })
+      pcall(vim.api.nvim_win_call, prev_win, function() vim.cmd('normal! zz') end)
     end
 
     local poll_timer = vim.uv.new_timer()
     local last_line = ''
-
-    local prev_buf_to_restore = vim.api.nvim_win_get_buf(prev_win)
 
     local function cleanup()
       if poll_timer then
@@ -1447,11 +1393,7 @@ local configure_user_commands = function(vim)
     end
 
     local fzf_cmd = table.concat({
-      'fzf',
-      '--ansi',
-      '--disabled',
-      '--layout=reverse',
-      '--delimiter=:',
+      'fzf', '--ansi', '--disabled', '--layout=reverse', '--delimiter=:',
       '--bind', vim.fn.shellescape('change:reload:' .. rg_base .. ' -- {q} || true'),
       '--bind', vim.fn.shellescape('focus:execute-silent(echo {+} > ' .. tmp .. '.cur)'),
       '--query', vim.fn.shellescape(initial_query),
@@ -1460,15 +1402,13 @@ local configure_user_commands = function(vim)
     local shell_cmd = table.concat({
       rg_base .. ' --',
       vim.fn.shellescape(initial_query ~= '' and initial_query or '.'),
-      '|', fzf_cmd,
-      '>', vim.fn.shellescape(tmp),
+      '|', fzf_cmd, '>', vim.fn.shellescape(tmp),
     }, ' ')
 
     local job_id = vim.fn.termopen(shell_cmd, {
       on_exit = function(_, exit_code, _)
         vim.schedule(function()
           cleanup()
-
           local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
           vim.fn.delete(tmp)
           vim.fn.delete(tmp .. '.cur')
@@ -1481,19 +1421,11 @@ local configure_user_commands = function(vim)
             local selected = lines[1] and vim.trim(lines[1]) or ''
             if selected ~= '' then
               local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
-              if file then
-                local existing = vim.fn.bufnr(file)
-                if existing ~= -1 then
-                  vim.cmd('buffer ' .. existing)
-                else
-                  vim.cmd('edit ' .. vim.fn.fnameescape(file))
-                end
-                pcall(vim.api.nvim_win_set_cursor, 0, { tonumber(lnum), tonumber(col) - 1 })
-              end
+              if file then open_file_or_switch(file, tonumber(lnum), tonumber(col)) end
             end
           else
-            if vim.api.nvim_win_is_valid(prev_win) and vim.api.nvim_buf_is_valid(prev_buf_to_restore) then
-              vim.api.nvim_win_set_buf(prev_win, prev_buf_to_restore)
+            if vim.api.nvim_win_is_valid(prev_win) and vim.api.nvim_buf_is_valid(prev_buf) then
+              vim.api.nvim_win_set_buf(prev_win, prev_buf)
             end
           end
 
@@ -1519,9 +1451,7 @@ local configure_user_commands = function(vim)
     vim.api.nvim_create_autocmd('TermClose', {
       buffer = fzf_buf,
       once = true,
-      callback = function()
-        cleanup()
-      end,
+      callback = function() cleanup() end,
     })
 
     vim.keymap.set({ 'n', 't' }, '<Esc>', function()
@@ -1536,104 +1466,249 @@ local configure_user_commands = function(vim)
     fzf_live_grep(args.args)
   end, { nargs = '?', desc = 'Live grep with split preview' })
 
-  local function fzf_buffers()
-    if vim.fn.executable('fzf') == 0 then
-      vim.notify('fzf is not installed', vim.log.levels.ERROR)
-      return
+  _G._term_last_output = _G._term_last_output or {}
+
+  local function term_has_fg_child(pid)
+    if vim.fn.has('win32') == 1 then
+      local r = vim.system({ 'powershell', '-NoProfile', '-Command',
+        string.format('(Get-CimInstance Win32_Process -Filter "ParentProcessId=%d").Count', pid)
+      }):wait()
+      local count = tonumber(vim.trim(r.stdout or ''))
+      return count and count > 0
+    else
+      local r = vim.system({ 'ps', '-o', 'pgid=,tpgid=', '-p', tostring(pid) }):wait()
+      if r.code ~= 0 then return false end
+      local pgid, tpgid = vim.trim(r.stdout or ''):match('(%d+)%s+(%d+)')
+      if not pgid or not tpgid then return false end
+      return pgid ~= tpgid
+    end
+  end
+
+  local function term_is_idle(bufnr)
+    local chan = vim.bo[bufnr].channel
+    if chan == 0 then return false end
+    local last = _G._term_last_output[bufnr]
+    if last and (vim.uv.now() - last) <= 1000 then return false end
+    local ok, pid = pcall(vim.fn.jobpid, chan)
+    if not ok or not pid then return true end
+    return not term_has_fg_child(pid)
+  end
+
+  local function create_terminal()
+    vim.cmd('enew')
+    vim.fn.termopen(vim.o.shell)
+    vim.cmd('startinsert')
+  end
+
+  local function fzf_buf_picker(opts)
+    if not require_executables('fzf') then return end
+    opts = opts or {}
+    local filter = opts.filter or function(b)
+      return vim.api.nvim_buf_is_loaded(b) and vim.bo[b].buflisted
+    end
+    local prompt = opts.prompt or 'Buffers> '
+    local format_entry = opts.format_entry or function(b)
+      local raw = vim.api.nvim_buf_get_name(b)
+      local name = raw ~= '' and vim.fn.fnamemodify(raw, ':~:.') or ('[buf ' .. b .. ']')
+      local modified = vim.bo[b].modified and ' [+]' or ''
+      local bell = (_G._term_bell_bufs and _G._term_bell_bufs[b]) and ' [bell]' or ''
+      return string.format('%d: %s%s%s', b, name, modified, bell)
     end
 
-    local bufs = vim.tbl_filter(function(b)
-      return vim.api.nvim_buf_is_loaded(b)
-          and vim.bo[b].buflisted
-    end, vim.api.nvim_list_bufs())
+    local bufs = vim.tbl_filter(filter, vim.api.nvim_list_bufs())
 
     if #bufs == 0 then
-      vim.notify('No listed buffers', vim.log.levels.INFO)
+      vim.notify('No matching buffers', vim.log.levels.INFO)
       return
     end
 
     local input_file = vim.fn.tempname()
     local output_file = vim.fn.tempname()
-
+    local cur_file = vim.fn.tempname()
     local lines = {}
+    local current_buf = vim.api.nvim_get_current_buf()
+    local current_line = nil
     for _, b in ipairs(bufs) do
-      local raw = vim.api.nvim_buf_get_name(b)
-      local name = raw ~= '' and vim.fn.fnamemodify(raw, ':~:.') or ('[buf ' .. b .. ']')
-      local modified = vim.bo[b].modified and ' [+]' or ''
-      table.insert(lines, string.format('%d: %s%s', b, name, modified))
+      local entry = format_entry(b)
+      if b == current_buf then
+        current_line = entry
+      else
+        table.insert(lines, entry)
+      end
     end
+    if current_line then table.insert(lines, 1, current_line) end
     vim.fn.writefile(lines, input_file)
 
+    local prev_win = vim.api.nvim_get_current_win()
+    local prev_buf = vim.api.nvim_win_get_buf(prev_win)
+
+    local preview_buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[preview_buf].bufhidden = 'wipe'
+
+    local fzf_buf = vim.api.nvim_create_buf(false, true)
+    local fzf_height = math.min(#bufs + 4, 15)
+    vim.cmd('botright ' .. fzf_height .. 'split')
+    local fzf_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_win_set_buf(fzf_win, fzf_buf)
+    vim.wo[fzf_win].winfixheight = true
+    vim.wo[fzf_win].statusline = ' '
+
+    vim.api.nvim_win_set_buf(prev_win, preview_buf)
+    vim.wo[prev_win].number = true
+    vim.wo[prev_win].cursorline = true
+
+    local function update_preview(line)
+      if not line or line == '' then return end
+      local bnr = line:match('^(%d+):')
+      if not bnr then return end
+      bnr = tonumber(bnr)
+      if not vim.api.nvim_win_is_valid(prev_win) then return end
+      if vim.api.nvim_buf_is_valid(bnr) then
+        vim.api.nvim_win_set_buf(prev_win, bnr)
+      end
+    end
+
+    local poll_timer = vim.uv.new_timer()
+    local last_line = ''
+
+    local function cleanup()
+      if poll_timer then
+        poll_timer:stop()
+        poll_timer:close()
+        poll_timer = nil
+      end
+      if vim.api.nvim_win_is_valid(fzf_win) then
+        vim.api.nvim_win_close(fzf_win, true)
+      end
+      vim.schedule(function()
+        if vim.api.nvim_buf_is_valid(fzf_buf) then
+          pcall(vim.api.nvim_buf_delete, fzf_buf, { force = true })
+        end
+      end)
+    end
+
     local fzf_cmd = table.concat({
-      'fzf',
-      '--layout=reverse',
-      "--prompt='Buffers> '",
+      'fzf', '--layout=reverse',
+      '--bind', vim.fn.shellescape('focus:execute-silent(echo {} > ' .. cur_file .. ')'),
+      '--prompt', vim.fn.shellescape(prompt),
     }, ' ')
     local shell_cmd = 'cat ' .. vim.fn.shellescape(input_file) .. ' | ' .. fzf_cmd .. ' > ' .. vim.fn.shellescape(output_file)
-
-    local prev_win = vim.api.nvim_get_current_win()
-    local buf = vim.api.nvim_create_buf(false, true)
-    local width = math.floor(vim.o.columns * 0.6)
-    local height = math.min(#bufs + 4, math.floor(vim.o.lines * 0.5))
-    local win = vim.api.nvim_open_win(buf, true, {
-      relative = 'editor',
-      width = width,
-      height = height,
-      row = math.floor((vim.o.lines - height) / 2),
-      col = math.floor((vim.o.columns - width) / 2),
-      style = 'minimal',
-      border = 'rounded',
-    })
 
     local job_id = vim.fn.termopen(shell_cmd, {
       on_exit = function(_, exit_code, _)
         vim.schedule(function()
-          if vim.api.nvim_buf_is_valid(buf) then
-            vim.api.nvim_buf_delete(buf, { force = true })
-          end
-
-          local result = vim.fn.filereadable(output_file) == 1 and vim.fn.readfile(output_file) or {}
+          cleanup()
           vim.fn.delete(input_file)
-          vim.fn.delete(output_file)
+          vim.fn.delete(cur_file)
 
           if vim.api.nvim_win_is_valid(prev_win) then
             vim.api.nvim_set_current_win(prev_win)
           end
 
           if exit_code == 0 then
+            local result = vim.fn.filereadable(output_file) == 1 and vim.fn.readfile(output_file) or {}
+            vim.fn.delete(output_file)
             local selected = result[1] and vim.trim(result[1]) or ''
             local bufnr = selected:match('^(%d+):')
-            if bufnr then
+            if bufnr and vim.api.nvim_buf_is_valid(tonumber(bufnr)) then
               vim.cmd('buffer ' .. bufnr)
+            end
+          else
+            vim.fn.delete(output_file)
+            if vim.api.nvim_win_is_valid(prev_win) and vim.api.nvim_buf_is_valid(prev_buf) then
+              vim.api.nvim_win_set_buf(prev_win, prev_buf)
             end
           end
         end)
       end,
     })
 
-    vim.api.nvim_create_autocmd('TermClose', {
-      buffer = buf,
-      once = true,
-      callback = function()
-        if vim.api.nvim_win_is_valid(win) then
-          vim.api.nvim_win_close(win, true)
+    poll_timer:start(100, 100, vim.schedule_wrap(function()
+      if vim.fn.filereadable(cur_file) == 1 then
+        local cur_lines = vim.fn.readfile(cur_file)
+        local cur = cur_lines[1] or ''
+        if cur ~= '' and cur ~= last_line then
+          last_line = cur
+          update_preview(cur)
         end
-      end,
+      end
+    end))
+
+    vim.api.nvim_create_autocmd('TermClose', {
+      buffer = fzf_buf,
+      once = true,
+      callback = function() cleanup() end,
     })
 
-    vim.keymap.set({ 'n', 't' }, '<Esc>', function()
-      if vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_close(win, true)
-      end
-      pcall(vim.fn.jobstop, job_id)
-    end, { buffer = buf })
+    vim.keymap.set('t', '<Esc>', function()
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, true, true), 'n', false)
+      vim.schedule(function()
+        pcall(vim.fn.jobstop, job_id)
+        cleanup()
+      end)
+    end, { buffer = fzf_buf, nowait = true })
 
     vim.cmd('startinsert')
   end
 
   vim.api.nvim_create_user_command('FzfBuffers', function()
-    fzf_buffers()
+    fzf_buf_picker()
   end, { desc = 'Pick buffer with fzf' })
+
+  vim.api.nvim_create_user_command('FzfTerminals', function()
+    fzf_buf_picker({
+      prompt = 'Terminals> ',
+      filter = function(b)
+        return vim.api.nvim_buf_is_valid(b)
+            and vim.bo[b].buftype == 'terminal'
+            and vim.bo[b].channel ~= 0
+      end,
+      format_entry = function(b)
+        local raw = vim.api.nvim_buf_get_name(b)
+        local name = raw:match('term://(.+)') or raw
+        if name == '' then name = '[terminal ' .. b .. ']' end
+        local idle = term_is_idle(b) and '' or ' [busy]'
+        local bell = (_G._term_bell_bufs and _G._term_bell_bufs[b]) and ' [bell]' or ''
+        return string.format('%d: %s%s%s', b, name, idle, bell)
+      end,
+    })
+  end, { desc = 'Pick terminal with fzf' })
+
+  vim.api.nvim_create_user_command('TermNew', function()
+    create_terminal()
+  end, { desc = 'Create a new terminal buffer' })
+
+  vim.api.nvim_create_user_command('TermNext', function()
+    local current = vim.api.nvim_get_current_buf()
+    local term_bufs = vim.tbl_filter(function(b)
+      return vim.api.nvim_buf_is_valid(b)
+          and vim.bo[b].buftype == 'terminal'
+          and vim.bo[b].channel ~= 0
+    end, vim.api.nvim_list_bufs())
+
+    local idle = {}
+    for _, b in ipairs(term_bufs) do
+      if term_is_idle(b) then
+        table.insert(idle, b)
+      end
+    end
+
+    if #idle == 0 then
+      create_terminal()
+      return
+    end
+
+    local target = idle[1]
+    for _, b in ipairs(idle) do
+      if b > current then
+        target = b
+        break
+      end
+    end
+
+    vim.cmd('buffer ' .. target)
+    vim.cmd('startinsert')
+  end, { desc = 'Switch to next idle terminal or create new' })
 
   vim.api.nvim_create_user_command('LazyGit', function()
     vim.cmd('terminal lazygit')
@@ -1649,9 +1724,126 @@ local configure_user_commands = function(vim)
   end, { nargs = 1, desc = 'Open LazyGit with filter' })
 end
 
+local configure_term_bell_indicator = function()
+  local term_bell_overlay = { win = nil, buf = nil }
+  _G._term_bell_bufs = _G._term_bell_bufs or {}
+
+  local function term_bell_count()
+    local n = 0
+    for b, _ in pairs(_G._term_bell_bufs) do
+      if vim.api.nvim_buf_is_valid(b) then n = n + 1
+      else _G._term_bell_bufs[b] = nil end
+    end
+    return n
+  end
+
+  local function ensure_overlay_buf()
+    if term_bell_overlay.buf and vim.api.nvim_buf_is_valid(term_bell_overlay.buf) then return end
+    term_bell_overlay.buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[term_bell_overlay.buf].buftype = 'nofile'
+    vim.bo[term_bell_overlay.buf].bufhidden = 'hide'
+    vim.bo[term_bell_overlay.buf].buflisted = false
+  end
+
+  local function refresh_term_bell_overlay()
+    local n = term_bell_count()
+    if n == 0 then
+      if term_bell_overlay.win and vim.api.nvim_win_is_valid(term_bell_overlay.win) then
+        vim.api.nvim_win_close(term_bell_overlay.win, true)
+        term_bell_overlay.win = nil
+      end
+      return
+    end
+    ensure_overlay_buf()
+    local dots = table.concat(vim.fn['repeat']({'●'}, n), ' ')
+    vim.api.nvim_buf_set_lines(term_bell_overlay.buf, 0, -1, false, { ' ' .. dots .. ' ' })
+    local width = n * 2 + 1
+    if term_bell_overlay.win and vim.api.nvim_win_is_valid(term_bell_overlay.win) then
+      vim.api.nvim_win_set_config(term_bell_overlay.win, {
+        relative = 'editor',
+        width = width,
+        row = 0,
+        col = vim.o.columns - width - 2,
+      })
+      return
+    end
+    term_bell_overlay.win = vim.api.nvim_open_win(term_bell_overlay.buf, false, {
+      relative = 'editor',
+      width = width,
+      height = 1,
+      row = 0,
+      col = vim.o.columns - width - 2,
+      style = 'minimal',
+      border = 'rounded',
+      focusable = false,
+      zindex = 100,
+    })
+  end
+
+  local orig_termopen = vim.fn.termopen
+  vim.fn.termopen = function(cmd, opts)
+    opts = opts or {}
+    local user_stdout = opts.on_stdout
+    opts.on_stdout = function(job_id, data, event)
+      local info = vim.api.nvim_get_chan_info(job_id)
+      local term_buf = info and info.buffer or 0
+      if term_buf > 0 then
+        _G._term_last_output[term_buf] = vim.uv.now()
+      end
+      for _, chunk in ipairs(data) do
+        if chunk:find('\a') or chunk:find('\x07') then
+          if term_buf > 0 then
+            vim.schedule(function()
+              _G._term_bell_bufs[term_buf] = true
+              refresh_term_bell_overlay()
+            end)
+          end
+          break
+        end
+      end
+      if user_stdout then user_stdout(job_id, data, event) end
+    end
+    return orig_termopen(cmd, opts)
+  end
+
+  vim.api.nvim_create_autocmd('BufEnter', {
+    callback = function(ev)
+      if not _G._term_bell_bufs[ev.buf] then return end
+      local win = vim.api.nvim_get_current_win()
+      local config = vim.api.nvim_win_get_config(win)
+      if config.relative ~= '' then return end
+      _G._term_bell_bufs[ev.buf] = nil
+      refresh_term_bell_overlay()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('BufDelete', {
+    callback = function(ev)
+      if _G._term_bell_bufs[ev.buf] then
+        _G._term_bell_bufs[ev.buf] = nil
+        vim.schedule(refresh_term_bell_overlay)
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('VimResized', {
+    callback = function() refresh_term_bell_overlay() end,
+  })
+
+  vim.api.nvim_create_user_command('TermBellDismiss', function()
+    _G._term_bell_bufs = {}
+    refresh_term_bell_overlay()
+  end, { desc = 'Dismiss all terminal bell indicators' })
+  vim.api.nvim_create_user_command('TermBellTest', function()
+    _G._term_bell_bufs[-1] = true
+    refresh_term_bell_overlay()
+  end, { desc = 'Test terminal bell indicator' })
+end
+
 configure_defaults(vim)
 configure_global_keymaps(vim)
 configure_autocmds(vim)
 configure_user_commands(vim)
 configure_window_management()
+configure_term_bell_indicator()
 configure_lsp(vim, lsp_configs)
