@@ -699,10 +699,12 @@ local configure_global_keymaps = function(vim)
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
-  set("n", "<leader>lg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
+  set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
+  set("n", "<leader>gs", "<cmd>Neogit<cr>", { desc = "Neogit" })
   set("n", "<leader>ff", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
   set("n", "<leader>fg", "<cmd>FzfGrep<cr>", { desc = "Grep content (rg + fzf)" })
   set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
+  set("n", "<leader>flg", "<cmd>FzfLiveGrep<cr>", { desc = "Live grep with preview" })
   set("n", "<leader>bl", "<cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
   set({ "n", "i", "v" }, "<D-p>", "<cmd>FzfFiles<cr>", { desc = "Find files (Cmd-P)" })
 end
@@ -1361,6 +1363,178 @@ local configure_user_commands = function(vim)
     local dir = vim.fn.expand('%:p:h')
     fzf_grep(args.args, dir)
   end, { nargs = '?', desc = 'Live grep in current file directory with rg + fzf' })
+
+  local function fzf_live_grep(query)
+    if vim.fn.executable('rg') == 0 then
+      vim.notify('rg (ripgrep) is not installed', vim.log.levels.ERROR)
+      return
+    end
+    if vim.fn.executable('fzf') == 0 then
+      vim.notify('fzf is not installed', vim.log.levels.ERROR)
+      return
+    end
+
+    local tmp = vim.fn.tempname()
+    local initial_query = (query and query ~= '') and query or ''
+    local rg_base = 'rg --column --line-number --no-heading --color=always --smart-case'
+
+    local prev_win = vim.api.nvim_get_current_win()
+
+    local preview_buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[preview_buf].bufhidden = 'wipe'
+
+    local fzf_buf = vim.api.nvim_create_buf(false, true)
+    vim.cmd('botright 15split')
+    local fzf_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_win_set_buf(fzf_win, fzf_buf)
+    vim.wo[fzf_win].winfixheight = true
+
+    local preview_win = prev_win
+    vim.api.nvim_win_set_buf(preview_win, preview_buf)
+    vim.wo[preview_win].number = true
+    vim.wo[preview_win].cursorline = true
+
+    local current_preview_file = nil
+
+    local function update_preview(line)
+      if not line or line == '' then return end
+      local file, lnum = line:match('^(.+):(%d+):%d+:')
+      if not file or not lnum then return end
+      lnum = tonumber(lnum)
+      if not vim.api.nvim_win_is_valid(preview_win) then return end
+
+      if current_preview_file ~= file then
+        current_preview_file = file
+        local abs = vim.fn.fnamemodify(file, ':p')
+        if vim.fn.filereadable(abs) == 1 then
+          local pbuf = vim.fn.bufnr(abs)
+          if pbuf == -1 then
+            pbuf = vim.api.nvim_create_buf(false, true)
+            vim.bo[pbuf].bufhidden = 'wipe'
+            local content = vim.fn.readfile(abs)
+            vim.api.nvim_buf_set_lines(pbuf, 0, -1, false, content)
+            local ft = vim.filetype.match({ filename = abs })
+            if ft then vim.bo[pbuf].filetype = ft end
+          end
+          vim.api.nvim_win_set_buf(preview_win, pbuf)
+          if vim.api.nvim_buf_is_valid(preview_buf) and preview_buf ~= pbuf then
+            pcall(vim.api.nvim_buf_delete, preview_buf, { force = true })
+          end
+          preview_buf = pbuf
+        end
+      end
+      pcall(vim.api.nvim_win_set_cursor, preview_win, { lnum, 0 })
+      pcall(vim.api.nvim_win_call, preview_win, function() vim.cmd('normal! zz') end)
+    end
+
+    local poll_timer = vim.uv.new_timer()
+    local last_line = ''
+
+    local prev_buf_to_restore = vim.api.nvim_win_get_buf(prev_win)
+
+    local function cleanup()
+      if poll_timer then
+        poll_timer:stop()
+        poll_timer:close()
+        poll_timer = nil
+      end
+      if vim.api.nvim_win_is_valid(fzf_win) then
+        vim.api.nvim_win_close(fzf_win, true)
+      end
+      if vim.api.nvim_buf_is_valid(fzf_buf) then
+        pcall(vim.api.nvim_buf_delete, fzf_buf, { force = true })
+      end
+    end
+
+    local fzf_cmd = table.concat({
+      'fzf',
+      '--ansi',
+      '--disabled',
+      '--layout=reverse',
+      '--delimiter=:',
+      '--bind', vim.fn.shellescape('change:reload:' .. rg_base .. ' -- {q} || true'),
+      '--bind', vim.fn.shellescape('focus:execute-silent(echo {+} > ' .. tmp .. '.cur)'),
+      '--query', vim.fn.shellescape(initial_query),
+      "--prompt='LiveGrep> '",
+    }, ' ')
+    local shell_cmd = table.concat({
+      rg_base .. ' --',
+      vim.fn.shellescape(initial_query ~= '' and initial_query or '.'),
+      '|', fzf_cmd,
+      '>', vim.fn.shellescape(tmp),
+    }, ' ')
+
+    local job_id = vim.fn.termopen(shell_cmd, {
+      on_exit = function(_, exit_code, _)
+        vim.schedule(function()
+          cleanup()
+
+          local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
+          vim.fn.delete(tmp)
+          vim.fn.delete(tmp .. '.cur')
+
+          if vim.api.nvim_win_is_valid(prev_win) then
+            vim.api.nvim_set_current_win(prev_win)
+          end
+
+          if exit_code == 0 then
+            local selected = lines[1] and vim.trim(lines[1]) or ''
+            if selected ~= '' then
+              local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
+              if file then
+                local existing = vim.fn.bufnr(file)
+                if existing ~= -1 then
+                  vim.cmd('buffer ' .. existing)
+                else
+                  vim.cmd('edit ' .. vim.fn.fnameescape(file))
+                end
+                pcall(vim.api.nvim_win_set_cursor, 0, { tonumber(lnum), tonumber(col) - 1 })
+              end
+            end
+          else
+            if vim.api.nvim_win_is_valid(prev_win) and vim.api.nvim_buf_is_valid(prev_buf_to_restore) then
+              vim.api.nvim_win_set_buf(prev_win, prev_buf_to_restore)
+            end
+          end
+
+          if vim.api.nvim_buf_is_valid(preview_buf) then
+            pcall(vim.api.nvim_buf_delete, preview_buf, { force = true })
+          end
+        end)
+      end,
+    })
+
+    poll_timer:start(100, 100, vim.schedule_wrap(function()
+      local cur_file = tmp .. '.cur'
+      if vim.fn.filereadable(cur_file) == 1 then
+        local cur_lines = vim.fn.readfile(cur_file)
+        local cur = cur_lines[1] or ''
+        if cur ~= '' and cur ~= last_line then
+          last_line = cur
+          update_preview(cur)
+        end
+      end
+    end))
+
+    vim.api.nvim_create_autocmd('TermClose', {
+      buffer = fzf_buf,
+      once = true,
+      callback = function()
+        cleanup()
+      end,
+    })
+
+    vim.keymap.set({ 'n', 't' }, '<Esc>', function()
+      cleanup()
+      pcall(vim.fn.jobstop, job_id)
+    end, { buffer = fzf_buf })
+
+    vim.cmd('startinsert')
+  end
+
+  vim.api.nvim_create_user_command('FzfLiveGrep', function(args)
+    fzf_live_grep(args.args)
+  end, { nargs = '?', desc = 'Live grep with split preview' })
 
   local function fzf_buffers()
     if vim.fn.executable('fzf') == 0 then
