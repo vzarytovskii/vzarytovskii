@@ -714,7 +714,16 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
   set("n", "<leader>flg", "<cmd>FzfLiveGrep<cr>", { desc = "Live grep with preview" })
   set("n", "<leader>bl", "<cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
-  set("n", "<leader>bK", "<cmd>bdelete<cr>", { desc = "Kill current buffer" })
+  set("n", "<leader>bK", function()
+    local wins = vim.tbl_filter(function(w)
+      return vim.api.nvim_win_get_config(w).relative == ''
+    end, vim.api.nvim_tabpage_list_wins(0))
+    if #wins > 1 then
+      vim.api.nvim_win_close(0, false)
+    else
+      vim.cmd('bdelete')
+    end
+  end, { desc = "Close window or kill buffer" })
   set("n", "<leader>tn", "<cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
   set("n", "<leader>tN", "<cmd>TermNew<cr>", { desc = "Create new terminal" })
   set("n", "<leader>tl", "<cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
@@ -724,6 +733,68 @@ local configure_global_keymaps = function(vim)
   set("t", "<C-Space>b", "<C-\\><C-n><cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
   set("t", "<C-Space>f", "<C-\\><C-n><cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
   set({ "n", "i", "v" }, "<D-p>", "<cmd>FzfFiles<cr>", { desc = "Find files (Cmd-P)" })
+
+  local function ace_window()
+    local wins = vim.tbl_filter(function(w)
+      local cfg = vim.api.nvim_win_get_config(w)
+      return cfg.relative == ''
+    end, vim.api.nvim_tabpage_list_wins(0))
+
+    if #wins <= 1 then return end
+
+    local cur = vim.api.nvim_get_current_win()
+
+    if #wins == 2 then
+      local target = wins[1] == cur and wins[2] or wins[1]
+      vim.api.nvim_set_current_win(target)
+      return
+    end
+
+    local labels = 'asdfjkl;ghqweruiop'
+    local overlays = {}
+
+    for i, w in ipairs(wins) do
+      local label = labels:sub(i, i)
+      if label == '' then break end
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, { ' ' .. label .. ' ' })
+      local width = vim.api.nvim_win_get_width(w)
+      local height = vim.api.nvim_win_get_height(w)
+      local ow = vim.api.nvim_open_win(buf, false, {
+        relative = 'win',
+        win = w,
+        width = 3,
+        height = 1,
+        row = math.floor(height / 2),
+        col = math.floor(width / 2) - 1,
+        style = 'minimal',
+        border = 'rounded',
+        focusable = false,
+        zindex = 200,
+      })
+      vim.api.nvim_set_hl(0, 'AceWindowLabel', { fg = '#ff5f00', bg = '#1a1a1a', bold = true })
+      vim.api.nvim_win_set_option(ow, 'winhighlight', 'Normal:AceWindowLabel')
+      table.insert(overlays, { win = ow, buf = buf, label = label, target = w })
+    end
+
+    vim.cmd('redraw')
+    local ok, char = pcall(vim.fn.getcharstr)
+
+    for _, o in ipairs(overlays) do
+      if vim.api.nvim_win_is_valid(o.win) then vim.api.nvim_win_close(o.win, true) end
+      if vim.api.nvim_buf_is_valid(o.buf) then vim.api.nvim_buf_delete(o.buf, { force = true }) end
+    end
+
+    if not ok then return end
+    for _, o in ipairs(overlays) do
+      if char == o.label and vim.api.nvim_win_is_valid(o.target) then
+        vim.api.nvim_set_current_win(o.target)
+        return
+      end
+    end
+  end
+
+  set("n", "<leader>w", ace_window, { desc = "Ace window switch" })
 end
 
 local configure_window_management = function()
