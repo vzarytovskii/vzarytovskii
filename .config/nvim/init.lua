@@ -152,7 +152,8 @@ local configure_defaults = function(vim)
 
   vim.opt.grepformat = "%f:%l:%c:%m,%f"
 
-  vim.opt.cmdheight = 1
+  vim.opt.cmdheight = 0
+  vim.opt.showmode = false
 
   vim.opt.updatetime = 500
   vim.opt.ttimeoutlen = 10
@@ -233,7 +234,7 @@ local configure_defaults = function(vim)
   vim.opt.wildoptions = "pum,fuzzy,exacttext"
   vim.opt.wildmode = "longest:full,full"
 
-  vim.opt.statusline = "%f %m%r%h%w %= %{v:lua.Lsp_progress()} %l:%c %p%%"
+  vim.opt.statusline = "%{v:lua.Statusline_mode()} %f %m%r%h%w %= %{v:lua.Lsp_progress()} %l:%c %p%%"
 
   vim.diagnostic.config({
     virtual_text = { current_line = true },
@@ -264,7 +265,7 @@ vim.schedule(function()
         empty = 'cmd',
         bufwrite = 'msg',
         confirm = 'cmd',
-        emsg = 'pager',
+        emsg = 'msg',
         echo = 'msg',
         echomsg = 'msg',
         echoerr = 'pager',
@@ -713,7 +714,7 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
   set("n", "<leader>flg", "<cmd>FzfLiveGrep<cr>", { desc = "Live grep with preview" })
   set("n", "<leader>bl", "<cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
-  set("n", "<leader>bK", "<cmd>BufferKill<cr>", { desc = "Kill current buffer" })
+  set("n", "<leader>bK", "<cmd>bdelete<cr>", { desc = "Kill current buffer" })
   set("n", "<leader>tn", "<cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
   set("n", "<leader>tN", "<cmd>TermNew<cr>", { desc = "Create new terminal" })
   set("n", "<leader>tl", "<cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
@@ -1072,6 +1073,24 @@ local configure_lsp = function(vim, lsp_configs)
       map('<leader>sS', vim.lsp.buf.workspace_symbol, 'Workspace Symbols')
     end,
   })
+  local mode_map = {
+    n = 'NOR', no = 'O-P', nov = 'O-P', noV = 'O-P', ['no\22'] = 'O-P',
+    niI = 'NOR', niR = 'NOR', niV = 'NOR', nt = 'NOR',
+    v = 'VIS', vs = 'VIS', V = 'V-L', Vs = 'V-L',
+    ['\22'] = 'V-B', ['\22s'] = 'V-B',
+    s = 'SEL', S = 'S-L', ['\19'] = 'S-B',
+    i = 'INS', ic = 'INS', ix = 'INS',
+    R = 'REP', Rc = 'REP', Rx = 'REP', Rv = 'V-R', Rvc = 'V-R', Rvx = 'V-R',
+    c = 'CMD', cv = 'EX', ce = 'EX',
+    r = 'HIT', rm = 'MOR', ['r?'] = 'CON',
+    ['!'] = 'SHL', t = 'TER',
+  }
+
+  function Statusline_mode()
+    local mode = vim.api.nvim_get_mode().mode
+    return mode_map[mode] or mode
+  end
+
   local progress_msg = ''
   local progress_timer = nil
 
