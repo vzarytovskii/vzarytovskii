@@ -1117,6 +1117,31 @@ local configure_lsp = function(vim, lsp_configs)
 end
 
 local configure_autocmds = function(vim)
+	-- If nvim was opened with a single file (no directory), cd to the file's
+	-- directory, then walk up to find a .git root and cd there if one exists.
+	vim.api.nvim_create_autocmd('VimEnter', {
+		once = true,
+		callback = function()
+			local args = vim.fn.argv()
+			if #args ~= 1 then return end
+			local arg = args[1]
+			if vim.fn.isdirectory(arg) == 1 then return end
+			local file_dir = vim.fn.fnamemodify(arg, ':p:h')
+			local dir = file_dir
+			local git_root = nil
+			while true do
+				if vim.uv.fs_stat(dir .. '/.git') then
+					git_root = dir
+					break
+				end
+				local parent = vim.fn.fnamemodify(dir, ':h')
+				if parent == dir then break end
+				dir = parent
+			end
+			vim.cmd.cd(git_root or file_dir)
+		end,
+	})
+
 	vim.api.nvim_create_autocmd('BufNew', {
 		callback = function(ev)
 			local new_buf = ev.buf
