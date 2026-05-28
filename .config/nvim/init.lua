@@ -152,7 +152,7 @@ local configure_defaults = function(vim)
 
   vim.opt.grepformat = "%f:%l:%c:%m,%f"
 
-  vim.opt.cmdheight = 0
+  vim.opt.cmdheight = 1
   vim.opt.showmode = false
 
   vim.opt.updatetime = 500
@@ -262,8 +262,8 @@ vim.schedule(function()
     msg = {
       targets = {
         [''] = 'msg',
-        empty = 'cmd',
-        bufwrite = 'msg',
+        empty = 'msg',
+        bufwrite = 'cmd',
         confirm = 'cmd',
         emsg = 'msg',
         echo = 'msg',
