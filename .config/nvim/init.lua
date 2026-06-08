@@ -193,7 +193,21 @@ local configure_defaults = function(vim)
   vim.opt.keymodel = "startsel,stopsel"
 
   vim.opt.undofile = true
-  vim.opt.undodir = vim.fn.expand("~/.undodir")
+  local state_dir = vim.fn.stdpath('state')
+  local undo_dir = state_dir .. '/undo//'
+  local backup_dir = state_dir .. '/backup//'
+  local swap_dir = state_dir .. '/swap//'
+
+  vim.fn.mkdir(state_dir .. '/undo', 'p')
+  vim.fn.mkdir(state_dir .. '/backup', 'p')
+  vim.fn.mkdir(state_dir .. '/swap', 'p')
+
+  vim.opt.undodir = undo_dir
+  vim.opt.backup = true
+  vim.opt.writebackup = true
+  vim.opt.backupdir = backup_dir
+  vim.opt.swapfile = true
+  vim.opt.directory = swap_dir
 
   vim.opt.number = true
 
@@ -710,6 +724,8 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
   set("n", "<leader>gs", "<cmd>Neogit<cr>", { desc = "Neogit" })
   set("n", "<leader>ff", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
+  set("n", "<leader>fr", "<cmd>FzfRecents<cr>", { desc = "Recent files (fzf)" })
+  set("n", "<leader>fR", "<cmd>FzfRecentDirs<cr>", { desc = "Recent folders (fzf)" })
   set("n", "<leader>fg", "<cmd>FzfGrep<cr>", { desc = "Grep content (rg + fzf)" })
   set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
   set("n", "<leader>flg", "<cmd>FzfLiveGrep<cr>", { desc = "Live grep with preview" })
@@ -1217,7 +1233,11 @@ local configure_autocmds = function(vim)
       if #args ~= 1 then return end
       local arg = args[1]
       if vim.fn.isdirectory(arg) == 1 then return end
-      local file_dir = vim.fn.fnamemodify(arg, ':p:h')
+      local file = vim.fn.fnamemodify(arg, ':p')
+      if file == '' or file:match('^%a[%w+.-]*://') then return end
+      local file_dir = vim.fn.fnamemodify(file, ':h')
+      if vim.fn.isdirectory(file_dir) ~= 1 then return end
+
       local dir = file_dir
       local git_root = nil
       while true do
@@ -1229,7 +1249,13 @@ local configure_autocmds = function(vim)
         if parent == dir then break end
         dir = parent
       end
-      vim.cmd.cd(git_root or file_dir)
+
+      local target_dir = git_root or file_dir
+      if vim.fn.isdirectory(target_dir) ~= 1 then return end
+      local ok, err = pcall(vim.cmd.cd, target_dir)
+      if not ok then
+        vim.notify('VimEnter cd failed: ' .. tostring(err), vim.log.levels.WARN)
+      end
     end,
   })
 
@@ -1328,6 +1354,12 @@ local configure_user_commands = function(vim)
     if lnum then
       pcall(vim.api.nvim_win_set_cursor, 0, { lnum, (col or 1) - 1 })
     end
+  end
+
+  local function read_selected_line(path)
+    if vim.fn.filereadable(path) ~= 1 then return '' end
+    local lines = vim.fn.readfile(path)
+    return lines[1] and vim.trim(lines[1]) or ''
   end
 
   local function fzf_run(shell_cmd, opts)
@@ -1465,20 +1497,68 @@ local configure_user_commands = function(vim)
     vim.cmd('startinsert')
   end
 
+  local function run_fzf_selection(shell_cmd, opts)
+    opts = opts or {}
+    local output_file = vim.fn.tempname()
+    local tmp_files = { output_file }
+    if opts.tmp_files then
+      vim.list_extend(tmp_files, opts.tmp_files)
+    end
+
+    fzf_run(shell_cmd .. ' > ' .. vim.fn.shellescape(output_file), {
+      layout = opts.layout,
+      split_height = opts.split_height,
+      preview_file = opts.preview_file,
+      on_preview = opts.on_preview,
+      tmp_files = tmp_files,
+      on_result = function(exit_code)
+        local selected = ''
+        if exit_code == 0 then
+          selected = read_selected_line(output_file)
+        end
+        if opts.on_result then
+          opts.on_result(exit_code, selected)
+        end
+      end,
+    })
+  end
+
+  local function run_fzf_from_lines(lines, opts)
+    opts = opts or {}
+    local input_file = vim.fn.tempname()
+    vim.fn.writefile(lines, input_file)
+
+    local fzf_cmd = opts.fzf_cmd
+    if not fzf_cmd then
+      local prompt = opts.prompt or 'Select> '
+      fzf_cmd = 'fzf --layout=reverse --prompt=' .. vim.fn.shellescape(prompt)
+    end
+
+    local tmp_files = { input_file }
+    if opts.tmp_files then
+      vim.list_extend(tmp_files, opts.tmp_files)
+    end
+
+    run_fzf_selection('cat ' .. vim.fn.shellescape(input_file) .. ' | ' .. fzf_cmd, {
+      layout = opts.layout,
+      split_height = opts.split_height,
+      preview_file = opts.preview_file,
+      on_preview = opts.on_preview,
+      tmp_files = tmp_files,
+      on_result = opts.on_result,
+    })
+  end
+
   local function fzf_files(query)
     if not require_executables('fd', 'fzf') then return end
-    local tmp = vim.fn.tempname()
     local fd_cmd = "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
     local fzf_cmd = "fzf --height=100% --layout=reverse --prompt='Files> '"
     if query and query ~= '' then
       fzf_cmd = fzf_cmd .. ' --query ' .. vim.fn.shellescape(query)
     end
-    fzf_run(fd_cmd .. ' | ' .. fzf_cmd .. ' > ' .. vim.fn.shellescape(tmp), {
-      tmp_files = { tmp },
-      on_result = function(exit_code)
+    run_fzf_selection(fd_cmd .. ' | ' .. fzf_cmd, {
+      on_result = function(exit_code, selected)
         if exit_code ~= 0 then return end
-        local lines = vim.fn.filereadable(tmp) == 1 and vim.fn.readfile(tmp) or {}
-        local selected = lines[1] and vim.trim(lines[1]) or ''
         if selected ~= '' then open_file_or_switch(selected) end
       end,
     })
@@ -1487,6 +1567,92 @@ local configure_user_commands = function(vim)
   vim.api.nvim_create_user_command('FzfFiles', function(args)
     fzf_files(args.args)
   end, { nargs = '?', desc = 'Pick files with fd + fzf' })
+
+  local function get_recent_files()
+    local seen = {}
+    local files = {}
+    for _, file in ipairs(vim.v.oldfiles or {}) do
+      local abs = vim.fn.fnamemodify(file, ':p')
+      if abs ~= ''
+          and not seen[abs]
+          and vim.fn.filereadable(abs) == 1
+          and not abs:match('^term://')
+      then
+        seen[abs] = true
+        table.insert(files, abs)
+      end
+    end
+    return files
+  end
+
+  local function fzf_recents()
+    if not require_executables('fzf') then return end
+    local recents = get_recent_files()
+    if #recents == 0 then
+      vim.notify('No recent files found', vim.log.levels.INFO)
+      return
+    end
+
+    local entries = vim.tbl_map(function(path)
+      return vim.fn.fnamemodify(path, ':~:.')
+    end, recents)
+
+    run_fzf_from_lines(entries, {
+      prompt = 'Recents> ',
+      on_result = function(exit_code, selected)
+        if exit_code ~= 0 then return end
+        if selected == '' then return end
+        open_file_or_switch(vim.fn.fnamemodify(selected, ':p'))
+      end,
+    })
+  end
+
+  local function fzf_recent_dirs()
+    if not require_executables('fzf') then return end
+    local seen = {}
+    local dirs = {}
+    for _, file in ipairs(get_recent_files()) do
+      local dir = vim.fn.fnamemodify(file, ':p:h')
+      if dir ~= '' and not seen[dir] and vim.fn.isdirectory(dir) == 1 then
+        seen[dir] = true
+        table.insert(dirs, dir)
+      end
+    end
+
+    if #dirs == 0 then
+      vim.notify('No recent folders found', vim.log.levels.INFO)
+      return
+    end
+
+    local entries = vim.tbl_map(function(path)
+      return vim.fn.fnamemodify(path, ':~:.')
+    end, dirs)
+
+    run_fzf_from_lines(entries, {
+      prompt = 'RecentDirs> ',
+      on_result = function(exit_code, selected)
+        if exit_code ~= 0 then return end
+        if selected == '' then return end
+        local dir = vim.fn.fnamemodify(selected, ':p')
+        if vim.fn.isdirectory(dir) == 0 then return end
+        vim.cmd('cd ' .. vim.fn.fnameescape(dir))
+        local ok, oil = pcall(require, 'oil')
+        if ok and oil and oil.open then
+          oil.open(dir)
+        else
+          vim.cmd('edit ' .. vim.fn.fnameescape(dir))
+        end
+      end,
+    })
+  end
+
+  vim.api.nvim_create_user_command('FzfRecents', function()
+    fzf_recents()
+  end, { desc = 'Pick recent file with fzf' })
+
+  vim.api.nvim_create_user_command('FzfRecentDirs', function()
+    fzf_recent_dirs()
+  end, { desc = 'Pick recent folder with fzf' })
 
   local function fzf_grep(query, dir)
     if not require_executables('rg', 'fzf') then return end
@@ -1620,8 +1786,6 @@ local configure_user_commands = function(vim)
       return
     end
 
-    local input_file = vim.fn.tempname()
-    local output_file = vim.fn.tempname()
     local cur_file = vim.fn.tempname()
     local lines = {}
     local current_buf = vim.api.nvim_get_current_buf()
@@ -1635,17 +1799,14 @@ local configure_user_commands = function(vim)
       end
     end
     if current_line then table.insert(lines, 1, current_line) end
-    vim.fn.writefile(lines, input_file)
-
     local fzf_cmd = table.concat({
       'fzf', '--layout=reverse',
       '--bind', vim.fn.shellescape('focus:execute-silent(echo {} > ' .. cur_file .. ')'),
       '--prompt', vim.fn.shellescape(prompt),
     }, ' ')
-    local shell_cmd = 'cat ' ..
-        vim.fn.shellescape(input_file) .. ' | ' .. fzf_cmd .. ' > ' .. vim.fn.shellescape(output_file)
 
-    fzf_run(shell_cmd, {
+    run_fzf_from_lines(lines, {
+      fzf_cmd = fzf_cmd,
       layout = 'split',
       split_height = math.min(#bufs + 4, 15),
       preview_file = cur_file,
@@ -1658,12 +1819,9 @@ local configure_user_commands = function(vim)
           vim.api.nvim_win_set_buf(pwin, bnr)
         end
       end,
-      tmp_files = { input_file, output_file, cur_file },
-      on_result = function(exit_code)
+      tmp_files = { cur_file },
+      on_result = function(exit_code, selected)
         if exit_code ~= 0 then return end
-        local result = vim.fn.filereadable(output_file) == 1 and vim.fn.readfile(output_file) or
-            {}
-        local selected = result[1] and vim.trim(result[1]) or ''
         local bufnr = selected:match('^(%d+):')
         if bufnr and vim.api.nvim_buf_is_valid(tonumber(bufnr)) then
           vim.cmd('buffer ' .. bufnr)
