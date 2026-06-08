@@ -724,12 +724,15 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
   set("n", "<leader>gs", "<cmd>Neogit<cr>", { desc = "Neogit" })
   set("n", "<leader>ff", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
+  set("n", "<leader>lf", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
   set("n", "<leader>fr", "<cmd>FzfRecents<cr>", { desc = "Recent files (fzf)" })
+  set("n", "<leader>lr", "<cmd>FzfRecents<cr>", { desc = "Recent files (fzf)" })
   set("n", "<leader>fR", "<cmd>FzfRecentDirs<cr>", { desc = "Recent folders (fzf)" })
+  set("n", "<leader>lR", "<cmd>FzfRecentDirs<cr>", { desc = "Recent folders (fzf)" })
   set("n", "<leader>fg", "<cmd>FzfGrep<cr>", { desc = "Grep content (rg + fzf)" })
   set("n", "<leader>fG", "<cmd>FzfGrepDir<cr>", { desc = "Grep in current dir (rg + fzf)" })
   set("n", "<leader>flg", "<cmd>FzfLiveGrep<cr>", { desc = "Live grep with preview" })
-  set("n", "<leader>bl", "<cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
+  set("n", "<leader>lb", "<cmd>FzfBuffers<cr>", { desc = "Buffer list (fzf)" })
   set("n", "<leader>bK", function()
     local wins = vim.tbl_filter(function(w)
       return vim.api.nvim_win_get_config(w).relative == ''
@@ -740,9 +743,13 @@ local configure_global_keymaps = function(vim)
       vim.cmd('bdelete')
     end
   end, { desc = "Close window or kill buffer" })
-  set("n", "<leader>tn", "<cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
-  set("n", "<leader>tN", "<cmd>TermNew<cr>", { desc = "Create new terminal" })
-  set("n", "<leader>tl", "<cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
+  set("n", "<leader>nb", "<cmd>enew<cr>", { desc = "New buffer" })
+  set("n", "<leader>nt", "<cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
+  set("n", "<leader>nT", "<cmd>TermNew<cr>", { desc = "Create new terminal" })
+  set("n", "<leader>nc", "<cmd>CopilotTermNew<cr>", { desc = "Create new Copilot terminal" })
+  set("n", "<leader>nC", "<cmd>CopilotTermNewWithFlags<cr>", { desc = "Create new Copilot terminal with flags" })
+  set("n", "<leader>lt", "<cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
+  set("n", "<leader>lc", "<cmd>FzfCopilotTerminals<cr>", { desc = "Copilot terminal list (fzf)" })
   set("t", "<C-Space>n", "<C-\\><C-n><cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
   set("t", "<C-Space>N", "<C-\\><C-n><cmd>TermNew<cr>", { desc = "Create new terminal" })
   set("t", "<C-Space>l", "<C-\\><C-n><cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
@@ -1764,6 +1771,12 @@ local configure_user_commands = function(vim)
     vim.cmd('startinsert')
   end
 
+  local function create_terminal_command(command)
+    vim.cmd('enew')
+    vim.fn.termopen(command)
+    vim.cmd('startinsert')
+  end
+
   local function fzf_buf_picker(opts)
     if not require_executables('fzf') then return end
     opts = opts or {}
@@ -1853,9 +1866,47 @@ local configure_user_commands = function(vim)
     })
   end, { desc = 'Pick terminal with fzf' })
 
+  vim.api.nvim_create_user_command('FzfCopilotTerminals', function()
+    fzf_buf_picker({
+      prompt = 'CopilotTerms> ',
+      filter = function(b)
+        return vim.api.nvim_buf_is_valid(b)
+            and vim.bo[b].buftype == 'terminal'
+            and vim.bo[b].channel ~= 0
+            and vim.api.nvim_buf_get_name(b):match('copilot') ~= nil
+      end,
+      format_entry = function(b)
+        local raw = vim.api.nvim_buf_get_name(b)
+        local name = raw:match('term://(.+)') or raw
+        if name == '' then name = '[terminal ' .. b .. ']' end
+        local idle = term_is_idle(b) and '' or ' [busy]'
+        local bell = (_G._term_bell_bufs and _G._term_bell_bufs[b]) and ' [bell]' or ''
+        return string.format('%d: %s%s%s', b, name, idle, bell)
+      end,
+    })
+  end, { desc = 'Pick Copilot terminal with fzf' })
+
   vim.api.nvim_create_user_command('TermNew', function()
     create_terminal()
   end, { desc = 'Create a new terminal buffer' })
+
+  vim.api.nvim_create_user_command('CopilotTermNew', function()
+    if not require_executables('copilot') then return end
+    create_terminal_command('copilot --experimental')
+  end, { desc = 'Create a new Copilot terminal buffer' })
+
+  vim.api.nvim_create_user_command('CopilotTermNewWithFlags', function()
+    if not require_executables('copilot') then return end
+    vim.ui.input({
+      prompt = 'Copilot flags: ',
+      default = '--experimental',
+    }, function(input)
+      if input == nil then return end
+      local flags = vim.trim(input)
+      if flags == '' then flags = '--experimental' end
+      create_terminal_command('copilot ' .. flags)
+    end)
+  end, { desc = 'Create a new Copilot terminal buffer with custom flags' })
 
   vim.api.nvim_create_user_command('TermNext', function()
     local current = vim.api.nvim_get_current_buf()
