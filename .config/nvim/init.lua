@@ -322,30 +322,17 @@ end)
 local plugins = {
   { 'nvim-lua/plenary.nvim', lazy = false },
   {
-    'Mofiqul/vscode.nvim',
-    lazy = false,
-    opts = {
-      transparent = false,
-      italic_comments = false,
-      italic_inlayhints = false,
-      terminal_colors = true
-    },
-    config = function()
-      vim.cmd("colorscheme vscode")
-    end,
-  },
-  {
     'f-person/auto-dark-mode.nvim',
     lazy = false,
     opts = {
       update_interval = 1000,
       set_dark_mode = function()
         vim.api.nvim_set_option_value("background", "dark", {})
-        vim.cmd("colorscheme vscode")
+        vim.cmd("colorscheme default")
       end,
       set_light_mode = function()
         vim.api.nvim_set_option_value("background", "light", {})
-        vim.cmd("colorscheme vscode")
+        vim.cmd("colorscheme default")
       end,
     },
   },
@@ -445,8 +432,8 @@ local plugins = {
     },
   },
   {
-    'dlyongemallo/diffview.nvim',
-    cmd = { 'DiffviewOpen', 'DiffviewFileHistory' },
+    'dlyongemallo/diffview-plus.nvim',
+    cmd = { 'DiffviewOpen', 'DiffViewToggle', 'DiffviewFileHistory', 'DiffviewDiffFiles', 'DiffviewLog' },
     config = function()
       local actions = require('diffview.actions')
       require('diffview').setup({
