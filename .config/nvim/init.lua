@@ -507,13 +507,14 @@ local plugins = {
   },
   {
     'pwntester/octo.nvim',
+    events = { 'VimEnter' },
     cmd = 'Octo',
     opts = {
       picker = 'default',
       enable_builtin = true,
       use_timeline_icons = false,
       file_panel = {
-        use_icons = false
+        icons = false
       },
       runs = {
         icons = {
@@ -719,6 +720,7 @@ end, { desc = 'Clean packages, update plugins, and update Mason tools' })
 local configure_global_keymaps = function(vim)
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
+
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
   set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
   set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
@@ -818,6 +820,68 @@ local configure_global_keymaps = function(vim)
   end
 
   set("n", "<leader>w", ace_window, { desc = "Ace window switch" })
+
+  local function show_help()
+    local leader_items = {}
+    local other_items = {}
+
+    for _, mode in ipairs({ 'n', 'v', 'i', 't' }) do
+      for _, km in ipairs(vim.api.nvim_get_keymap(mode)) do
+        if km.desc and km.desc ~= '' then
+          local lhs = km.lhs
+          local entry = string.format('%-20s [%s] %s', lhs, mode, km.desc)
+          if lhs:match(' ') then
+            table.insert(leader_items, entry)
+          else
+            table.insert(other_items, entry)
+          end
+        end
+      end
+    end
+
+    table.sort(leader_items)
+    table.sort(other_items)
+
+    local items = vim.list_extend({ 'LEADER BINDINGS:', '─────────────────' }, leader_items)
+    items = vim.list_extend(items, { '', 'OTHER BINDINGS:', '────────────────' })
+    items = vim.list_extend(items, other_items)
+
+    if #leader_items == 0 and #other_items == 0 then
+      vim.notify('No keybindings found', vim.log.levels.INFO)
+      return
+    end
+
+    local height = math.min(#items + 2, vim.o.lines - 4)
+    local width = math.min(80, vim.o.columns - 4)
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, items)
+    vim.bo[buf].modifiable = false
+    vim.bo[buf].buftype = 'nofile'
+
+    local win = vim.api.nvim_open_win(buf, true, {
+      relative = 'editor',
+      width = width,
+      height = height,
+      row = math.floor((vim.o.lines - height) / 2),
+      col = math.floor((vim.o.columns - width) / 2),
+      style = 'minimal',
+      border = 'rounded',
+      title = ' Help (hk) ',
+      title_pos = 'center',
+    })
+
+    vim.keymap.set('n', '<Esc>', function()
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+      end
+      if vim.api.nvim_buf_is_valid(buf) then
+        vim.api.nvim_buf_delete(buf, { force = true })
+      end
+    end, { buffer = buf, noremap = true, silent = true })
+  end
+
+  set("n", "<leader>hk", show_help, { desc = "Show key bindings help" })
 end
 
 local configure_window_management = function()
