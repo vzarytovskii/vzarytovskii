@@ -1282,6 +1282,22 @@ local configure_lsp = function(vim, lsp_configs)
 end
 
 local configure_autocmds = function(vim)
+  -- A directory that should never become the CWD via automatic root detection.
+  -- $HOME, any ancestor of $HOME (e.g. /Users), and the filesystem root (/ or C:/)
+  -- are rejected so they only become CWD when opened explicitly.
+  local function is_unsafe_auto_root(dir)
+    if not dir or dir == '' then return true end
+    dir = vim.fs.normalize(dir)
+    -- A filesystem root (/ or C:/) is its own parent.
+    if vim.fn.fnamemodify(dir, ':h') == dir then return true end
+    local home = vim.uv.os_homedir()
+    if home then
+      home = vim.fs.normalize(home)
+      if dir == home or vim.startswith(home .. '/', dir .. '/') then return true end
+    end
+    return false
+  end
+
   -- If nvim was opened with a single file (no directory), cd to the file's
   -- directory, then walk up to find a .git root and cd there if one exists.
   vim.api.nvim_create_autocmd('VimEnter', {
@@ -1308,8 +1324,15 @@ local configure_autocmds = function(vim)
         dir = parent
       end
 
-      local target_dir = git_root or file_dir
+      -- Prefer the nearest .git root, but only when it is a safe target. If no
+      -- .git is found all the way up to the filesystem root (or the only root
+      -- found is unsafe, e.g. $HOME), fall back to the file's own directory.
+      local target_dir = file_dir
+      if git_root and not is_unsafe_auto_root(git_root) then
+        target_dir = git_root
+      end
       if vim.fn.isdirectory(target_dir) ~= 1 then return end
+      if is_unsafe_auto_root(target_dir) then return end
       local ok, err = pcall(vim.cmd.cd, target_dir)
       if not ok then
         vim.notify('VimEnter cd failed: ' .. tostring(err), vim.log.levels.WARN)
@@ -1346,8 +1369,14 @@ local configure_autocmds = function(vim)
   vim.api.nvim_create_autocmd('BufEnter', {
     callback = function(ev)
       if vim.bo[ev.buf].buftype ~= '' then return end
-      local root = vim.fs.root(ev.buf, { '.git', 'Cargo.toml', 'CMakeLists.txt', '.cargo' })
-      if root then vim.cmd.lcd(root) end
+      if vim.api.nvim_buf_get_name(ev.buf) == '' then return end
+      -- '.cargo' is intentionally omitted: the global Cargo home (~/.cargo) would
+      -- otherwise make every non-project file resolve its root to $HOME.
+      local root = vim.fs.root(ev.buf, { '.git', 'Cargo.toml', 'Cargo.lock', 'CMakeLists.txt' })
+      if not root then return end
+      -- Never auto-lcd to $HOME, an ancestor of it, or the filesystem root.
+      if is_unsafe_auto_root(root) then return end
+      vim.cmd.lcd(root)
     end,
   })
 
