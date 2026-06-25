@@ -741,10 +741,10 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>nb", "<cmd>enew<cr>", { desc = "New buffer" })
   set("n", "<leader>nt", "<cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
   set("n", "<leader>nT", "<cmd>TermNew<cr>", { desc = "Create new terminal" })
-  set("n", "<leader>nc", "<cmd>CopilotTermNew<cr>", { desc = "Create new Copilot terminal" })
-  set("n", "<leader>nC", "<cmd>CopilotTermNewWithFlags<cr>", { desc = "Create new Copilot terminal with flags" })
+  set("n", "<leader>na", "<cmd>AgentTermNew<cr>", { desc = "Create new agent terminal" })
+  set("n", "<leader>nA", "<cmd>AgentTermNewWithFlags<cr>", { desc = "Create new agent terminal with custom command" })
   set("n", "<leader>lt", "<cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
-  set("n", "<leader>lc", "<cmd>FzfCopilotTerminals<cr>", { desc = "Copilot terminal list (fzf)" })
+  set("n", "<leader>lA", "<cmd>FzfAgentTerminals<cr>", { desc = "Agent terminal list (fzf)" })
   set("t", "<C-Space>n", "<C-\\><C-n><cmd>TermNext<cr>", { desc = "Next idle terminal or create new" })
   set("t", "<C-Space>N", "<C-\\><C-n><cmd>TermNew<cr>", { desc = "Create new terminal" })
   set("t", "<C-Space>l", "<C-\\><C-n><cmd>FzfTerminals<cr>", { desc = "Terminal list (fzf)" })
@@ -1988,9 +1988,9 @@ local configure_user_commands = function(vim, root_markers)
     })
   end, { desc = 'Pick terminal with fzf' })
 
-  vim.api.nvim_create_user_command('FzfCopilotTerminals', function()
+  vim.api.nvim_create_user_command('FzfAgentTerminals', function()
     fzf_buf_picker({
-      prompt = 'CopilotTerms> ',
+      prompt = 'AgentTerms> ',
       filter = function(b)
         return vim.api.nvim_buf_is_valid(b)
             and vim.bo[b].buftype == 'terminal'
@@ -2012,23 +2012,24 @@ local configure_user_commands = function(vim, root_markers)
     create_terminal()
   end, { desc = 'Create a new terminal buffer' })
 
-  vim.api.nvim_create_user_command('CopilotTermNew', function()
-    if not require_executables('copilot') then return end
-    create_terminal_command('copilot --experimental')
-  end, { desc = 'Create a new Copilot terminal buffer' })
+  vim.api.nvim_create_user_command('AgentTermNew', function()
+    if not require_executables('omp') then return end
+    create_terminal_command('omp')
+  end, { desc = 'Create a new agent terminal buffer' })
 
-  vim.api.nvim_create_user_command('CopilotTermNewWithFlags', function()
-    if not require_executables('copilot') then return end
+  vim.api.nvim_create_user_command('AgentTermNewWithFlags', function()
     vim.ui.input({
-      prompt = 'Copilot flags: ',
-      default = '--experimental',
+      prompt = 'Agent command: ',
+      default = 'copilot --experimental',
     }, function(input)
       if input == nil then return end
-      local flags = vim.trim(input)
-      if flags == '' then flags = '--experimental' end
-      create_terminal_command('copilot ' .. flags)
+      local command = vim.trim(input)
+      if command == '' then command = 'copilot --experimental' end
+      local exe = command:match('^%S+')
+      if not require_executables(exe) then return end
+      create_terminal_command(command)
     end)
-  end, { desc = 'Create a new Copilot terminal buffer with custom flags' })
+  end, { desc = 'Create a new agent terminal buffer with a custom command' })
 
   vim.api.nvim_create_user_command('TermNext', function()
     local current = vim.api.nvim_get_current_buf()
