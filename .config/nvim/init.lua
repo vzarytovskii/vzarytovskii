@@ -18,6 +18,11 @@ local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattribu
   'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'powershell', 'xml' }
 local tools = { 'clang-format', 'codelldb' }
 
+-- Project-root markers shared by automatic cwd detection (VimEnter/BufEnter) and
+-- the fzf pickers. '.cargo' is intentionally omitted: the global Cargo home
+-- (~/.cargo) would otherwise make every non-project file resolve its root to $HOME.
+local project_root_markers = { '.git', 'Cargo.toml', 'Cargo.lock', 'CMakeLists.txt' }
+
 local lsp_configs = {
   ['clangd'] = {
     cmd = { 'clangd', '--background-index', '--clang-tidy', '--all-scopes-completion', '--pch-storage=memory', '--completion-style=detailed' },
@@ -729,7 +734,8 @@ local configure_global_keymaps = function(vim)
     if #wins > 1 then
       vim.api.nvim_win_close(0, false)
     else
-      vim.cmd('bdelete')
+      local force = vim.bo[vim.api.nvim_get_current_buf()].buftype == 'terminal'
+      vim.cmd('bdelete' .. (force and '!' or ''))
     end
   end, { desc = "Close window or kill buffer" })
   set("n", "<leader>nb", "<cmd>enew<cr>", { desc = "New buffer" })
@@ -1281,7 +1287,7 @@ local configure_lsp = function(vim, lsp_configs)
   end
 end
 
-local configure_autocmds = function(vim)
+local configure_autocmds = function(vim, root_markers)
   -- A directory that should never become the CWD via automatic root detection.
   -- $HOME, any ancestor of $HOME (e.g. /Users), and the filesystem root (/ or C:/)
   -- are rejected so they only become CWD when opened explicitly.
@@ -1299,7 +1305,7 @@ local configure_autocmds = function(vim)
   end
 
   -- If nvim was opened with a single file (no directory), cd to the file's
-  -- directory, then walk up to find a .git root and cd there if one exists.
+  -- directory, then walk up to find a project root and cd there if one exists.
   vim.api.nvim_create_autocmd('VimEnter', {
     once = true,
     callback = function()
@@ -1309,23 +1315,17 @@ local configure_autocmds = function(vim)
       if vim.fn.isdirectory(arg) == 1 then return end
       local file = vim.fn.fnamemodify(arg, ':p')
       if file == '' or file:match('^%a[%w+.-]*://') then return end
+      -- Resolve symlinks so a symlinked config dir (e.g. ~/.config/nvim ->
+      -- ~/dotfiles/.config/nvim) finds the real project root instead of falling
+      -- back to the launch directory.
+      file = vim.fn.resolve(file)
       local file_dir = vim.fn.fnamemodify(file, ':h')
       if vim.fn.isdirectory(file_dir) ~= 1 then return end
 
-      local dir = file_dir
-      local git_root = nil
-      while true do
-        if vim.uv.fs_stat(dir .. '/.git') then
-          git_root = dir
-          break
-        end
-        local parent = vim.fn.fnamemodify(dir, ':h')
-        if parent == dir then break end
-        dir = parent
-      end
+      local git_root = vim.fs.root(file, root_markers)
 
-      -- Prefer the nearest .git root, but only when it is a safe target. If no
-      -- .git is found all the way up to the filesystem root (or the only root
+      -- Prefer the nearest project root, but only when it is a safe target. If no
+      -- marker is found all the way up to the filesystem root (or the only root
       -- found is unsafe, e.g. $HOME), fall back to the file's own directory.
       local target_dir = file_dir
       if git_root and not is_unsafe_auto_root(git_root) then
@@ -1369,10 +1369,10 @@ local configure_autocmds = function(vim)
   vim.api.nvim_create_autocmd('BufEnter', {
     callback = function(ev)
       if vim.bo[ev.buf].buftype ~= '' then return end
-      if vim.api.nvim_buf_get_name(ev.buf) == '' then return end
-      -- '.cargo' is intentionally omitted: the global Cargo home (~/.cargo) would
-      -- otherwise make every non-project file resolve its root to $HOME.
-      local root = vim.fs.root(ev.buf, { '.git', 'Cargo.toml', 'Cargo.lock', 'CMakeLists.txt' })
+      local name = vim.api.nvim_buf_get_name(ev.buf)
+      if name == '' then return end
+      -- Resolve symlinks so a symlinked path finds the real project root.
+      local root = vim.fs.root(vim.fn.resolve(name), root_markers)
       if not root then return end
       -- Never auto-lcd to $HOME, an ancestor of it, or the filesystem root.
       if is_unsafe_auto_root(root) then return end
@@ -1420,7 +1420,7 @@ local configure_autocmds = function(vim)
   })
 end
 
-local configure_user_commands = function(vim)
+local configure_user_commands = function(vim, root_markers)
   local function require_executables(...)
     for _, exe in ipairs({ ... }) do
       if vim.fn.executable(exe) == 0 then
@@ -1447,6 +1447,38 @@ local configure_user_commands = function(vim)
     if vim.fn.filereadable(path) ~= 1 then return '' end
     local lines = vim.fn.readfile(path)
     return lines[1] and vim.trim(lines[1]) or ''
+  end
+
+  -- Search root for the fzf pickers, derived from the current buffer rather than
+  -- the ambient window cwd (which can still be $HOME when a file is opened from an
+  -- oil buffer, a new tab, or a no-argument launch). Resolves symlinks, then
+  -- prefers the nearest project marker, else the file's own directory.
+  local function search_root()
+    local name = vim.api.nvim_buf_get_name(0)
+    if name:match('^oil://') then
+      local ok, oil = pcall(require, 'oil')
+      if ok and oil.get_current_dir then
+        local dir = oil.get_current_dir()
+        if dir and dir ~= '' then
+          dir = vim.fn.resolve((dir:gsub('/$', '')))
+          return vim.fs.root(dir, root_markers) or dir
+        end
+      end
+    end
+    if name == '' or name:match('^%a[%w+.-]*://') then
+      return vim.fn.getcwd()
+    end
+    local file = vim.fn.resolve(vim.fn.fnamemodify(name, ':p'))
+    local dir = vim.fn.fnamemodify(file, ':h')
+    if vim.fn.isdirectory(dir) ~= 1 then return vim.fn.getcwd() end
+    return vim.fs.root(file, root_markers) or dir
+  end
+
+  -- Join a fzf-selected (possibly relative) path onto the root used to produce it,
+  -- so it opens correctly regardless of the window's cwd.
+  local function resolve_under(root, path)
+    if path == '' or path:sub(1, 1) == '/' then return path end
+    return vim.fs.joinpath(root, path)
   end
 
   local function fzf_run(shell_cmd, opts)
@@ -1480,7 +1512,9 @@ local configure_user_commands = function(vim)
           if not vim.api.nvim_win_is_valid(pwin) then return end
           if preview_state.current_file ~= file then
             preview_state.current_file = file
-            local abs = vim.fn.fnamemodify(file, ':p')
+            local abs = file
+            if abs:sub(1, 1) ~= '/' and opts.cwd then abs = vim.fs.joinpath(opts.cwd, abs) end
+            abs = vim.fn.fnamemodify(abs, ':p')
             if vim.fn.filereadable(abs) == 1 then
               local nbuf = vim.fn.bufnr(abs)
               if nbuf == -1 then
@@ -1541,6 +1575,7 @@ local configure_user_commands = function(vim)
     end
 
     local job_id = vim.fn.termopen(shell_cmd, {
+      cwd = (opts.cwd and vim.fn.isdirectory(opts.cwd) == 1) and opts.cwd or nil,
       on_exit = function(_, exit_code, _)
         vim.schedule(function()
           cleanup()
@@ -1594,6 +1629,7 @@ local configure_user_commands = function(vim)
 
     fzf_run(shell_cmd .. ' > ' .. vim.fn.shellescape(output_file), {
       layout = opts.layout,
+      cwd = opts.cwd,
       split_height = opts.split_height,
       preview_file = opts.preview_file,
       on_preview = opts.on_preview,
@@ -1638,15 +1674,17 @@ local configure_user_commands = function(vim)
 
   local function fzf_files(query)
     if not require_executables('fd', 'fzf') then return end
+    local root = search_root()
     local fd_cmd = "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
     local fzf_cmd = "fzf --height=100% --layout=reverse --prompt='Files> '"
     if query and query ~= '' then
       fzf_cmd = fzf_cmd .. ' --query ' .. vim.fn.shellescape(query)
     end
     run_fzf_selection(fd_cmd .. ' | ' .. fzf_cmd, {
+      cwd = root,
       on_result = function(exit_code, selected)
         if exit_code ~= 0 then return end
-        if selected ~= '' then open_file_or_switch(selected) end
+        if selected ~= '' then open_file_or_switch(resolve_under(root, selected)) end
       end,
     })
   end
@@ -1743,6 +1781,7 @@ local configure_user_commands = function(vim)
 
   local function fzf_grep(query, dir)
     if not require_executables('rg', 'fzf') then return end
+    local cwd = dir or search_root()
     local tmp = vim.fn.tempname()
     local initial_query = (query and query ~= '') and query or ''
     local path_arg = dir and (' ' .. vim.fn.shellescape(dir)) or ''
@@ -1759,6 +1798,7 @@ local configure_user_commands = function(vim)
       path_arg, '|', fzf_cmd, '>', vim.fn.shellescape(tmp),
     }, ' ')
     fzf_run(shell_cmd, {
+      cwd = cwd,
       tmp_files = { tmp },
       on_result = function(exit_code)
         if exit_code ~= 0 then return end
@@ -1766,7 +1806,7 @@ local configure_user_commands = function(vim)
         local selected = lines[1] and vim.trim(lines[1]) or ''
         if selected == '' then return end
         local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
-        if file then open_file_or_switch(file, tonumber(lnum), tonumber(col)) end
+        if file then open_file_or_switch(resolve_under(cwd, file), tonumber(lnum), tonumber(col)) end
       end,
     })
   end
@@ -1782,6 +1822,7 @@ local configure_user_commands = function(vim)
 
   local function fzf_live_grep(query)
     if not require_executables('rg', 'fzf') then return end
+    local root = search_root()
     local tmp = vim.fn.tempname()
     local cur_file = tmp .. '.cur'
     local initial_query = (query and query ~= '') and query or ''
@@ -1800,6 +1841,7 @@ local configure_user_commands = function(vim)
     }, ' ')
     fzf_run(shell_cmd, {
       layout = 'split',
+      cwd = root,
       preview_file = cur_file,
       tmp_files = { tmp, cur_file },
       on_result = function(exit_code)
@@ -1808,7 +1850,7 @@ local configure_user_commands = function(vim)
         local selected = lines[1] and vim.trim(lines[1]) or ''
         if selected == '' then return end
         local file, lnum, col = selected:match('^(.+):(%d+):(%d+):')
-        if file then open_file_or_switch(file, tonumber(lnum), tonumber(col)) end
+        if file then open_file_or_switch(resolve_under(root, file), tonumber(lnum), tonumber(col)) end
       end,
     })
   end
@@ -2155,8 +2197,8 @@ end
 
 configure_defaults(vim)
 configure_global_keymaps(vim)
-configure_autocmds(vim)
-configure_user_commands(vim)
+configure_autocmds(vim, project_root_markers)
+configure_user_commands(vim, project_root_markers)
 configure_window_management()
 configure_term_bell_indicator()
 configure_lsp(vim, lsp_configs)
