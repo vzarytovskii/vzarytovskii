@@ -128,8 +128,8 @@ local configure_defaults = function(vim)
   vim.opt.scrolloff = 8
   vim.opt.signcolumn = "yes"
   vim.opt.isfname:append("@-@")
-
-  vim.opt.keymodel = "startsel,stopsel"
+  vim.opt.selectmode = ""
+  vim.opt.keymodel = "startsel"
 
   vim.opt.undofile = true
   local state_dir = vim.fn.stdpath('state')
