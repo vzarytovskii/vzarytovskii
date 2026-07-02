@@ -81,72 +81,6 @@ local lsp_configs = {
       client.server_capabilities.documentFormattingProvider = true
     end,
   },
-  ['copilot-language-server'] = {
-    cmd = { 'copilot-language-server', '--stdio' },
-    root_markers = { '.git' },
-    workspace_required = false,
-    init_options = {
-      editorInfo = {
-        name = 'Neovim',
-        version = tostring(vim.version()),
-      },
-      editorPluginInfo = {
-        name = 'Neovim',
-        version = tostring(vim.version()),
-      },
-    },
-    settings = {
-      telemetry = {
-        telemetryLevel = 'all',
-      },
-    },
-    on_attach = function(client, bufnr)
-      vim.api.nvim_buf_create_user_command(bufnr, 'LspCopilotSignIn', function()
-        client:request(
-          'signIn',
-          vim.empty_dict(),
-          function(err, result)
-            if err then
-              vim.notify(err.message, vim.log.levels.ERROR)
-              return
-            end
-            if result.command then
-              local code = result.userCode
-              local command = result.command
-              vim.fn.setreg('+', code)
-              vim.fn.setreg('*', code)
-              local continue = vim.fn.confirm(
-                'Copied your one-time code to clipboard.\n' ..
-                'Open the browser to complete the sign-in process?',
-                '&Yes\n&No'
-              )
-              if continue == 1 then
-                client:exec_cmd(command, { bufnr = bufnr },
-                  function(cmd_err, cmd_result)
-                    if cmd_err then
-                      vim.notify(cmd_err.message,
-                        vim.log.levels.ERROR)
-                      return
-                    end
-                    if cmd_result.status == 'OK' then
-                      vim.notify('Signed in as ' ..
-                        cmd_result.user .. '.')
-                    end
-                  end)
-              end
-            end
-
-            if result.status == 'PromptUserDeviceFlow' then
-              vim.notify('Enter your one-time code ' ..
-                result.userCode .. ' in ' .. result.verificationUri)
-            elseif result.status == 'AlreadySignedIn' then
-              vim.notify('Already signed in as ' .. result.user .. '.')
-            end
-          end
-        )
-      end, { desc = 'Sign in Copilot with GitHub' })
-    end,
-  },
 }
 
 local configure_defaults = function(vim)
@@ -520,7 +454,6 @@ local plugins = {
       },
     },
   },
-
 }
 
 local pack_fields = { src = true, name = true, version = true }
@@ -1995,7 +1928,7 @@ local configure_user_commands = function(vim, root_markers)
         return vim.api.nvim_buf_is_valid(b)
             and vim.bo[b].buftype == 'terminal'
             and vim.bo[b].channel ~= 0
-            and vim.api.nvim_buf_get_name(b):match('copilot') ~= nil
+            and vim.api.nvim_buf_get_name(b):match('agent') ~= nil
       end,
       format_entry = function(b)
         local raw = vim.api.nvim_buf_get_name(b)
@@ -2006,7 +1939,7 @@ local configure_user_commands = function(vim, root_markers)
         return string.format('%d: %s%s%s', b, name, idle, bell)
       end,
     })
-  end, { desc = 'Pick Copilot terminal with fzf' })
+  end, { desc = 'Pick Agent terminal with fzf' })
 
   vim.api.nvim_create_user_command('TermNew', function()
     create_terminal()
@@ -2020,11 +1953,11 @@ local configure_user_commands = function(vim, root_markers)
   vim.api.nvim_create_user_command('AgentTermNewWithFlags', function()
     vim.ui.input({
       prompt = 'Agent command: ',
-      default = 'copilot --experimental',
+      default = 'omp',
     }, function(input)
       if input == nil then return end
       local command = vim.trim(input)
-      if command == '' then command = 'copilot --experimental' end
+      if command == '' then command = 'omp' end
       local exe = command:match('^%S+')
       if not require_executables(exe) then return end
       create_terminal_command(command)
