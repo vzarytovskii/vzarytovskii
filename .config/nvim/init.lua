@@ -478,6 +478,8 @@ for _, spec in ipairs(plugins) do
     end
   end
   if next(meta) then plugin_meta[spec.src] = meta end
+  -- Expose build hooks on the pack spec so the PackChanged handler can run them.
+  if meta.build then spec.data = { build = meta.build } end
 
   spec.name = spec.name or spec.src:gsub('%.git$', ''):match('[^/]+$')
   managed_names[spec.name] = true
@@ -724,7 +726,7 @@ local configure_global_keymaps = function(vim)
         zindex = 200,
       })
       vim.api.nvim_set_hl(0, 'AceWindowLabel', { fg = '#ff5f00', bg = '#1a1a1a', bold = true })
-      vim.api.nvim_win_set_option(ow, 'winhighlight', 'Normal:AceWindowLabel')
+      vim.api.nvim_set_option_value('winhighlight', 'Normal:AceWindowLabel', { win = ow })
       table.insert(overlays, { win = ow, buf = buf, label = label, target = w })
     end
 
@@ -2069,9 +2071,9 @@ local configure_term_bell_indicator = function()
     })
   end
 
-  local orig_termopen = vim.fn.termopen
   vim.fn.termopen = function(cmd, opts)
     opts = opts or {}
+    opts.term = true
     local user_stdout = opts.on_stdout
     opts.on_stdout = function(job_id, data, event)
       local info = vim.api.nvim_get_chan_info(job_id)
@@ -2092,7 +2094,7 @@ local configure_term_bell_indicator = function()
       end
       if user_stdout then user_stdout(job_id, data, event) end
     end
-    return orig_termopen(cmd, opts)
+    return vim.fn.jobstart(cmd, opts)
   end
 
   vim.api.nvim_create_autocmd('BufEnter', {
