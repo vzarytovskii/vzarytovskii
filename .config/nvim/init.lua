@@ -2134,6 +2134,183 @@ local configure_term_bell_indicator = function()
     refresh_term_bell_overlay()
   end, { desc = 'Test terminal bell indicator' })
 end
+local configure_centered_view = function(vim)
+  -- Content column = ratio * width, clamped to [min, max] for readability on
+  -- very wide (ultrawide) and narrow windows.
+  local ratio, min_content, max_content = 0.62, 72, 120
+  local max_gutter = 46
+
+  local active = {}
+  local busy = false
+
+  local function sign_cols(winid)
+    local sc = vim.api.nvim_get_option_value('signcolumn', { win = winid })
+    if sc == 'no' then return 0 end
+    -- 'yes'/'auto' -> 1 group (2 cols); 'yes:N'/'auto:N' -> N groups.
+    local n = tonumber(sc:match(':(%d)')) or 1
+    return 2 * n
+  end
+
+  local function compute_pad(total, buf, winid)
+    local content = math.max(min_content, math.min(max_content, math.floor(total * ratio)))
+    local nwidth = math.max(3, #tostring(vim.api.nvim_buf_line_count(buf)))
+    local gutter = sign_cols(winid) + nwidth + 1
+    local pad = math.floor((total - gutter - content) / 2)
+    return math.min(pad, max_gutter - gutter)
+  end
+
+  function _G.__centered_view_pad()
+    local winid = vim.g.statusline_winid
+    if winid == nil or winid == 0 then winid = vim.api.nvim_get_current_win() end
+    if not vim.api.nvim_win_is_valid(winid) then return '' end
+    local pad = vim.w[winid].centered_view_pad
+    if not pad or pad < 1 then return '' end
+    return string.rep(' ', pad)
+  end
+
+  local number_seg = [[%{(&number || &relativenumber) ? (v:virtnum == 0 ? printf('%'.max([3,strlen(line('$'))]).'d ', &relativenumber ? (v:relnum==0 ? v:lnum : v:relnum) : v:lnum) : repeat(' ', max([3,strlen(line('$'))]) + 1)) : ''}]]
+  local centered_stc = "%{v:lua.__centered_view_pad()}%s" .. number_seg
+
+  local function make_pad_win(width)
+    vim.cmd('noautocmd rightbelow vnew')
+    local win = vim.api.nvim_get_current_win()
+    local buf = vim.api.nvim_get_current_buf()
+    vim.api.nvim_win_set_width(win, width)
+    for _, o in ipairs({ 'number', 'relativenumber', 'cursorline', 'cursorcolumn', 'list', 'spell', 'wrap' }) do
+      vim.api.nvim_set_option_value(o, false, { win = win })
+    end
+    vim.api.nvim_set_option_value('signcolumn', 'no', { win = win })
+    vim.api.nvim_set_option_value('foldcolumn', '0', { win = win })
+    vim.api.nvim_set_option_value('statuscolumn', '', { win = win })
+    vim.api.nvim_set_option_value('winfixwidth', true, { win = win })
+    vim.api.nvim_set_option_value('fillchars', 'eob: ', { win = win })
+    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal,EndOfBuffer:Normal', { win = win })
+    vim.api.nvim_set_option_value('buftype', 'nofile', { buf = buf })
+    vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
+    vim.api.nvim_set_option_value('swapfile', false, { buf = buf })
+    vim.api.nvim_set_option_value('buflisted', false, { buf = buf })
+    vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
+    return win
+  end
+
+  local function disable(content)
+    local info = active[content]
+    active[content] = nil
+    busy = true
+    if info and info.right and vim.api.nvim_win_is_valid(info.right) then
+      pcall(vim.api.nvim_win_close, info.right, true)
+    end
+    if vim.api.nvim_win_is_valid(content) then
+      vim.w[content].centered_view = nil
+      vim.w[content].centered_view_pad = nil
+      vim.api.nvim_set_option_value('statuscolumn', '', { win = content })
+      if info then
+        vim.api.nvim_set_option_value('wrap', info.wrap, { win = content })
+        vim.api.nvim_set_option_value('fillchars', info.fcs, { win = content })
+      end
+    end
+    busy = false
+    if vim.api.nvim_win_is_valid(content) then vim.cmd('redraw') end
+  end
+
+  local function enable(content)
+    if vim.api.nvim_win_get_config(content).relative ~= '' then
+      vim.notify('Centered view: not available in floating windows', vim.log.levels.WARN)
+      return
+    end
+    local buf = vim.api.nvim_win_get_buf(content)
+    if vim.api.nvim_get_option_value('buftype', { buf = buf }) ~= '' then
+      vim.notify('Centered view: only available for normal buffers', vim.log.levels.WARN)
+      return
+    end
+    local total = vim.api.nvim_win_get_width(content)
+    local pad = compute_pad(total, buf, content)
+    if pad < 1 then
+      vim.notify('Centered view: window too narrow', vim.log.levels.WARN)
+      return
+    end
+    local saved_wrap = vim.api.nvim_get_option_value('wrap', { win = content })
+    local saved_fcs = vim.api.nvim_get_option_value('fillchars', { win = content })
+    busy = true
+    local right = make_pad_win(pad)
+    vim.api.nvim_set_current_win(content)
+    busy = false
+    active[content] = { right = right, wrap = saved_wrap, fcs = saved_fcs }
+    vim.w[content].centered_view = true
+    vim.w[content].centered_view_pad = pad
+    vim.api.nvim_set_option_value('wrap', true, { win = content })
+    vim.api.nvim_set_option_value('statuscolumn', centered_stc, { win = content })
+    vim.api.nvim_set_option_value('fillchars', 'eob: ,vert: ', { win = content })
+    vim.cmd('redraw')
+  end
+
+  local function toggle(content)
+    content = content or vim.api.nvim_get_current_win()
+    if active[content] or vim.w[content].centered_view then
+      disable(content)
+    else
+      enable(content)
+    end
+  end
+
+  local group = vim.api.nvim_create_augroup('CenteredView', { clear = true })
+
+  vim.api.nvim_create_autocmd('VimResized', {
+    group = group,
+    callback = function()
+      if busy then return end
+      for content, info in pairs(active) do
+        if vim.api.nvim_win_is_valid(content) and info.right and vim.api.nvim_win_is_valid(info.right) then
+          local total = vim.api.nvim_win_get_width(content) + vim.api.nvim_win_get_width(info.right) + 1
+          local pad = compute_pad(total, vim.api.nvim_win_get_buf(content), content)
+          if pad < 1 then
+            disable(content)
+          else
+            vim.w[content].centered_view_pad = pad
+            busy = true
+            pcall(vim.api.nvim_win_set_width, info.right, pad)
+            busy = false
+          end
+        else
+          disable(content)
+        end
+      end
+      vim.cmd('redraw')
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = group,
+    callback = function(args)
+      if busy then return end
+      local closed = tonumber(args.match)
+      if not closed then return end
+      local info = active[closed]
+      if info then
+        active[closed] = nil
+        if info.right and vim.api.nvim_win_is_valid(info.right) then
+          busy = true
+          pcall(vim.api.nvim_win_close, info.right, true)
+          busy = false
+        end
+        return
+      end
+      for content, i in pairs(active) do
+        if i.right == closed then
+          disable(content)
+          return
+        end
+      end
+    end,
+  })
+
+  vim.api.nvim_create_user_command('CenteredViewToggle', function()
+    toggle()
+  end, { desc = 'Toggle centered (VSCode-style) view in the current window' })
+
+  vim.keymap.set('n', '<leader>cv', function() toggle() end,
+    { noremap = true, silent = true, desc = 'Toggle centered view' })
+end
 
 configure_defaults(vim)
 configure_global_keymaps(vim)
@@ -2141,4 +2318,5 @@ configure_autocmds(vim, project_root_markers)
 configure_user_commands(vim, project_root_markers)
 configure_window_management()
 configure_term_bell_indicator()
+configure_centered_view(vim)
 configure_lsp(vim, lsp_configs)
