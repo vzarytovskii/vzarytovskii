@@ -1,5 +1,32 @@
 local vim = vim
 
+local socket_dir = os.getenv("XDG_RUNTIME_DIR") or os.getenv("TMPDIR") or "/tmp"
+local socket_path = socket_dir .. "/nvim_default.sock"
+
+local uv = vim.uv or vim.loop
+local client = uv.new_pipe(false)
+local is_running = false
+
+uv.pipe_connect(client, socket_path, function(err)
+  if not err then
+    is_running = true
+  end
+  uv.close(client)
+end)
+
+uv.run("once")
+
+if is_running then
+  vim.schedule(function()
+    vim.cmd("connect " .. vim.fn.fnameescape(socket_path))
+  end)
+  return
+else
+  os.remove(socket_path)
+  vim.fn.serverstart(socket_path)
+end
+
+
 local old = vim.opt.runtimepath:get()
 vim.opt.runtimepath = vim.iter(old):filter(
   function(el)
@@ -277,21 +304,6 @@ local plugins = {
         vim.api.nvim_set_option_value("background", "light", {})
 --        vim.cmd("colorscheme default")
       end,
-    },
-  },
-  {
-    'stevearc/oil.nvim',
-    lazy = false,
-    keys = {
-      { 'fe', mode = { 'n' }, function() require('oil').open() end, desc = 'Open Oil file explorer' },
-    },
-    opts = {
-      default_file_explorer = true,
-      delete_to_trash = true,
-      watch_for_changes = true,
-      columns = { 'permissions', 'size', 'mtime' },
-      win_options = { signcolumn = 'yes:2' },
-      view_options = { show_hidden = true },
     },
   },
   {
@@ -651,6 +663,33 @@ end, { desc = 'Clean packages, update plugins, and update Mason tools' })
 local configure_global_keymaps = function(vim)
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
+
+  set('n', 'ZZ', function()
+    vim.cmd('silent detach!')
+  end, { desc = 'Save and detach persistent session' })
+
+  set('n', 'ZQ', ':silent detach!<CR>', { silent = true, desc = 'Detach persistent session without saving' })
+
+  local quit_commands = {
+    ['q']     = 'silent detach!',
+    ['wq']    = 'silent! update | silent detach!',
+    ['qa']    = 'silent detach!',
+    ['qall']  = 'silent detach!',
+    ['wqa']   = 'silent! wall | silent detach!',
+    ['wqall'] = 'silent! wall | silent detach!',
+  }
+
+  set('c', '<CR>', function()
+    if vim.fn.getcmdtype() == ':' then
+      local cmd = vim.fn.getcmdline()
+      local base_cmd = cmd:match("^%s*(%a+)!?%s*$")
+      if base_cmd and quit_commands[base_cmd] then
+        return '<C-u>' .. quit_commands[base_cmd] .. '<CR>'
+      end
+    end
+    return '<CR>'
+  end, { expr = true, desc = 'Intercept quit commands and turn them into detaches' })
+
 
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
   set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
@@ -2014,6 +2053,12 @@ local configure_user_commands = function(vim, root_markers)
   vim.api.nvim_create_user_command('LazyGitFilter', function(args)
     vim.cmd('terminal lazygit --filter ' .. vim.fn.shellescape(args.args))
   end, { nargs = 1, desc = 'Open LazyGit with filter' })
+
+  vim.api.nvim_create_user_command('KillServer', function()
+    vim.keymap.del('c', '<CR>')
+    vim.cmd('qa!')
+  end, { desc = 'Force kill the background Neovim server completely' })
+
 end
 
 local configure_term_bell_indicator = function()
