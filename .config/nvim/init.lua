@@ -3,24 +3,20 @@ local vim = vim
 local socket_dir = os.getenv("XDG_RUNTIME_DIR") or os.getenv("TMPDIR") or "/tmp"
 local socket_path = socket_dir .. "/nvim_default.sock"
 
-local uv = vim.uv or vim.loop
-local client = uv.new_pipe(false)
-local is_running = false
-
-uv.pipe_connect(client, socket_path, function(err)
-  if not err then
-    is_running = true
+-- A connectable socket means a session is already running, so this instance is
+-- only a launcher: forward its file arguments over RPC and hand the UI over on
+-- UIEnter. Otherwise become the session -- nvim only ever autostarts a server
+-- on a random path, so the shared one has to be created explicitly.
+local probed, session = pcall(vim.fn.sockconnect, 'pipe', socket_path, { rpc = true })
+local joining = probed and session ~= 0
+if joining then
+  local opens = vim.tbl_map(function(arg)
+    return 'drop ' .. vim.fn.fnameescape(vim.fn.fnamemodify(arg, ':p'))
+  end, vim.fn.argv())
+  if #opens > 0 then
+    pcall(vim.rpcrequest, session, 'nvim_exec2', table.concat(opens, ' | '), vim.empty_dict())
   end
-  uv.close(client)
-end)
-
-uv.run("once")
-
-if is_running then
-  vim.schedule(function()
-    vim.cmd("connect " .. vim.fn.fnameescape(socket_path))
-  end)
-  return
+  pcall(vim.fn.chanclose, session)
 else
   os.remove(socket_path)
   vim.fn.serverstart(socket_path)
@@ -111,6 +107,8 @@ local lsp_configs = {
 }
 
 local configure_defaults = function(vim)
+  vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver90"
+
   vim.g.mapleader = " "
   vim.g.maplocalleader = "\\"
 
@@ -631,68 +629,28 @@ vim.api.nvim_create_user_command('PackClean', function()
   vim.pack.del(orphans)
 end, {})
 
-vim.api.nvim_create_user_command('UpdateAll', function()
-  vim.cmd('PackClean')
-
-  local pre_wins = vim.api.nvim_tabpage_list_wins(0)
-  vim.cmd('PackUpdate')
-  local post_wins = vim.api.nvim_tabpage_list_wins(0)
-
-  local new_wins = vim.tbl_filter(function(w)
-    return not vim.tbl_contains(pre_wins, w)
-  end, post_wins)
-
-  local function continue()
-    vim.schedule(function()
-      vim.cmd('TSUpdate')
-      vim.cmd('Mason')
-    end)
-  end
-
-  if #new_wins > 0 then
-    vim.api.nvim_create_autocmd('WinClosed', {
-      pattern = tostring(new_wins[1]),
-      once = true,
-      callback = continue,
-    })
-  else
-    continue()
-  end
-end, { desc = 'Clean packages, update plugins, and update Mason tools' })
-
 local configure_global_keymaps = function(vim)
   local opts = { noremap = true, silent = true }
   local set = vim.keymap.set
 
-  set('n', 'ZZ', function()
-    vim.cmd('silent detach!')
-  end, { desc = 'Save and detach persistent session' })
-
-  set('n', 'ZQ', ':silent detach!<CR>', { silent = true, desc = 'Detach persistent session without saving' })
-
-  local quit_commands = {
-    ['q']     = 'silent detach!',
-    ['wq']    = 'silent! update | silent detach!',
-    ['qa']    = 'silent detach!',
-    ['qall']  = 'silent detach!',
-    ['wqa']   = 'silent! wall | silent detach!',
-    ['wqall'] = 'silent! wall | silent detach!',
-  }
-
-  set('c', '<CR>', function()
-    if vim.fn.getcmdtype() == ':' then
-      local cmd = vim.fn.getcmdline()
-      local base_cmd = cmd:match("^%s*(%a+)!?%s*$")
-      if base_cmd and quit_commands[base_cmd] then
-        return '<C-u>' .. quit_commands[base_cmd] .. '<CR>'
-      end
-    end
-    return '<CR>'
-  end, { expr = true, desc = 'Intercept quit commands and turn them into detaches' })
-
-
   set("i", "<S-Tab>", "<C-\\><C-N><<<C-\\><C-N>^i", opts)
   set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+
+  set('n', '<leader>eD', '<cmd>silent detach<cr>', { desc = "Detach from current session" })
+
+  set('n', '<C-a>', '^', { desc = "Beginning of line" })
+  set('n', '<C-e>', '$', { desc = "End of line" })
+  set('n', '<C-k>', 'd$', { desc = "Kill the line till the end of line" })
+
+  set('i', '<C-a>', '<C-o>^', { desc = "Beginning of line" })
+  set('i', '<C-e>', '<C-o>$', { desc = "End of line" })
+  set('i', '<C-k>', '<C-o>d$', { desc = "Kill the line till the end of line" })
+
+  set('v', '<C-a>', '^', { desc = "Beginning of line" })
+  set('v', '<C-e>', '$', { desc = "End of line" })
+  set('v', '<C-k>', 'd$', { desc = "Kill the line till the end of line" })
+
+
   set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
   set("n", "<leader>gs", "<cmd>Neogit<cr>", { desc = "Neogit" })
   set("n", "<leader>ff", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
@@ -1266,6 +1224,61 @@ local configure_lsp = function(vim, lsp_configs)
 end
 
 local configure_autocmds = function(vim, root_markers)
+  -- Every UI attach lands here: a launcher hands its UI over, a session reports
+  -- the reattach. The first UIEnter is this instance's own startup.
+  local own_ui_seen = false
+  vim.api.nvim_create_autocmd('UIEnter', {
+    callback = function()
+      if joining then
+        -- ! stops this launcher once the UI is gone instead of leaving it headless.
+        vim.cmd('connect! ' .. vim.fn.fnameescape(socket_path))
+      elseif own_ui_seen then
+        local up = os.time() - math.floor(vim.v.starttime / 1e9)
+        vim.schedule(function()
+          local usage_hours = math.floor(up / 3600)
+          local usage_minutes = math.floor((up % 3600) / 60)
+          local usage_seconds = up % 60
+
+          -- format it into a string
+          local usage_text = string.format(
+            "%s, %s, and %s",
+            usage_hours == 1 and string.format("%d hour", usage_hours) or string.format("%d hours", usage_hours),
+            usage_minutes == 1 and string.format("%d minute", usage_minutes)
+              or string.format("%d minutes", usage_minutes),
+            usage_seconds == 1 and string.format("%d second", usage_seconds)
+              or string.format("%d seconds", usage_seconds)
+          )
+
+          vim.notify(('Reattached to session (up %s)'):format(usage_text), vim.log.levels.INFO)
+        end)
+      end
+      own_ui_seen = true
+    end,
+  })
+
+  -- Anything that would exit nvim (:q, :qa, :wq, ZZ, ZQ, ...) detaches the UI
+  -- instead, keeping the server alive. ExitPre only fires when the quit really
+  -- would exit, and nvim cancels that quit when the window it was about to close
+  -- no longer exists -- hence the window swap. :restart/ZR are left alone; use
+  -- :cquit to terminate the server.
+  vim.api.nvim_create_autocmd('ExitPre', {
+    callback = function()
+      if vim.v.exitreason ~= 'quit' then return end
+      if #vim.api.nvim_list_uis() == 0 then return end
+
+      local win = vim.api.nvim_get_current_win()
+      local view = vim.fn.winsaveview()
+      if not pcall(vim.cmd, 'noautocmd split') then return end
+      if not pcall(vim.api.nvim_win_close, win, false) then return end
+      vim.fn.winrestview(view)
+
+      local ok, err = pcall(vim.cmd, 'silent detach')
+      if not ok then
+        vim.notify('detach failed: ' .. tostring(err), vim.log.levels.WARN)
+      end
+    end,
+  })
+
   -- A directory that should never become the CWD via automatic root detection.
   -- $HOME, any ancestor of $HOME (e.g. /Users), and the filesystem root (/ or C:/)
   -- are rejected so they only become CWD when opened explicitly.
@@ -2055,7 +2068,7 @@ local configure_user_commands = function(vim, root_markers)
   end, { nargs = 1, desc = 'Open LazyGit with filter' })
 
   vim.api.nvim_create_user_command('KillServer', function()
-    vim.keymap.del('c', '<CR>')
+    vim.fn.serverstop(socket_path)
     vim.cmd('qa!')
   end, { desc = 'Force kill the background Neovim server completely' })
 
