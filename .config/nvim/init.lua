@@ -40,11 +40,8 @@ end
 local treesitter_configs = { 'c', 'cpp', 'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore', 'rust',
   'yaml', 'markdown', 'markdown_inline', 'regex', 'bash', 'lua', 'cmake', 'json', 'json5', 'powershell', 'xml' }
 local tools = { 'clang-format', 'codelldb' }
-
--- Project-root markers shared by automatic cwd detection (VimEnter/BufEnter) and
--- the fzf pickers. '.cargo' is intentionally omitted: the global Cargo home
--- (~/.cargo) would otherwise make every non-project file resolve its root to $HOME.
 local project_root_markers = { '.git', 'Cargo.toml', 'Cargo.lock', 'CMakeLists.txt' }
+local required_executables = { 'fzf', 'fd', 'rg', 'git', 'lazygit', 'omp' }
 
 local lsp_configs = {
   ['clangd'] = {
@@ -235,7 +232,8 @@ local configure_defaults = function(vim)
 end
 
 vim.schedule(function()
-  require('vim._core.ui2').enable({
+  local ui2 = require('vim._core.ui2')
+  ui2.enable({
     enable = true,
     msg = {
       targets = {
@@ -281,6 +279,22 @@ vim.schedule(function()
       },
     },
   })
+  local set_pos = ui2.msg.set_pos
+  ui2.msg.set_pos = function(tgt, focus)
+    set_pos(tgt, focus)
+    if tgt ~= nil and tgt ~= 'msg' then return end
+    local win = ui2.wins.msg
+    if not win or not vim.api.nvim_win_is_valid(win) then return end
+    if vim.api.nvim_win_get_config(win).hide then return end
+    local tabline = (vim.o.showtabline == 2
+      or (vim.o.showtabline == 1 and vim.fn.tabpagenr('$') > 1)) and 1 or 0
+    pcall(vim.api.nvim_win_set_config, win, {
+      relative = 'editor',
+      anchor = 'NE',
+      row = tabline,
+      col = vim.o.columns,
+    })
+  end
 end)
 
 local plugins = {
@@ -492,7 +506,6 @@ for _, spec in ipairs(plugins) do
     end
   end
   if next(meta) then plugin_meta[spec.src] = meta end
-  -- Expose build hooks on the pack spec so the PackChanged handler can run them.
   if meta.build then spec.data = { build = meta.build } end
 
   spec.name = spec.name or spec.src:gsub('%.git$', ''):match('[^/]+$')
@@ -530,8 +543,6 @@ local function load_and_setup(spec, meta)
   setup_plugin(spec.name, meta)
 end
 
--- Load eager plugins and run their setup immediately so colorschemes / UI
--- plugins don't flicker through a VimEnter detour.
 vim.pack.add(eager_specs)
 for _, spec in ipairs(eager_specs) do
   loaded_plugins[spec.src] = true
@@ -657,6 +668,7 @@ local configure_global_keymaps = function(vim)
   set("n", "<leader>lf", "<cmd>FzfFiles<cr>", { desc = "Find files (fd + fzf)" })
   set("n", "<leader>fr", "<cmd>FzfRecents<cr>", { desc = "Recent files (fzf)" })
   set("n", "<leader>lr", "<cmd>FzfRecents<cr>", { desc = "Recent files (fzf)" })
+  set("n", "<leader>cd", "<cmd>FzfDirs<cr>", { desc = "Change window cwd (fd + fzf)" })
   set("n", "<leader>fR", "<cmd>FzfRecentDirs<cr>", { desc = "Recent folders (fzf)" })
   set("n", "<leader>lR", "<cmd>FzfRecentDirs<cr>", { desc = "Recent folders (fzf)" })
   set("n", "<leader>fg", "<cmd>FzfGrep<cr>", { desc = "Grep content (rg + fzf)" })
@@ -1224,13 +1236,10 @@ local configure_lsp = function(vim, lsp_configs)
 end
 
 local configure_autocmds = function(vim, root_markers)
-  -- Every UI attach lands here: a launcher hands its UI over, a session reports
-  -- the reattach. The first UIEnter is this instance's own startup.
   local own_ui_seen = false
   vim.api.nvim_create_autocmd('UIEnter', {
     callback = function()
       if joining then
-        -- ! stops this launcher once the UI is gone instead of leaving it headless.
         vim.cmd('connect! ' .. vim.fn.fnameescape(socket_path))
       elseif own_ui_seen then
         local up = os.time() - math.floor(vim.v.starttime / 1e9)
@@ -1239,7 +1248,6 @@ local configure_autocmds = function(vim, root_markers)
           local usage_minutes = math.floor((up % 3600) / 60)
           local usage_seconds = up % 60
 
-          -- format it into a string
           local usage_text = string.format(
             "%s, %s, and %s",
             usage_hours == 1 and string.format("%d hour", usage_hours) or string.format("%d hours", usage_hours),
@@ -1256,11 +1264,6 @@ local configure_autocmds = function(vim, root_markers)
     end,
   })
 
-  -- Anything that would exit nvim (:q, :qa, :wq, ZZ, ZQ, ...) detaches the UI
-  -- instead, keeping the server alive. ExitPre only fires when the quit really
-  -- would exit, and nvim cancels that quit when the window it was about to close
-  -- no longer exists -- hence the window swap. :restart/ZR are left alone; use
-  -- :cquit to terminate the server.
   vim.api.nvim_create_autocmd('ExitPre', {
     callback = function()
       if vim.v.exitreason ~= 'quit' then return end
@@ -1279,13 +1282,9 @@ local configure_autocmds = function(vim, root_markers)
     end,
   })
 
-  -- A directory that should never become the CWD via automatic root detection.
-  -- $HOME, any ancestor of $HOME (e.g. /Users), and the filesystem root (/ or C:/)
-  -- are rejected so they only become CWD when opened explicitly.
   local function is_unsafe_auto_root(dir)
     if not dir or dir == '' then return true end
     dir = vim.fs.normalize(dir)
-    -- A filesystem root (/ or C:/) is its own parent.
     if vim.fn.fnamemodify(dir, ':h') == dir then return true end
     local home = vim.uv.os_homedir()
     if home then
@@ -1295,8 +1294,6 @@ local configure_autocmds = function(vim, root_markers)
     return false
   end
 
-  -- If nvim was opened with a single file (no directory), cd to the file's
-  -- directory, then walk up to find a project root and cd there if one exists.
   vim.api.nvim_create_autocmd('VimEnter', {
     once = true,
     callback = function()
@@ -1306,18 +1303,12 @@ local configure_autocmds = function(vim, root_markers)
       if vim.fn.isdirectory(arg) == 1 then return end
       local file = vim.fn.fnamemodify(arg, ':p')
       if file == '' or file:match('^%a[%w+.-]*://') then return end
-      -- Resolve symlinks so a symlinked config dir (e.g. ~/.config/nvim ->
-      -- ~/dotfiles/.config/nvim) finds the real project root instead of falling
-      -- back to the launch directory.
       file = vim.fn.resolve(file)
       local file_dir = vim.fn.fnamemodify(file, ':h')
       if vim.fn.isdirectory(file_dir) ~= 1 then return end
 
       local git_root = vim.fs.root(file, root_markers)
 
-      -- Prefer the nearest project root, but only when it is a safe target. If no
-      -- marker is found all the way up to the filesystem root (or the only root
-      -- found is unsafe, e.g. $HOME), fall back to the file's own directory.
       local target_dir = file_dir
       if git_root and not is_unsafe_auto_root(git_root) then
         target_dir = git_root
@@ -1362,10 +1353,8 @@ local configure_autocmds = function(vim, root_markers)
       if vim.bo[ev.buf].buftype ~= '' then return end
       local name = vim.api.nvim_buf_get_name(ev.buf)
       if name == '' then return end
-      -- Resolve symlinks so a symlinked path finds the real project root.
       local root = vim.fs.root(vim.fn.resolve(name), root_markers)
       if not root then return end
-      -- Never auto-lcd to $HOME, an ancestor of it, or the filesystem root.
       if is_unsafe_auto_root(root) then return end
       vim.cmd.lcd(root)
     end,
@@ -1440,10 +1429,6 @@ local configure_user_commands = function(vim, root_markers)
     return lines[1] and vim.trim(lines[1]) or ''
   end
 
-  -- Search root for the fzf pickers, derived from the current buffer rather than
-  -- the ambient window cwd (which can still be $HOME when a file is opened from an
-  -- oil buffer, a new tab, or a no-argument launch). Resolves symlinks, then
-  -- prefers the nearest project marker, else the file's own directory.
   local function search_root()
     local name = vim.api.nvim_buf_get_name(0)
     if name:match('^oil://') then
@@ -1465,8 +1450,6 @@ local configure_user_commands = function(vim, root_markers)
     return vim.fs.root(file, root_markers) or dir
   end
 
-  -- Join a fzf-selected (possibly relative) path onto the root used to produce it,
-  -- so it opens correctly regardless of the window's cwd.
   local function resolve_under(root, path)
     if path == '' or path:sub(1, 1) == '/' then return path end
     return vim.fs.joinpath(root, path)
@@ -1683,6 +1666,30 @@ local configure_user_commands = function(vim, root_markers)
   vim.api.nvim_create_user_command('FzfFiles', function(args)
     fzf_files(args.args)
   end, { nargs = '?', desc = 'Pick files with fd + fzf' })
+
+  local function fzf_dirs(query)
+    if not require_executables('fd', 'fzf') then return end
+    local root = search_root()
+    local fd_cmd = "{ echo .; fd --type d --strip-cwd-prefix --hidden --follow --exclude .git; }"
+    local fzf_cmd = "fzf --height=100% --layout=reverse --prompt='Cd> '"
+    if query and query ~= '' then
+      fzf_cmd = fzf_cmd .. ' --query ' .. vim.fn.shellescape(query)
+    end
+    run_fzf_selection(fd_cmd .. ' | ' .. fzf_cmd, {
+      cwd = root,
+      on_result = function(exit_code, selected)
+        if exit_code ~= 0 or selected == '' then return end
+        local dir = vim.fn.fnamemodify(resolve_under(root, selected), ':p')
+        if vim.fn.isdirectory(dir) == 0 then return end
+        vim.cmd('lcd ' .. vim.fn.fnameescape(dir))
+        vim.notify('cwd: ' .. vim.fn.fnamemodify(dir, ':~'), vim.log.levels.INFO)
+      end,
+    })
+  end
+
+  vim.api.nvim_create_user_command('FzfDirs', function(args)
+    fzf_dirs(args.args)
+  end, { nargs = '?', desc = 'Pick a directory with fd + fzf and lcd into it' })
 
   local function get_recent_files()
     local seen = {}
@@ -2193,8 +2200,6 @@ local configure_term_bell_indicator = function()
   end, { desc = 'Test terminal bell indicator' })
 end
 local configure_centered_view = function(vim)
-  -- Content column = ratio * width, clamped to [min, max] for readability on
-  -- very wide (ultrawide) and narrow windows.
   local ratio, min_content, max_content = 0.62, 72, 120
   local max_gutter = 46
 
@@ -2204,7 +2209,6 @@ local configure_centered_view = function(vim)
   local function sign_cols(winid)
     local sc = vim.api.nvim_get_option_value('signcolumn', { win = winid })
     if sc == 'no' then return 0 end
-    -- 'yes'/'auto' -> 1 group (2 cols); 'yes:N'/'auto:N' -> N groups.
     local n = tonumber(sc:match(':(%d)')) or 1
     return 2 * n
   end
@@ -2364,12 +2368,37 @@ local configure_centered_view = function(vim)
 
   vim.api.nvim_create_user_command('CenteredViewToggle', function()
     toggle()
-  end, { desc = 'Toggle centered (VSCode-style) view in the current window' })
+  end, { desc = 'Toggle centered view in the current window' })
 
   vim.keymap.set('n', '<leader>cv', function() toggle() end,
     { noremap = true, silent = true, desc = 'Toggle centered view' })
 end
 
+local configure_dependency_check = function(vim, executables)
+  vim.api.nvim_create_autocmd('VimEnter', {
+    once = true,
+    callback = function()
+      local pending = #executables
+      if pending == 0 then return end
+      local missing = {}
+      for _, exe in ipairs(executables) do
+        vim.system({ 'sh', '-c', 'command -v ' .. vim.fn.shellescape(exe) }, { text = true }, function(res)
+          if res.code ~= 0 then
+            table.insert(missing, exe)
+          end
+          pending = pending - 1
+          if pending > 0 or #missing == 0 then return end
+          table.sort(missing)
+          vim.schedule(function()
+            vim.notify('Missing executables: ' .. table.concat(missing, ', '), vim.log.levels.ERROR)
+          end)
+        end)
+      end
+    end,
+  })
+end
+
+configure_dependency_check(vim, required_executables)
 configure_defaults(vim)
 configure_global_keymaps(vim)
 configure_autocmds(vim, project_root_markers)
