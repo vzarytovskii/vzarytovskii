@@ -22,6 +22,9 @@ else
   vim.fn.serverstart(socket_path)
 end
 
+-- Set by :KillServer so the ExitPre handler lets the quit through instead of detaching.
+local killing_server = false
+
 
 local old = vim.opt.runtimepath:get()
 vim.opt.runtimepath = vim.iter(old):filter(
@@ -1266,6 +1269,7 @@ local configure_autocmds = function(vim, root_markers)
 
   vim.api.nvim_create_autocmd('ExitPre', {
     callback = function()
+      if killing_server then return end
       if vim.v.exitreason ~= 'quit' then return end
       if #vim.api.nvim_list_uis() == 0 then return end
 
@@ -2075,6 +2079,7 @@ local configure_user_commands = function(vim, root_markers)
   end, { nargs = 1, desc = 'Open LazyGit with filter' })
 
   vim.api.nvim_create_user_command('KillServer', function()
+    killing_server = true
     vim.fn.serverstop(socket_path)
     vim.cmd('qa!')
   end, { desc = 'Force kill the background Neovim server completely' })
