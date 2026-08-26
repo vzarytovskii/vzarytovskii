@@ -156,6 +156,8 @@ local configure_defaults = function(vim)
   vim.opt.selectmode = ""
   vim.opt.keymodel = "startsel"
 
+  vim.opt.messagesopt="wait:5000,history:500,maxheight:5"
+
   vim.opt.undofile = true
   local state_dir = vim.fn.stdpath('state')
   local undo_dir = state_dir .. '/undo//'
@@ -267,15 +269,11 @@ vim.schedule(function()
         wmsg = 'msg',
         typed_cmd = 'cmd',
       },
-      cmd = {
-        height = 0.5,
-      },
       dialog = {
         height = 0.5,
       },
       msg = {
         height = 0.3,
-        timeout = 5000,
       },
       pager = {
         height = 0.5,
