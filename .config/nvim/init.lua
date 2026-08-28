@@ -306,14 +306,14 @@ local plugins = {
     opts = {
       update_interval = 1000,
       set_dark_mode = function()
-        vim.api.nvim_set_hl(0, "Normal", { bg = "black" }) -- "none" for transparency
-        vim.api.nvim_set_hl(0, "NormalFloat", { bg = "black" })
+--        vim.api.nvim_set_hl(0, "Normal", { bg = "none" }) -- "none" for transparency
+--        vim.api.nvim_set_hl(0, "NormalFloat", { bg = "black" })
         vim.api.nvim_set_option_value("background", "dark", {})
 --        vim.cmd("colorscheme default")
       end,
       set_light_mode = function()
-        vim.api.nvim_set_hl(0, "Normal", { bg = "white" })
-        vim.api.nvim_set_hl(0, "NormalFloat", { bg = "white" })
+--        vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+--        vim.api.nvim_set_hl(0, "NormalFloat", { bg = "white" })
         vim.api.nvim_set_option_value("background", "light", {})
 --        vim.cmd("colorscheme default")
       end,
